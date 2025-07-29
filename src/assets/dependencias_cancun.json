@@ -1,0 +1,200 @@
+{
+  "sistema_clasificacion_dependencias": {
+    "version": "1.0",
+    "municipio": "Benito Juárez (Cancún)",
+    "descripcion": "Sistema para clasificar peticiones ciudadanas por dependencia municipal",
+    "categorias": {
+      "obras_servicios_publicos": {
+        "nombre": "Obras y Servicios Públicos",
+        "dependencia_principal": "Primera Regiduría de la Comisión de Obras y Servicios Públicos",
+        "dependencias_relacionadas": [
+          "Secretaría Municipal de Obras Públicas y Servicios",
+          "Dirección General de Obras Públicas",
+          "Dirección General de Servicios Públicos",
+          "Dirección de Alumbrado Público",
+          "Dirección de Bacheo y Pipas",
+          "Dirección de Parques y Áreas Jardinadas",
+          "Dirección de Atención a Demandas Emergentes"
+        ],
+        "palabras_clave": [
+          ],
+        "tipos_peticion": [
+          "Reparación de calles y banquetas",
+          "Mantenimiento de alumbrado público",
+          "Limpieza y mantenimiento de parques",
+          "Construcción de obras públicas",
+          "Reparación de infraestructura urbana",
+          "Limpieza y mantenimiento urbano"
+        ]
+      },
+"seguridad_transito": {
+  "nombre": "Seguridad y Tránsito",
+  "dependencia_principal": "Novena Regiduría de la Comisión de Seguridad Ciudadana, Policía Preventiva, Tránsito, Bomberos y Protección Civil",
+  "dependencias_relacionadas": [
+    "Secretaría Municipal de Seguridad Ciudadana y Tránsito",
+    "Dirección de Tránsito Municipal",
+    "Dirección de la Policía Turística",
+    "Dirección General de la Policía Auxiliar",
+    "Dirección de Seguridad Ciudadana",
+    "Dirección General de Protección Civil",
+    "Dirección General del Heroico Cuerpo de Bomberos, Rescate, Emergencias Médicas y Desastres"
+  ],
+  "palabras_clave": [
+   ],
+  "tipos_peticion": [
+    "Reportes de inseguridad",
+    "Problemas de tránsito y vialidad",
+    "Emergencias médicas y rescates",
+    "Solicitud de patrullajes",
+    "Reportes de accidentes"
+  ]
+},
+"desarrollo_urbano_ecologia": {
+  "nombre": "Desarrollo Urbano y Ecología",
+  "dependencia_principal": "Quinta Regiduría de la Comisión de Turismo, Ecología y Ambiente",
+  "dependencias_relacionadas": [
+    "Secretaría Municipal de Ecología y Desarrollo Urbano",
+    "Dirección General de Ecología",
+    "Dirección General de Desarrollo Urbano",
+    "Dirección de Imagen Urbana y Vía Pública",
+    "Dirección de Áreas Naturales Protegidas",
+    "Instituto de Planeación para el Desarrollo Urbano Municipal (IMPLAN)"
+  ],
+  "palabras_clave": [
+    ],
+  "tipos_peticion": [
+    "Solicitudes de licencias de construcción",
+    "Cambios de uso de suelo",
+    "Denuncias ambientales",
+    "Regularización de predios",
+    "Permisos de desarrollo urbano"
+  ]
+}, "salud_bienestar": {
+  "nombre": "Salud y Bienestar Social",
+  "dependencia_principal": "Cuarta Regiduría de la Comisión de Salud Pública, Asistencia Social y Protección Animal",
+  "dependencias_relacionadas": [
+    "Secretaría Municipal de Bienestar",
+    "Dirección General de Salud",
+    "Dirección General de Bienestar",
+    "Sistema Municipal para el Desarrollo Integral de la Familia (DIF)",
+    "Instituto Municipal de la Mujer (IMM)"
+  ],
+  "palabras_clave": [
+   ],
+  "tipos_peticion": [
+    "Servicios de salud municipal",
+    "Programas de asistencia social",
+    "Atención a violencia familiar",
+    "Servicios del DIF",
+    "Protección animal"
+  ]
+}, 
+"hacienda_ingresos": {
+  "nombre": "Hacienda e Ingresos",
+  "dependencia_principal": "Tesorera Municipal",
+  "dependencias_relacionadas": [
+    "Dirección de Ingresos",
+    "Dirección de Catastro Municipal",
+    "Dirección de Comercio y Servicios en la Vía Pública",
+    "Dirección de Fiscalización",
+    "Dirección de Zona Federal Marítima Terrestre"
+  ],
+  "palabras_clave": [
+    ],
+  "tipos_peticion": [
+    "Pagos de impuestos y derechos",
+    "Licencias comerciales",
+    "Trámites catastrales",
+    "Permisos de comercio en vía pública",
+    "Zona federal marítimo terrestre"
+  ]
+}, 
+"turismo": {
+  "nombre": "Turismo",
+  "dependencia_principal": "Secretario Municipal de Turismo",
+  "dependencias_relacionadas": [
+    "Dirección de Planeación Turística",
+    "Dirección de Fomento Turístico Internacional",
+    "Dirección de Asuntos Internacionales",
+    "Dirección de la Policía Turística"
+  ],
+  "palabras_clave": [
+    ],
+  "tipos_peticion": [
+    "Promoción y desarrollo turístico",
+    "Atención a turistas",
+    "Eventos y convenciones",
+    "Servicios turísticos",
+    "Seguridad turística"
+  ]
+}, 
+"educacion_cultura": {
+  "nombre": "Educación y Cultura",
+  "dependencia_principal": "Séptima Regiduría de la Comisión de Educación, Cultura y Deporte",
+  "dependencias_relacionadas": [
+    "Dirección General de Educación",
+    "Instituto de la Cultura y las Artes",
+    "Instituto Municipal del Deporte",
+    "Instituto Municipal de la Juventud (IMJUVE)"
+  ],
+  "palabras_clave": [
+  ],
+  "tipos_peticion": [
+    "Programas educativos y becas",
+    "Eventos culturales y artísticos",
+    "Actividades deportivas",
+    "Programas juveniles",
+    "Uso de espacios culturales"
+  ]
+},  "transparencia_gobierno": {
+  "nombre": "Transparencia y Gobierno",
+  "dependencia_principal": "Décima Regiduría de la Comisión de Mejora Regulatoria, Transparencia, Protección de Datos Personales y Acceso a la Información Pública",
+  "dependencias_relacionadas": [
+    "Unidad de Transparencia, Acceso a la Información Pública y Protección de Datos Personales",
+    "Dirección General de Gobierno",
+    "Contralor Municipal",
+    "Dirección de Atención Ciudadana"
+  ],
+  "palabras_clave": [
+   ],
+  "tipos_peticion": [
+    "Solicitudes de información pública",
+    "Quejas y sugerencias",
+    "Protección de datos personales",
+    "Mejora de trámites y servicios",
+    "Transparencia gubernamental"
+  ]
+}
+    },
+    "algoritmo_clasificacion": {
+      "descripcion": "Pasos para clasificar una petición",
+      "pasos": [
+        "1. Extraer palabras clave de la petición",
+        "2. Buscar coincidencias en las palabras_clave de cada categoría",
+        "3. Calcular puntuación por categoría basada en coincidencias",
+        "4. Seleccionar la categoría con mayor puntuación",
+        "5. Asignar a la dependencia correspondiente de esa categoría"
+      ],
+      "reglas_especiales": {
+        "emergencias": {
+          "palabras": ["emergencia", "urgente", "accidente", "incendio", "rescate"],
+          "dependencia_directa": "Dirección General de Protección Civil"
+        },
+        "violencia_genero": {
+          "palabras": ["violencia", "género", "mujer", "violencia familiar", "maltrato"],
+          "dependencia_directa": "Instituto Municipal de la Mujer (IMM)"
+        },
+        "registro_civil": {
+          "palabras": ["acta nacimiento", "matrimonio", "defunción", "registro civil"],
+          "dependencia_directa": "Dirección de la Coordinación del Registro Civil"
+        }
+      }
+    },
+    "contactos_principales": {
+      "atencion_ciudadana": "Dirección de Atención Ciudadana",
+      "transparencia": "Unidad de Transparencia, Acceso a la Información Pública y Protección de Datos Personales",
+      "emergencias": "Dirección General de Protección Civil",
+      "presidencia": "Presidenta Municipal"
+    }
+  }
+}

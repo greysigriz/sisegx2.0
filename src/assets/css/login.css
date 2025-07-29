@@ -1,0 +1,604 @@
+/* Importar fuente Ramaraja para títulos elegantes y Hanuman como respaldo */
+@import url('https://fonts.googleapis.com/css2?family=Hanuman:wght@100;300;400;700;900&family=Ramaraja&display=swap');
+
+/* Definición de paleta de colores y valores reutilizables */
+:root {
+  /* Colores principales - Tema turquesa/azul */
+  --primary-color: #0891b2;      /* Azul turquesa principal */
+  --primary-dark: #0e7490;       /* Versión más oscura del primario */
+  --secondary-color: #06b6d4;    /* Azul claro secundario */
+  --accent-color: #22d3ee;       /* Color de acento brillante */
+  
+  /* Colores de fondo */
+  --bg-light: #f0f9ff;           /* Fondo claro azulado */
+  --bg-blue: #e0f2fe;            /* Fondo azul suave */
+  
+  /* Colores de texto */
+  --text-dark: #0f172a;          /* Texto principal oscuro */
+  --text-gray: #475569;          /* Texto secundario gris */
+  
+  /* Colores neutros */
+  --white: #ffffff;                        /* Blanco puro */
+  --white-transparent: rgba(255, 255, 255, 0.9);  /* Blanco semi-transparente */
+  --border-color: #cbd5e1;                /* Color de bordes */
+  
+  /* Sombras predefinidas */
+  --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1);    /* Sombra ligera */
+  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra media */
+  --shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Sombra fuerte */
+}
+
+/* ========================================
+   RESET CSS BÁSICO
+   ======================================== */
+/* Eliminar márgenes y padding por defecto, aplicar box-sizing border-box */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ========================================
+   ESTILOS BASE DEL BODY
+   ======================================== */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;              /* Altura de línea para mejor legibilidad */
+  color: var(--text-dark);       /* Color de texto principal */
+}
+
+/* ========================================
+   CONTENEDOR PRINCIPAL DE LA PÁGINA
+   ======================================== */
+/* Página de login - Layout principal con flexbox */
+.login-page {
+  min-height: 100vh;             /* Altura mínima de toda la ventana */
+  display: flex;                 /* Layout flexbox horizontal */
+  position: relative;            /* Para posicionar elementos absolutos */
+  overflow: hidden;              /* Ocultar desbordamiento de elementos decorativos */
+  flex-direction: row-reverse;   /* CAMBIADO: Formulario derecha, imagen izquierda */
+}
+
+/* ========================================
+   FONDO DE IMAGEN GLOBAL RESTAURADO
+   ======================================== */
+/* Pseudo-elemento para imagen de fondo de Cancún - RESTAURADO */
+.login-page::before {
+  content: "";                   /* Contenido vacío requerido para pseudo-elementos */
+  position: absolute;            /* Posicionamiento absoluto */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Imagen de fondo centrada y escalada para cubrir todo el contenedor */
+  background: url('src/assets/cancun.jpg') center/cover no-repeat;
+  z-index: -2;                   /* Detrás del overlay */
+  transform: scale(1.05);        /* Escala ligeramente para evitar bordes */
+}
+
+/* ========================================
+   OVERLAY DE COLOR TURQUESA RESTAURADO
+   ======================================== */
+/* Capa semi-transparente sobre la imagen para mejorar legibilidad - RESTAURADO */
+.login-page::after {
+  content: "";                   /* Contenido vacío requerido */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Gradiente diagonal con colores turquesa semi-transparentes */
+  background: linear-gradient(135deg, 
+    rgba(8, 145, 178, 0.3) 0%,   /* Turquesa al 30% de opacidad */
+    rgba(6, 182, 212, 0.2) 50%,  /* Azul claro al 20% de opacidad */
+    rgba(34, 211, 238, 0.3) 100% /* Accent color al 30% de opacidad */
+  );
+  z-index: -1;                   /* Entre la imagen y el contenido */
+}
+
+/* ========================================
+   SECCIÓN IZQUIERDA DECORATIVA
+   ======================================== */
+/* Área decorativa que balancea el diseño - SIN fondo propio */
+.login-left-section {
+  flex: 0 0 50%;                 /* CAMBIADO: Ocupa exactamente el 50% del ancho */
+  display: flex;
+  align-items: center;           /* Centra verticalmente */
+  justify-content: center;       /* Centra horizontalmente */
+  position: relative;
+  z-index: 1;                    /* Sobre el fondo pero bajo el formulario */
+}
+
+/* ========================================
+   CONTENEDOR DEL FORMULARIO PRINCIPAL
+   ======================================== */
+/* Container principal del formulario con efecto glassmorphism RESTAURADO */
+.login-container {
+  flex: 0 0 50%;                 /* CAMBIADO: Ocupa exactamente el 50% del ancho */
+  display: flex;
+  flex-direction: column;        /* Layout vertical */
+  justify-content: center;       /* Centra verticalmente */
+  align-items: center;           /* Centra horizontalmente */
+  padding: 3rem 2rem;            /* Espaciado interno generoso */
+  min-height: 100vh;             /* NUEVO: Altura completa de la ventana */
+  
+  /* Efecto glassmorphism - Fondo blanco semi-transparente RESTAURADO */
+  background: rgba(255, 255, 255, 0.95); /* Blanco con alta opacidad para contraste */
+  backdrop-filter: blur(10px);   /* Desenfoque del fondo detrás del elemento */
+  -webkit-backdrop-filter: blur(10px); /* Soporte para Safari */
+  border: 1px solid rgba(255, 255, 255, 0.8); /* Borde semi-transparente */
+  
+  /* Efectos visuales */
+  box-shadow: var(--shadow-strong); /* Sombra pronunciada */
+  position: relative;
+  z-index: 2;                    /* Sobre todos los otros elementos */
+  margin: 0;                     /* CAMBIADO: Sin margen para ocupar toda la mitad */
+  border-radius: 0;              /* CAMBIADO: Sin bordes redondeados para ocupar todo el espacio */
+  max-width: none;               /* CAMBIADO: Sin límite de ancho máximo */
+}
+/* Estilos principales para la imagen del logo */
+.login-container img {
+  width: 350px;                  /* Tamaño grande del logo */
+  height: auto;                  /* Altura proporcional automática */
+  margin-bottom: 2rem;           /* Espacio generoso debajo del logo */
+  
+  /* Efectos visuales elegantes */
+  border-radius: 16px;           /* Bordes redondeados más pronunciados */
+  box-shadow: 
+    0 10px 30px rgba(8, 145, 178, 0.2),     /* Sombra principal con color primario */
+    0 4px 15px rgba(0, 0, 0, 0.1),          /* Sombra secundaria para profundidad */
+    0 0 0 2px rgba(255, 255, 255, 0.8);     /* Borde blanco sutil */
+  
+  /* Transiciones suaves para interactividad */
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Transición con bounce */
+  
+  /* Filtros para mejorar la calidad visual */
+  filter: brightness(1.05) contrast(1.1) saturate(1.1);
+  
+  /* Posicionamiento relativo para elementos decorativos */
+  position: relative;
+  z-index: 3;                    /* Sobre otros elementos */
+  
+  /* Respaldo por si la imagen no carga */
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  display: block;                /* Asegura que se comporte como bloque */
+}
+
+/* Efecto hover elegante */
+.login-container img:hover {
+  transform: scale(1.08) translateY(-5px); /* Aumento y elevación */
+  box-shadow: 
+    0 20px 40px rgba(8, 145, 178, 0.3),     /* Sombra más intensa */
+    0 8px 25px rgba(0, 0, 0, 0.15),         /* Sombra de profundidad */
+    0 0 0 3px rgba(34, 211, 238, 0.4);      /* Borde brillante */
+  
+  filter: brightness(1.1) contrast(1.15) saturate(1.2); /* Mejora visual en hover */
+}
+
+/* Efecto al hacer clic */
+.login-container img:active {
+  transform: scale(1.02) translateY(-2px); /* Reducción del efecto al presionar */
+  transition: all 0.1s ease;              /* Transición rápida para feedback inmediato */
+}
+
+/* Elemento decorativo detrás del logo */
+.login-container img::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: linear-gradient(45deg, 
+    rgba(34, 211, 238, 0.1) 0%, 
+    rgba(6, 182, 212, 0.1) 50%, 
+    rgba(8, 145, 178, 0.1) 100%
+  );
+  border-radius: 20px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Activar elemento decorativo en hover */
+.login-container img:hover::before {
+  opacity: 1;
+}
+
+/* ========================================
+   AJUSTES RESPONSIVOS PARA EL LOGO
+   ======================================== */
+
+/* Tablets */
+@media (max-width: 768px) {
+  .login-container img {
+    width: 280px;                /* Grande en tablets */
+    margin-bottom: 1.5rem;       /* Menos espacio en tablets */
+    border-radius: 14px;         /* Bordes proporcionalmente menores */
+  }
+}
+
+/* Móviles */
+@media (max-width: 480px) {
+  .login-container img {
+    width: 220px;                /* Más grande en móviles */
+    margin-bottom: 1.2rem;       /* Espacio reducido */
+    border-radius: 12px;         /* Bordes aún menores */
+    
+    /* Efectos reducidos en móviles para mejor performance */
+    box-shadow: 
+      0 8px 20px rgba(8, 145, 178, 0.15),
+      0 3px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Hover más sutil en móviles */
+  .login-container img:hover {
+    transform: scale(1.05) translateY(-3px);
+    box-shadow: 
+      0 12px 25px rgba(8, 145, 178, 0.2),
+      0 5px 15px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* ========================================
+   ESTILOS PARA IMAGEN CON FONDO TRANSPARENTE
+   ======================================== */
+
+/* Si tu logo tiene fondo transparente, esto mejorará su apariencia */
+.login-container img[src*="png"], 
+.login-container img[src*="svg"] {
+  /* Fondo sutil para logos con transparencia */
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  
+  /* Padding interno para separar el logo del fondo */
+  padding: 15px;
+  
+  /* Ajustar el tamaño considerando el padding */
+  width: 380px;                  /* Compensar por el padding adicional */
+}
+
+/* Ajustes responsive para logos con fondo */
+@media (max-width: 768px) {
+  .login-container img[src*="png"], 
+  .login-container img[src*="svg"] {
+    width: 300px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container img[src*="png"], 
+  .login-container img[src*="svg"] {
+    width: 240px;
+    padding: 10px;
+  }
+}
+/* ========================================
+   TÍTULO PRINCIPAL DEL FORMULARIO
+   ======================================== */
+/* Estilizado del título principal con efectos de gradiente */
+.login-container h1 {
+  font-family: 'Ramaraja', serif; /* Fuente elegante serif */
+  font-size: 3rem;               /* Tamaño grande para impacto visual */
+  font-weight: 700;              /* Peso bold */
+  color: var(--primary-color);   /* Color primario para contraste en fondo blanco */
+  margin-bottom: 0.5rem;         /* Espacio inferior pequeño */
+  text-align: center;            /* Texto centrado */
+  
+  /* Efecto de texto con gradiente */
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text; /* Recorta el gradiente al texto */
+  -webkit-text-fill-color: transparent; /* Hace el texto transparente para mostrar el gradiente */
+  background-clip: text;         /* Versión estándar */
+  
+  /* Sombras sutiles para profundidad */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+/* ========================================
+   SUBTÍTULO DEL FORMULARIO
+   ======================================== */
+/* Texto descriptivo debajo del título principal */
+.login-container h2 {
+  font-size: 1.5rem;             /* Tamaño medio */
+  font-weight: 600;              /* Peso semi-bold */
+  color: var(--text-gray);       /* Color gris para jerarquía visual */
+  margin-bottom: 2.5rem;         /* Espaciado generoso antes del formulario */
+  text-align: center;            /* Texto centrado */
+  text-shadow: none;             /* Sin sombra para limpieza en fondo blanco */
+}
+
+/* ========================================
+   FORMULARIO PRINCIPAL
+   ======================================== */
+/* Container del formulario con layout vertical */
+form {
+  width: 100%;                   /* Ancho completo del contenedor */
+  max-width: 400px;              /* Ancho máximo para legibilidad */
+  display: flex;
+  flex-direction: column;        /* Elementos apilados verticalmente */
+  gap: 1.5rem;                   /* Espaciado consistente entre elementos */
+}
+/* ========================================
+   GRUPOS DE CAMPOS DE ENTRADA
+   ======================================== */
+/* Contenedor para cada campo label + input */
+.input-group {
+  display: flex;
+  flex-direction: column;        /* Label arriba, input abajo */
+  gap: 0.5rem;                   /* Espacio pequeño entre label e input */
+}
+
+/* Etiquetas de los campos */
+.input-group label {
+  font-weight: 600;              /* Peso semi-bold para destacar */
+  color: var(--text-dark);       /* Color oscuro para contraste en fondo blanco */
+  font-size: 0.875rem;           /* Tamaño ligeramente menor que el texto normal */
+  margin-bottom: 0.25rem;        /* Espacio adicional pequeño */
+  text-shadow: none;             /* Sin sombra para limpieza */
+}
+
+/* Campos de entrada (inputs) */
+.input-group input {
+  padding: 1rem 1.25rem;         /* Padding generoso para comodidad */
+  border: 2px solid var(--border-color); /* Borde gris visible */
+  border-radius: 12px;           /* Bordes redondeados modernos */
+  font-size: 1rem;               /* Tamaño de texto estándar */
+  transition: all 0.3s ease;     /* Transición suave para todas las propiedades */
+  background: var(--white);      /* Fondo blanco sólido */
+  color: var(--text-dark);       /* Texto oscuro */
+}
+
+/* Estado de focus en los inputs */
+.input-group input:focus {
+  outline: none;                 /* Remueve el outline por defecto del navegador */
+  border-color: var(--primary-color); /* Cambio de color del borde */
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2); /* Sombra de focus personalizada */
+  transform: translateY(-2px);   /* Elevación sutil */
+  background: var(--white);      /* Mantiene fondo blanco */
+}
+
+/* Texto placeholder en los inputs */
+.input-group input::placeholder {
+  color: var(--text-gray);       /* Color gris para el placeholder */
+  opacity: 0.8;                  /* Opacidad reducida */
+}
+
+/* ========================================
+   BOTÓN DE ENVÍO DEL FORMULARIO
+   ======================================== */
+/* Botón principal con gradiente y efectos hover */
+button[type="submit"] {
+  padding: 1rem 1.5rem;          /* Padding generoso para área de click */
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); /* Gradiente atractivo */
+  color: var(--white);           /* Texto blanco */
+  border: none;                  /* Sin borde */
+  border-radius: 12px;           /* Bordes redondeados */
+  font-size: 1.1rem;             /* Tamaño ligeramente mayor */
+  font-weight: 700;              /* Texto bold */
+  cursor: pointer;               /* Cursor de mano */
+  transition: all 0.3s ease;     /* Transiciones suaves */
+  box-shadow: 0 8px 20px rgba(8, 145, 178, 0.4); /* Sombra pronunciada */
+  margin-top: 1rem;              /* Espacio superior */
+  text-transform: uppercase;     /* Texto en mayúsculas */
+  letter-spacing: 0.5px;         /* Espaciado entre letras */
+}
+
+/* Estado hover del botón (cuando no está deshabilitado) */
+button[type="submit"]:hover:not(:disabled) {
+  transform: translateY(-3px);   /* Elevación en hover */
+  box-shadow: 0 12px 25px rgba(8, 145, 178, 0.5); /* Sombra más intensa */
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)); /* Gradiente más oscuro */
+}
+
+/* Estado activo del botón (al hacer click) */
+button[type="submit"]:active {
+  transform: translateY(-1px);   /* Elevación reducida al presionar */
+}
+
+/* Estado deshabilitado del botón */
+button[type="submit"]:disabled {
+  opacity: 0.6;                  /* Opacidad reducida */
+  cursor: not-allowed;           /* Cursor de prohibido */
+  transform: none;               /* Sin transformaciones */
+}
+/* ========================================
+   MENSAJES DE ERROR
+   ======================================== */
+/* Styling para mensajes de error del formulario */
+.error-message {
+  color: #dc2626;                /* Rojo de error fuerte */
+  background: rgba(220, 38, 38, 0.1); /* Fondo rojo semi-transparente */
+  border: 1px solid rgba(220, 38, 38, 0.3); /* Borde rojo sutil */
+  padding: 1rem;                 /* Padding interno */
+  border-radius: 12px;           /* Bordes redondeados */
+  text-align: center;            /* Texto centrado */
+  font-weight: 600;              /* Texto semi-bold */
+  animation: slideDown 0.3s ease; /* Animación de entrada */
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1); /* Sombra sutil */
+}
+/* ========================================
+   INDICADOR DE CARGA
+   ======================================== */
+/* Elemento mostrado durante procesos de carga */
+.loading-indicator {
+  text-align: center;            /* Texto centrado */
+  color: var(--primary-color);   /* Color primario para contraste */
+  font-weight: 600;              /* Texto semi-bold */
+  display: flex;                 /* Layout flexbox */
+  align-items: center;           /* Alineación vertical */
+  justify-content: center;       /* Alineación horizontal */
+  gap: 0.75rem;                  /* Espacio entre texto y spinner */
+  text-shadow: none;             /* Sin sombra para limpieza */
+}
+
+/* Spinner animado del indicador de carga */
+.loading-indicator::after {
+  content: '';                   /* Contenido vacío */
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(8, 145, 178, 0.3); /* Borde base semi-transparente */
+  border-top: 3px solid var(--primary-color); /* Borde superior sólido */
+  border-radius: 50%;            /* Forma circular */
+  animation: spin 1s linear infinite; /* Animación de rotación continua */
+}
+
+/* ========================================
+   ENLACES Y TEXTO ADICIONAL
+   ======================================== */
+/* Párrafo de texto adicional (ej: link de registro) */
+.login-container p {
+  margin-top: 2rem;              /* Espacio superior generoso */
+  text-align: center;            /* Texto centrado */
+  color: var(--text-gray);       /* Color gris secundario */
+  font-size: 0.9rem;             /* Tamaño ligeramente menor */
+  text-shadow: none;             /* Sin sombra */
+}
+
+/* Enlaces dentro del párrafo */
+.login-container p a {
+  color: var(--primary-color);   /* Color primario */
+  text-decoration: none;         /* Sin subrayado por defecto */
+  font-weight: 700;              /* Texto bold */
+  transition: all 0.3s ease;     /* Transición suave */
+  text-shadow: none;             /* Sin sombra */
+}
+
+/* Estado hover de los enlaces */
+.login-container p a:hover {
+  color: var(--primary-dark);    /* Color más oscuro en hover */
+  text-decoration: underline;    /* Subrayado en hover */
+}
+
+/* ========================================
+   ANIMACIONES Y KEYFRAMES
+   ======================================== */
+/* Animación de deslizamiento hacia abajo para mensajes de error */
+@keyframes slideDown {
+  from {
+    opacity: 0;                  /* Inicia invisible */
+    transform: translateY(-15px); /* Inicia desplazado hacia arriba */
+  }
+  to {
+    opacity: 1;                  /* Termina visible */
+    transform: translateY(0);    /* Termina en posición normal */
+  }
+}
+
+/* Animación de rotación para el spinner de carga */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);     /* Inicia sin rotación */
+  }
+  to {
+    transform: rotate(360deg);   /* Completa una rotación completa */
+  }
+}
+
+/* ========================================
+   ELEMENTOS DECORATIVOS FLOTANTES
+   ======================================== */
+
+/* Elemento decorativo superior derecho */
+.login-container::before {
+  content: '';                   /* Contenido vacío */
+  position: absolute;            /* Posicionamiento absoluto */
+  top: -50px;                    /* Fuera del contenedor por arriba */
+  right: -50px;                  /* Fuera del contenedor por la derecha */
+  width: 100px;
+  height: 100px;
+  /* Gradiente radial turquesa semi-transparente */
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, transparent 70%);
+  border-radius: 50%;            /* Forma circular */
+  animation: float 6s ease-in-out infinite; /* Animación flotante */
+}
+
+/* Elemento decorativo inferior izquierdo */
+.login-container::after {
+  content: '';                   /* Contenido vacío */
+  position: absolute;            /* Posicionamiento absoluto */
+  bottom: -30px;                 /* Fuera del contenedor por abajo */
+  left: -30px;                   /* Fuera del contenedor por la izquierda */
+  width: 60px;
+  height: 60px;
+  /* Gradiente radial azul semi-transparente */
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.3) 0%, transparent 70%);
+  border-radius: 50%;            /* Forma circular */
+  animation: float 4s ease-in-out infinite reverse; /* Animación flotante inversa */
+}
+
+/* Animación flotante para elementos decorativos */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);     /* Posición inicial */
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg); /* Posición intermedia elevada y rotada */
+  }
+}
+
+/* ========================================
+   DISEÑO RESPONSIVO - TABLETS
+   ======================================== */
+/* Adaptaciones para pantallas medianas (tablets) */
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;      /* Cambia a layout vertical */
+    padding: 1rem;               /* Padding reducido */
+  }
+
+  .login-left-section {
+    min-height: 40vh;            /* NUEVO: Altura mínima para la imagen */
+  }
+
+  .login-container {
+    flex: 1;                     /* Ocupa todo el espacio vertical disponible */
+    margin: 0;                   /* Sin margen */
+    padding: 2rem 1.5rem;        /* Padding reducido */
+    border-radius: 0;            /* Sin bordes redondeados en móvil */
+  }
+
+  .login-container h1 {
+    font-size: 2.5rem;           /* Título más pequeño */
+  }
+
+  .login-container h2 {
+    font-size: 1.25rem;          /* Subtítulo más pequeño */
+  }
+
+  form {
+    max-width: none;             /* Permite que el formulario use todo el ancho */
+  }
+}
+
+/* ========================================
+   DISEÑO RESPONSIVO - MÓVILES
+   ======================================== */
+/* Adaptaciones para pantallas pequeñas (móviles) */
+@media (max-width: 480px) {
+  .login-left-section {
+    min-height: 30vh;            /* NUEVO: Altura reducida para móviles */
+  }
+
+  .login-container {
+    padding: 1.5rem 1rem;        /* Padding muy reducido */
+    margin: 0;                   /* Sin margen */
+  }
+
+  .login-container h1 {
+    font-size: 2rem;             /* Título aún más pequeño */
+  }
+
+  /* Padding reducido en inputs y botones para móviles */
+  .input-group input,
+  button[type="submit"] {
+    padding: 0.875rem 1rem;      /* Padding más compacto */
+  }
+
+  button[type="submit"] {
+    font-size: 1rem;             /* Tamaño de fuente estándar */
+  }
+}

@@ -1,0 +1,5 @@
+# Ruta local para usuarios de Windows
+# VITE_API_URL=http://localhost/SISE/api
+
+# Ruta local para usuarios de Mac (XAMPP en puerto 8080)
+# VITE_API_URL=http://localhost:8080/SISE/api

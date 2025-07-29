@@ -1,0 +1,24 @@
+.tabla {
+  text-align: center;
+  padding: 0rem;
+  background: none;
+  min-height: auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 10px;
+  color: #000000;
+  overflow: hidden;
+}
+
+.tabla > * {
+  position: relative;
+  z-index: 2; /* eleva el contenido sobre el fondo */
+}
+
+.tabla p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}

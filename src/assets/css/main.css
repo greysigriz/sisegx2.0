@@ -1,0 +1,26 @@
+/* css principal */
+@import './base.css';
+
+/* Reemplazamos las reglas generales con reglas más específicas */
+/* para que no afecten al layout principal de SITRA */
+.default-layout #app {
+  margin: 0 auto;
+  font-weight: normal;
+}
+
+a:not(.app-container a),
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:not(.app-container a):hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+/* Eliminamos las reglas de media query que causan el problema */
+/* O las hacemos más específicas para que no afecten a SITRA */

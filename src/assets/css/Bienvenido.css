@@ -1,0 +1,12 @@
+.fila {
+  display: flex;
+  justify-content: center;
+  align-items: stretch; /* O usa flex-start si lo prefieres */
+  gap: 2rem;
+  margin: 2rem auto;
+  flex-wrap: wrap;
+}
+
+.tabla-reportes-wrapper {
+  width: 100%;
+}

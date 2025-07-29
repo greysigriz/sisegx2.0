@@ -1,0 +1,46 @@
+{
+  "name": "sisex",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "format": "prettier --write src/",
+    "backend-mac": "cd backend && python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8080",
+    "backend-win": "set PYTHONPATH=./backend && cd backend && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
+    "full-dev-mac": "concurrently \"npm run dev\" \"npm run backend-mac\"",
+    "full-dev-win": "concurrently \"npm run dev\" \"npm run backend-win\""
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "6.7.2",
+    "@fortawesome/free-solid-svg-icons": "6.7.2",
+    "@fortawesome/vue-fontawesome": "3.0.8",
+    "@vue-leaflet/vue-leaflet": "^0.10.1",
+    "@vueuse/motion": "3.0.3",
+    "axios": "^1.8.4",
+    "chart.js": "^4.4.8",
+    "echarts": "^5.6.0",
+    "font-awesome": "4.7.0",
+    "leaflet": "^1.9.4",
+    "pinia": "^3.0.1",
+    "swiper": "^11.2.8",
+    "vue": "^3.5.13",
+    "vue-chartjs": "^5.3.2",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.21.0",
+    "eslint-plugin-vue": "~10.0.0",
+    "globals": "^16.0.0",
+    "prettier": "3.5.3",
+    "vite": "^6.2.1",
+    "vite-plugin-vue-devtools": "^7.7.2"
+  }
+}
