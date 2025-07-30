@@ -2,89 +2,102 @@
   <div class="grafico-container">
     <h3>Estado de reportes</h3>
     <div class="grafico-layout">
-      <canvas ref="chart" class="grafico-canvas"></canvas>
+      <div ref="chart" class="grafico-canvas"></div>
       <ul class="leyenda">
-        <li><span class="color-box azul"></span> Sin revisar</li>
-        <li><span class="color-box rojo"></span> Esperando recepción</li>
-        <li><span class="color-box verde"></span> Completado</li>
-        <li><span class="color-box naranja"></span> Rechazado por departamento</li>
+        <li
+          v-for="item in leyendaDatos"
+          :key="item.estado"
+          :style="{ opacity: estadosActivos.includes(item.estado) ? 1 : 0.4, cursor: 'pointer' }"
+          @click="toggleEstado(item.estado)"
+        >
+          <span class="color-box" :style="{ backgroundColor: item.color }"></span>
+          {{ item.estado }} <b>({{ item.value }})</b>
+        </li>
       </ul>
     </div>
   </div>
 </template>
 
-
-<script>
+<script setup>
 import axios from 'axios'
-import { Chart, registerables } from 'chart.js'
-Chart.register(...registerables)
+import * as echarts from 'echarts'
+import { onMounted, ref } from 'vue'
 
-export default {
-  data() {
-    return {
-      chartInstance: null,
-      backendUrl: import.meta.env.VITE_API_URL
-    }
-  },
-  mounted() {
-    this.obtenerDatos()
-  },
-  methods: {
-    async obtenerDatos() {
-      try {
-        const res = await axios.get(`${this.backendUrl}/peticiones.php`)
-        const peticiones = res.data.records
+const chart = ref(null)
+const backendUrl = import.meta.env.VITE_API_URL
 
-        const conteo = {}
-        peticiones.forEach(p => {
-          conteo[p.estado] = (conteo[p.estado] || 0) + 1
-        })
+const mapaColores = {
+  'Sin revisar': '#0074D9',
+  'Esperando recepción': '#FF4136',
+  'Completado': '#2ECC40',
+  'Rechazado por departamento': '#FF851B',
+  'Devuelto': '#0891b2',
+}
 
-        const labels = Object.keys(conteo)
-        const data = Object.values(conteo)
+// Variable reactiva para los datos de la leyenda
+const leyendaDatos = ref([])
 
-        const mapaColores = {
-          'Sin revisar': '#0074D9',
-          'Esperando recepción': '#FF4136',
-          'Completado': '#2ECC40',
-          'Rechazado por departamento': '#FF851B'
-        }
+const estadosActivos = ref(Object.keys(mapaColores))
 
-        const backgroundColors = labels.map(label => mapaColores[label] || '#AAAAAA')
+onMounted(async () => {
+  try {
+    const res = await axios.get(`${backendUrl}/peticiones.php`)
+    const peticiones = res.data.records
 
-        this.crearGrafico(labels, data, backgroundColors)
-      } catch (err) {
-        console.error('Error cargando datos para gráfico:', err)
-      }
-    },
-    crearGrafico(labels, data, backgroundColors) {
-      if (this.chartInstance) this.chartInstance.destroy()
+    const conteo = {}
+    peticiones.forEach(p => {
+      conteo[p.estado] = (conteo[p.estado] || 0) + 1
+    })
 
-      this.chartInstance = new Chart(this.$refs.chart, {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: backgroundColors,
+    // Construir los datos para la leyenda
+    leyendaDatos.value = Object.entries(mapaColores).map(([estado, color]) => ({
+      estado,
+      color,
+      value: conteo[estado] || 0
+    }))
+
+    const data = leyendaDatos.value
+      .filter(d => estadosActivos.value.includes(d.estado))
+      .map(d => ({
+        value: d.value,
+        name: d.estado
+      }))
+
+    const myChart = echarts.init(chart.value)
+    const option = {
+      color: data.map(d => mapaColores[d.name] || '#AAAAAA'),
+      tooltip: { trigger: 'item' },
+      legend: { show: false }, // Oculta la leyenda de ECharts
+      series: [
+        {
+          name: 'Reportes',
+          type: 'pie',
+          radius: ['40%', '70%'],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 10,
             borderColor: '#fff',
             borderWidth: 2
-          }]
-        }, 
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false,
-            }
-          }
+          },
+          label: { show: false, position: 'center' },
+          emphasis: {
+            label: { show: true, fontSize: 24, fontWeight: 'bold' }
+          },
+          labelLine: { show: false },
+          data
         }
-      })
+      ]
     }
+
+    myChart.setOption(option)
+    window.addEventListener('resize', () => myChart.resize())
+  } catch (error) {
+    console.error('Error al cargar datos del gráfico:', error)
   }
-}
+})
 </script>
+
+
 
 <style scoped>
 .grafico-container {
