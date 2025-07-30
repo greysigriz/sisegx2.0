@@ -70,7 +70,7 @@ export default {
             borderColor: '#fff',
             borderWidth: 2
           }]
-        },
+        }, 
         options: {
           responsive: true,
           maintainAspectRatio: false,
@@ -157,27 +157,27 @@ export default {
   --color-warning: #ea580c;
   --color-danger: #dc2626;
   --color-info: #0891b2;
-  
+
   /* Colores de fondo */
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
-  
+
   /* Colores de texto */
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
-  
+
   /* Sombras */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  
+
   /* Bordes */
   --border-radius: 8px;
   --border-radius-lg: 12px;
   --border-color: #e5e7eb;
-  
+
   /* Espaciado */
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
@@ -395,7 +395,7 @@ body {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -407,11 +407,11 @@ body {
   .grid-4 {
     grid-template-columns: 1fr;
   }
-  
+
   .card {
     padding: var(--spacing-md);
   }
-  
+
   .card-title {
     font-size: 1.125rem;
   }
@@ -422,7 +422,7 @@ body {
     --spacing-lg: 1rem;
     --spacing-xl: 1.5rem;
   }
-  
+
   .card {
     padding: var(--spacing-sm);
   }
