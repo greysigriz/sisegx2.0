@@ -11,7 +11,6 @@
     <div class="div3"> <BarChart /> </div>
     <div class="div4"> <DonutChart /> </div>
     <div class="div5"> <LineaReportes /> </div>
-    <div class="div6"> <ProblemasReportados /> </div>
   </div>
     <div>
     <MapaProblemas/>
