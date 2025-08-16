@@ -93,7 +93,7 @@ export default {
   color: white;
   padding: 20px;
   border-radius: 12px;
-  min-width: 260px;
+  min-width: 200px;
   flex: 1 1 260px;
   min-height: 160px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
