@@ -147,26 +147,27 @@
 }
 
 .chart1-derecha {
-  flex: 1;
+  flex: 1.5;
   max-width: none;
   margin: 0;
 }
 
 .pie-chart-wrapper {
   flex: 1;
-  max-width: 600px;
+  max-width: 900px;
 }
 
 .pie-chart {
-  width: 100%;
-  min-height: 500px;
+  width: 90%;
+  min-height: 550px;
   padding: 20px 0;
 }
 
 .chart1-derecha {
   margin-left: auto;
-  margin-right: 0;
-  max-width: 900px;
+  /* margin-right: 10px; */
+  min-height: 550px;
+  /* max-width: 00px; */
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -174,12 +175,11 @@
 }
 
 .chart-wrapper {
-  width: 100%;
-  max-width: 1400px;
-  margin-left: auto;
-  padding: 32px;
+    padding: 32px;
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 20px;
+  margin: 2rem auto;
+  max-width: 1400px;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04),

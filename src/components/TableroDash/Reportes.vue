@@ -277,7 +277,7 @@ onMounted(() => {
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 20px;
   margin: 2rem auto;
-  max-width: 1200px;
+  max-width: 1400px;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04),

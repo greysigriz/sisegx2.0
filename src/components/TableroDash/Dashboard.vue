@@ -452,10 +452,10 @@ export default {
           source: datasetSource,
         },
         grid: {
-          left: '10%',
+          left: '17%',
           right: '10%',
           bottom: '15%',
-          top: '25%',
+          top: '15%',
         },
         xAxis: {
           name: 'Cantidad',
@@ -502,7 +502,7 @@ export default {
             x: 'cantidad',
             y: 'estatus',
           },
-          barWidth: '65%',
+          barWidth: '75%',
           itemStyle: {
             color: (params) => {
               const estatus = params.value[2]
