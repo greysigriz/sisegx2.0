@@ -41,7 +41,7 @@ onMounted(() => {
       left: 'center',
       top: 20,
       textStyle: {
-        fontSize: 22,
+        fontSize: 29,
         fontWeight: '700',
         color: '#1E40AF',
         fontFamily: '"Inter", "Segoe UI", sans-serif'
@@ -136,18 +136,12 @@ onMounted(() => {
       }
     },
     toolbox: {
-      right: 15,
-      top: 70,
+      right: 20,
+      top: 20,
       feature: {
-        dataZoom: {
-          yAxisIndex: 'none',
-          icon: {
-            zoom: 'M4.854 4.146a.5.5 0 010 .708L1.707 7.5H4a.5.5 0 010 1H.5a.5.5 0 01-.5-.5v-3.5a.5.5 0 011 0v2.293L4.146 4.146a.5.5 0 01.708 0z'
-          }
-        },
-        restore: {},
         saveAsImage: {
-          pixelRatio: 2
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
         }
       },
       iconStyle: {

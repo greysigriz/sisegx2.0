@@ -56,4 +56,5 @@ const puntos = [
   { mz: 'MZ 58', lat: 21.1699, lng: -86.8566, problema: 'Obras sin terminar', cantidad: 11 },
   { mz: 'MZ 81', lat: 21.1644, lng: -86.8494, problema: 'Árboles Caídos', cantidad: 5 }
 ]
+
 </script>

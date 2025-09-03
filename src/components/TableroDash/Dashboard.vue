@@ -145,7 +145,7 @@ export default {
           left: 'center',
           top: 20,
           textStyle: {
-            fontSize: 24,
+            fontSize: 29,
             fontWeight: '700',
             color: '#1E40AF',
             fontFamily: '"Inter", "Segoe UI", sans-serif'
@@ -412,7 +412,7 @@ export default {
           left: 'center',
           top: 15,
           textStyle: {
-            fontSize: 24,
+            fontSize: 29,
             fontWeight: '700',
             color: '#1E40AF',
             fontFamily: '"Inter", "Segoe UI", sans-serif'
@@ -450,6 +450,25 @@ export default {
         },
         dataset: {
           source: datasetSource,
+        },
+        toolbox: {
+          right: 20,
+          top: 20,
+          feature: {
+            saveAsImage: {
+              pixelRatio: 2,
+              backgroundColor: '#ffffff'
+            }
+          },
+          iconStyle: {
+            borderColor: '#3B82F6',
+            borderWidth: 2
+          },
+          emphasis: {
+            iconStyle: {
+              borderColor: '#1E40AF'
+            }
+          }
         },
         grid: {
           left: '17%',
@@ -570,7 +589,7 @@ export default {
           left: 'center',
           top: 20,
           textStyle: {
-            fontSize: 24,
+            fontSize: 29,
             fontWeight: '700',
             color: '#1E40AF',
             fontFamily: '"Inter", "Segoe UI", sans-serif'
@@ -606,6 +625,25 @@ export default {
             `
           }
         },
+        toolbox: {
+          right: 20,
+          top: 20,
+          feature: {
+            saveAsImage: {
+              pixelRatio: 2,
+              backgroundColor: '#ffffff'
+            }
+          },
+          iconStyle: {
+            borderColor: '#3B82F6',
+            borderWidth: 2
+          },
+          emphasis: {
+            iconStyle: {
+              borderColor: '#1E40AF'
+            }
+          }
+        },
         legend: {
           top: '12%',
           left: 'center',
@@ -634,6 +672,7 @@ export default {
             shadowBlur: 8,
             shadowOffsetY: 4
           },
+
           label: {
             show: false,
             position: 'center'
@@ -804,15 +843,12 @@ export default {
           }
         },
         toolbox: {
-          right: 15,
-          top: 70,
+          right: 20,
+          top: 20,
           feature: {
-            dataZoom: {
-              yAxisIndex: 'none'
-            },
-            restore: {},
             saveAsImage: {
-              pixelRatio: 2
+              pixelRatio: 2,
+              backgroundColor: '#ffffff'
             }
           },
           iconStyle: {
