@@ -26,7 +26,7 @@ if (in_array($origin, $allowed_origins)) {
 // Essential CORS headers
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Auth-Token");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Auth-Token, Cache-Control, Pragma");
 header("Access-Control-Max-Age: 86400"); // 24 hours
 
 // Handle preflight OPTIONS requests IMMEDIATELY
@@ -36,7 +36,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     // Ensure no additional output
     exit(0);
 }
-
-// Only set JSON content type for non-OPTIONS requests
-header("Content-Type: application/json; charset=UTF-8");
 ?>

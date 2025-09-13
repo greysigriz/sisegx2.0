@@ -27,22 +27,72 @@
         <h2>Formulario de Petición</h2>
         <p class="form-description">Complete todos los campos para enviar su petición</p>
 
-        <div v-if="successMessage" class="success-message">
-          <font-awesome-icon icon="fa-solid fa-check-circle" />
-          {{ successMessage }}
-          <p>
-            Su folio de seguimiento es: <strong>{{ generatedFolio }}</strong>
-          </p>
-          <div v-if="lastClassification" class="classification-success">
-            <p><strong>Categoría asignada:</strong> {{ lastClassification.categoria }}</p>
-            <p><strong>Dependencia:</strong> {{ lastClassification.dependencia }}</p>
-            <p>
-              <strong>Tipo de petición:</strong> {{ lastClassification.tipo_peticion }}
+        <!-- Mensaje de éxito mejorado con folio destacado -->
+        <div v-if="successMessage" class="success-message" ref="successMessageRef">
+          <div class="success-header">
+            <font-awesome-icon icon="fa-solid fa-check-circle" class="success-icon" />
+            <h3>¡Petición enviada exitosamente!</h3>
+          </div>
+          
+          <div class="folio-display">
+            <p class="folio-label">Su folio de seguimiento es:</p>
+            <div class="folio-container">
+              <h2 class="folio-number">{{ generatedFolio }}</h2>
+              <button 
+                type="button" 
+                class="copy-folio-btn" 
+                @click="copyToClipboard(generatedFolio)"
+                title="Copiar folio"
+              >
+                <font-awesome-icon icon="fa-solid fa-copy" />
+              </button>
+            </div>
+            <p class="folio-instructions">
+              <strong>¡IMPORTANTE!</strong> Guarde este folio para dar seguimiento a su petición. 
+              Puede usarlo para consultar el estado de su solicitud.
             </p>
           </div>
-          <button class="primary-button new-petition-btn" @click="resetForm">
-            <font-awesome-icon icon="fa-solid fa-plus" /> Nueva Petición
-          </button>
+
+          <!-- Información de clasificación automática -->
+          <div v-if="lastClassification" class="classification-success">
+            <h4>Clasificación automática asignada:</h4>
+            <div class="classification-details">
+              <div class="classification-item">
+                <span class="label">Categoría:</span>
+                <span class="value">{{ lastClassification.categoria }}</span>
+              </div>
+              <div class="classification-item">
+                <span class="label">Dependencia:</span>
+                <span class="value">{{ lastClassification.dependencia }}</span>
+              </div>
+              <div class="classification-item">
+                <span class="label">Tipo de petición:</span>
+                <span class="value">{{ lastClassification.tipo_peticion }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información adicional -->
+          <div class="next-steps">
+            <h4>¿Qué sigue?</h4>
+            <ul>
+              <li>Recibirá una respuesta inicial en 3-5 días hábiles</li>
+              <li>Su petición será revisada y asignada al departamento correspondiente</li>
+              <li>Puede dar seguimiento usando su folio de seguimiento</li>
+            </ul>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="success-actions">
+            <button class="primary-button new-petition-btn" @click="resetForm">
+              <font-awesome-icon icon="fa-solid fa-plus" /> 
+              Nueva Petición
+            </button>
+            <button class="secondary-button print-btn" @click="printFolio">
+              <font-awesome-icon icon="fa-solid fa-print" />
+              Imprimir Folio
+            </button>
+          </div>
         </div>
 
         <div v-if="errorMessage" class="error-message">
@@ -62,19 +112,16 @@
           <div class="user-info-card">
             <div class="user-info-item">
               <label>Usuario registrado:</label>
-              <span
-                >{{ userData.Nombre }} {{ userData.ApellidoP }}
-                {{ userData.ApellidoM }}</span
-              >
+              <span>{{ userFullName }}</span>
             </div>
             <div class="user-info-item">
-              <label>División Administrativa:</label>
-              <span>{{ divisionNombre || "Cargando..." }}</span>
+              <label>Unidad:</label>
+              <span>{{ unidadNombre || 'Sin unidad asignada' }}</span>
             </div>
           </div>
         </div>
 
-        <form v-if="!successMessage" @submit.prevent="submitForm" class="petition-form">
+        <div v-if="!successMessage" class="petition-form">
           <!-- Nombre -->
           <div
             class="form-group"
@@ -95,6 +142,28 @@
               @blur="validateField('nombre', formData.nombre)"
             />
             <span v-if="errors.nombre" class="error-text">{{ errors.nombre }}</span>
+          </div>
+
+          <!-- Email -->
+          <div
+            class="form-group"
+            v-motion-fade-visible-once
+            :initial="{ opacity: 0, x: -30 }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 550 } }"
+          >
+            <label for="email"
+              >Correo electrónico <span class="required">*</span></label
+            >
+            <input
+              type="email"
+              id="email"
+              v-model="formData.email"
+              required
+              placeholder="ejemplo@correo.com"
+              :class="{ 'error-input': errors.email }"
+              @blur="validateField('email', formData.email)"
+            />
+            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
           </div>
 
           <!-- Teléfono -->
@@ -182,7 +251,6 @@
               <option value="2">🟠 Alto (2) - Problema urgente</option>
               <option value="3">🟡 Medio (3) - Problema importante</option>
               <option value="4">🟢 Bajo (4) - Problema menor</option>
-              <option value="5">🔵 Muy Bajo (5) - Consulta o sugerencia</option>
             </select>
             <span v-if="errors.nivel_importancia" class="error-text">{{
               errors.nivel_importancia
@@ -234,7 +302,7 @@
             </div>
           </div>
 
-          <!-- Clasificación automática - Sugerencias -->
+          <!-- Clasificación automática con selección -->
           <div
             v-if="classification && classification.length"
             class="classification-section"
@@ -244,68 +312,86 @@
           >
             <h3>
               <font-awesome-icon icon="fa-solid fa-robot" />
-              Clasificación Automática (Sugerencias)
+              Clasificación Automática
             </h3>
+            <p class="classification-help">
+              Seleccione la clasificación que mejor se adapte a su problema:
+            </p>
 
             <div
               v-for="(sugerencia, index) in classification"
               :key="index"
-              class="classification-info"
+              class="classification-card"
+              :class="{ 'selected': selectedClassification === sugerencia }"
+              @click="selectClassification(sugerencia)"
             >
-              <h4>Sugerencia {{ index + 1 }}</h4>
-
-              <div class="classification-item">
-                <strong>Categoría:</strong>
-                <span class="classification-value">{{ sugerencia.categoria }}</span>
-              </div>
-
-              <div class="classification-item">
-                <strong>Dependencia:</strong>
-                <span class="classification-value">{{ sugerencia.dependencia }}</span>
-              </div>
-
-              <div class="classification-item">
-                <strong>Tipo de petición:</strong>
-                <span class="classification-value">{{ sugerencia.tipo_peticion }}</span>
-              </div>
-
-              <div class="classification-item">
-                <strong>Puntuación:</strong>
-                <span class="classification-value">{{
-                  sugerencia.puntuacion.toFixed(2)
-                }}</span>
-              </div>
-
-              <div
-                v-if="
-                  sugerencia.palabras_encontradas &&
-                  sugerencia.palabras_encontradas.length
-                "
-                class="classification-item"
-              >
-                <strong>Palabras clave detectadas:</strong>
-                <div class="keywords">
-                  <span
-                    v-for="palabra in sugerencia.palabras_encontradas"
-                    :key="palabra"
-                    class="keyword-tag"
-                  >
-                    {{ palabra }}
-                  </span>
+              <div class="classification-header">
+                <h4>Opción {{ index + 1 }}</h4>
+                <div class="classification-score">
+                  Confianza: {{ (sugerencia.puntuacion * 100).toFixed(1) }}%
                 </div>
               </div>
 
-              <hr />
+              <div class="classification-content">
+                <div class="classification-item">
+                  <strong>Categoría:</strong>
+                  <span class="classification-value">{{ sugerencia.categoria }}</span>
+                </div>
+
+                <div class="classification-item">
+                  <strong>Dependencia:</strong>
+                  <span class="classification-value">{{ sugerencia.dependencia }}</span>
+                </div>
+
+                <div class="classification-item">
+                  <strong>Tipo de petición:</strong>
+                  <span class="classification-value">{{ sugerencia.tipo_peticion }}</span>
+                </div>
+
+                <div
+                  v-if="sugerencia.palabras_encontradas && sugerencia.palabras_encontradas.length"
+                  class="classification-item"
+                >
+                  <strong>Palabras clave:</strong>
+                  <div class="keywords">
+                    <span
+                      v-for="palabra in sugerencia.palabras_encontradas"
+                      :key="palabra"
+                      class="keyword-tag"
+                    >
+                      {{ palabra }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedClassification === sugerencia" class="selected-indicator">
+                <font-awesome-icon icon="fa-solid fa-check-circle" />
+                Clasificación seleccionada
+              </div>
             </div>
-            <button
-              type="button"
-              @click="reclassifyDescription"
-              :disabled="isClassifying"
-              class="reclassify-btn"
-            >
-              <font-awesome-icon icon="fa-solid fa-refresh" />
-              {{ isClassifying ? "Reclasificando..." : "Reclasificar" }}
-            </button>
+
+            <div class="classification-actions">
+              <button
+                type="button"
+                @click="reclassifyDescription"
+                :disabled="isClassifying"
+                class="reclassify-btn"
+              >
+                <font-awesome-icon icon="fa-solid fa-refresh" />
+                {{ isClassifying ? "Reclasificando..." : "Reclasificar" }}
+              </button>
+              
+              <button
+                v-if="selectedClassification"
+                type="button"
+                @click="selectedClassification = null"
+                class="clear-selection-btn"
+              >
+                <font-awesome-icon icon="fa-solid fa-times" />
+                Limpiar selección
+              </button>
+            </div>
           </div>
 
           <!-- Red social -->
@@ -335,9 +421,10 @@
             :enter="{ opacity: 1, y: 0, transition: { duration: 800, delay: 1200 } }"
           >
             <button
-              type="submit"
+              type="button"
               class="primary-button pulse-animation"
               :disabled="!canSubmit || isLoading"
+              @click="submitForm"
             >
               <font-awesome-icon icon="fa-solid fa-paper-plane" />
               <span v-if="!isLoading">Enviar Petición</span>
@@ -347,7 +434,7 @@
               <font-awesome-icon icon="fa-solid fa-times" /> Cancelar
             </button>
           </div>
-        </form>
+        </div>
       </div>
 
       <!-- Info extra (tarjetas) -->
@@ -465,44 +552,233 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 
 export default {
   name: "PetitionPage",
   setup() {
+    // -----------------------
+    // Utils
+    // -----------------------
+    const toIntOrNull = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const safeString = (v) => (typeof v === "string" ? v : v == null ? "" : String(v));
+
+    // -----------------------
+    // State
+    // -----------------------
     const formData = ref({
       nombre: "",
+      email: "",
       telefono: "",
       direccion: "",
       localidad: "",
       nivel_importancia: "",
       descripcion: "",
       red_social: "",
-      dependencia_seleccionada: "", // agregado
-      tipo_peticion_seleccionado: "", // agregado
+      division_id: null, // <- se poblará con IdDivisionAdm del usuario
     });
 
     const errors = ref({});
+    const showSuccess = ref(false);         // <- booleano claro para la UI de éxito
     const successMessage = ref("");
     const errorMessage = ref("");
     const generatedFolio = ref("");
     const isLoading = ref(false);
+
     const classification = ref(null);
     const isClassifying = ref(false);
     const lastClassification = ref(null);
+    const selectedClassification = ref(null);
 
-    const userData = ref({
-      Nombre: "Juan",
-      ApellidoP: "Pérez",
-      ApellidoM: "González",
-    });
-    const divisionNombre = ref("Zona Hotelera");
+    const unidadNombre = ref("");
 
+    // Datos de usuario
+    const userData = ref(null);
+    const isUserDataLoaded = ref(false);
+
+    // APIs
     const API_BASE = "http://127.0.0.1:8000";
+    const PETITION_API = "http://127.0.0.1/SISE/api/peticiones.php";
 
+    // -----------------------
+    // Computed
+    // -----------------------
+    const userFullName = computed(() => {
+      if (!userData.value) return "Usuario no identificado";
+      const nombre = safeString(userData.value.Nombre);
+      const apellidoP = safeString(userData.value.ApellidoP);
+      const apellidoM = safeString(userData.value.ApellidoM);
+      const full = `${nombre} ${apellidoP} ${apellidoM}`.trim();
+      return full || "Usuario sin nombre";
+    });
+
+    const canSubmit = computed(() => {
+      return (
+        Object.keys(errors.value).length === 0 &&
+        formData.value.nombre.length >= 2 &&
+        formData.value.email.includes("@") &&
+        formData.value.telefono.length >= 10 &&
+        formData.value.direccion.length >= 5 &&
+        formData.value.localidad.length >= 2 &&
+        formData.value.nivel_importancia !== "" &&
+        formData.value.descripcion.length >= 10 &&
+        formData.value.descripcion.length <= 1000
+      );
+    });
+
+    const canClassify = computed(() => formData.value.descripcion.length >= 10);
+
+    // -----------------------
+    // Carga de usuario
+    // -----------------------
+    const loadUserData = async () => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (!storedUser) return false;
+
+        const parsedUser = JSON.parse(storedUser);
+        let userInfo = null;
+
+        if (parsedUser.usuario) userInfo = parsedUser.usuario;
+        else if (parsedUser.user) userInfo = parsedUser.user;
+        else if (parsedUser.Id || parsedUser.Nombre) userInfo = parsedUser;
+
+        if (userInfo && (userInfo.Id || userInfo.Nombre)) {
+          userData.value = {
+            Id: userInfo.Id ?? null,
+            Nombre: userInfo.Nombre ?? "",
+            ApellidoP: userInfo.ApellidoP ?? "",
+            ApellidoM: userInfo.ApellidoM ?? "",
+            Usuario: userInfo.Usuario ?? "",
+            IdUnidad: userInfo.IdUnidad ?? null,
+            IdDivisionAdm: userInfo.IdDivisionAdm ?? null,
+            Puesto: userInfo.Puesto ?? "",
+            Estatus: userInfo.Estatus ?? "ACTIVO",
+          };
+
+          // Nombre de unidad (best effort)
+          if (userData.value.IdUnidad) {
+            try {
+              const r = await fetch(
+                `http://127.0.0.1/SISE/api/unidades.php?id=${userData.value.IdUnidad}`
+              );
+              if (r.ok) {
+                const unidadData = await r.json();
+                unidadNombre.value =
+                  unidadData.nombre_unidad || `Unidad ${userData.value.IdUnidad}`;
+              } else {
+                unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
+              }
+            } catch {
+              unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
+            }
+          }
+
+          // Prellenar nombre
+          const fullName = userFullName.value;
+          if (
+            fullName !== "Usuario no identificado" &&
+            fullName !== "Usuario sin nombre"
+          ) {
+            formData.value.nombre = fullName;
+          }
+
+          // 🔒 Asegurar division_id correcto desde el usuario
+          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
+
+          isUserDataLoaded.value = true;
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    const loadUserDataFromAPI = async () => {
+      try {
+        const response = await fetch(
+          "http://127.0.0.1/SISE/api/check-session.php",
+          {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) return false;
+
+        const sessionData = await response.json();
+        if (sessionData.success && sessionData.user) {
+          userData.value = {
+            Id: sessionData.user.Id ?? null,
+            Nombre: sessionData.user.Nombre ?? "",
+            ApellidoP: sessionData.user.ApellidoP ?? "",
+            ApellidoM: sessionData.user.ApellidoM ?? "",
+            Usuario: sessionData.user.Usuario ?? "",
+            IdUnidad: sessionData.user.IdUnidad ?? null,
+            IdDivisionAdm: sessionData.user.IdDivisionAdm ?? null,
+            Puesto: sessionData.user.Puesto ?? "",
+            Estatus: sessionData.user.Estatus ?? "ACTIVO",
+          };
+
+          // Nombre de unidad (best effort)
+          if (userData.value.IdUnidad) {
+            try {
+              const r = await fetch(
+                `http://127.0.0.1/SISE/api/unidades.php?id=${userData.value.IdUnidad}`
+              );
+              if (r.ok) {
+                const unidadData = await r.json();
+                unidadNombre.value =
+                  unidadData.nombre_unidad || `Unidad ${userData.value.IdUnidad}`;
+              } else {
+                unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
+              }
+            } catch {
+              unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
+            }
+          }
+
+          // Prellenar nombre
+          const fullName = userFullName.value;
+          if (
+            fullName !== "Usuario no identificado" &&
+            fullName !== "Usuario sin nombre"
+          ) {
+            formData.value.nombre = fullName;
+          }
+
+          // 🔒 division_id desde usuario (y guardar en form)
+          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
+
+          // Refrescar localStorage con formato consistente
+          localStorage.setItem(
+            "user",
+            JSON.stringify({ usuario: sessionData.user })
+          );
+
+          isUserDataLoaded.value = true;
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    // -----------------------
+    // Validaciones
+    // -----------------------
     const validateField = (field, value) => {
       errors.value = { ...errors.value };
-
       switch (field) {
         case "nombre":
           if (!value || value.length < 2)
@@ -511,32 +787,44 @@ export default {
             errors.value.nombre = "El nombre no puede exceder 100 caracteres";
           else delete errors.value.nombre;
           break;
+        case "email":
+          if (!value) errors.value.email = "El email es requerido";
+          else if (!/\S+@\S+\.\S+/.test(value))
+            errors.value.email = "El email no tiene un formato válido";
+          else delete errors.value.email;
+          break;
         case "telefono":
           if (!value) errors.value.telefono = "El teléfono es requerido";
           else if (value.length < 10 || value.length > 15)
-            errors.value.telefono = "El teléfono debe tener entre 10 y 15 caracteres";
+            errors.value.telefono =
+              "El teléfono debe tener entre 10 y 15 caracteres";
           else delete errors.value.telefono;
           break;
         case "direccion":
           if (!value || value.length < 5)
-            errors.value.direccion = "La dirección debe tener al menos 5 caracteres";
+            errors.value.direccion =
+              "La dirección debe tener al menos 5 caracteres";
           else delete errors.value.direccion;
           break;
         case "localidad":
           if (!value || value.length < 2)
-            errors.value.localidad = "La localidad debe tener al menos 2 caracteres";
+            errors.value.localidad =
+              "La localidad debe tener al menos 2 caracteres";
           else delete errors.value.localidad;
           break;
         case "nivel_importancia":
           if (!value)
-            errors.value.nivel_importancia = "Debe seleccionar un nivel de importancia";
+            errors.value.nivel_importancia =
+              "Debe seleccionar un nivel de importancia";
           else delete errors.value.nivel_importancia;
           break;
         case "descripcion":
           if (!value || value.length < 10)
-            errors.value.descripcion = "La descripción debe tener al menos 10 caracteres";
+            errors.value.descripcion =
+              "La descripción debe tener al menos 10 caracteres";
           else if (value.length > 1000)
-            errors.value.descripcion = "La descripción no puede exceder 1000 caracteres";
+            errors.value.descripcion =
+              "La descripción no puede exceder 1000 caracteres";
           else delete errors.value.descripcion;
           break;
       }
@@ -549,50 +837,10 @@ export default {
       validateField("telefono", cleanValue);
     };
 
-    const canSubmit = computed(() => {
-      return (
-        Object.keys(errors.value).length === 0 &&
-        formData.value.nombre.length >= 2 &&
-        formData.value.email.includes("@") &&
-        formData.value.telefono.length >= 10 &&
-        formData.value.direccion.length >= 5 &&
-        formData.value.localidad.length >= 2 &&
-        formData.value.nivel_importancia !== "" &&
-        formData.value.descripcion.length >= 10 &&
-        formData.value.descripcion.length <= 1000 &&
-        formData.value.dependencia_seleccionada !== ""
-      );
-    });
-
-    const canClassify = computed(() => {
-      return formData.value.descripcion.length >= 10;
-    });
-
+    // -----------------------
+    // Clasificación
+    // -----------------------
     let debounceTimeout = null;
-
-    const onDescriptionChange = () => {
-      validateField("descripcion", formData.value.descripcion);
-
-      if (
-        classification.value &&
-        Array.isArray(classification.value) &&
-        classification.value.length > 0 &&
-        Math.abs(
-          formData.value.descripcion.length -
-            classification.value[0].texto_original.length
-        ) > 10
-      ) {
-        classification.value = null;
-      }
-
-      if (debounceTimeout) clearTimeout(debounceTimeout);
-
-      if (formData.value.descripcion.length >= 20) {
-        debounceTimeout = setTimeout(() => {
-          classifyDescription(formData.value.descripcion);
-        }, 1000);
-      }
-    };
 
     const classifyDescription = async (texto) => {
       if (!texto || texto.length < 10) return;
@@ -618,21 +866,41 @@ export default {
         }
 
         const data = await response.json();
-
-        classification.value = data.resultado.map((item) => ({
-          ...item,
-          texto_original: texto,
-        }));
+        classification.value = Array.isArray(data.resultado)
+          ? data.resultado.map((item) => ({ ...item, texto_original: texto }))
+          : null;
       } catch (error) {
-        console.error("Error en clasificación:", error);
         errorMessage.value = `Error al clasificar: ${error.message}`;
-
         if (error.message.includes("fetch")) {
           errorMessage.value =
             "No se pudo conectar con el servidor de clasificación. Verifique su conexión.";
         }
       } finally {
         isClassifying.value = false;
+      }
+    };
+
+    const onDescriptionChange = () => {
+      validateField("descripcion", formData.value.descripcion);
+
+      if (
+        classification.value &&
+        Array.isArray(classification.value) &&
+        classification.value.length > 0 &&
+        Math.abs(
+          formData.value.descripcion.length -
+            classification.value[0].texto_original.length
+        ) > 10
+      ) {
+        classification.value = null;
+      }
+
+      if (debounceTimeout) clearTimeout(debounceTimeout);
+
+      if (formData.value.descripcion.length >= 20) {
+        debounceTimeout = setTimeout(() => {
+          classifyDescription(formData.value.descripcion);
+        }, 1000);
       }
     };
 
@@ -647,105 +915,292 @@ export default {
       classifyDescription(formData.value.descripcion);
     };
 
+    const selectClassification = (sugerencia) => {
+      selectedClassification.value = sugerencia;
+      console.log("Clasificación seleccionada:", sugerencia);
+    };
+
     watch(
       () => formData.value.descripcion,
       (newVal) => {
         validateField("descripcion", newVal);
-
         if (
           classification.value &&
           Array.isArray(classification.value) &&
           classification.value.length > 0 &&
-          Math.abs(newVal.length - classification.value[0].texto_original.length) > 10
+          Math.abs(
+            newVal.length - classification.value[0].texto_original.length
+          ) > 10
         ) {
           classification.value = null;
         }
       }
     );
 
+    // -----------------------
+    // Scroll helpers
+    // -----------------------
+    const scrollToSuccessMessage = async () => {
+      await nextTick();
+      const successElement = document.querySelector(".success-message");
+      if (successElement) {
+        successElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+        setTimeout(() => {
+          const rect = successElement.getBoundingClientRect();
+          const scrollTop =
+            window.pageYOffset +
+            rect.top -
+            window.innerHeight / 2 +
+            successElement.offsetHeight / 2;
+          window.scrollTo({ top: scrollTop, behavior: "smooth" });
+        }, 100);
+      }
+    };
+
+    // -----------------------
+    // Submit
+    // -----------------------
     const submitForm = async () => {
       try {
         isLoading.value = true;
         errorMessage.value = "";
+        showSuccess.value = false;
         successMessage.value = "";
+        lastClassification.value = null;
 
+        // Validar todos los campos salvo opcionales
         Object.entries(formData.value).forEach(([field, value]) => {
-          if (field !== "red_social") validateField(field, value);
+          if (field !== "red_social" && field !== "division_id") {
+            validateField(field, value);
+          }
         });
 
         if (Object.keys(errors.value).length > 0) {
           throw new Error("Corrige los errores en el formulario antes de enviar.");
         }
 
-        if (!classification.value) {
-          await classifyDescription(formData.value.descripcion);
-          if (!classification.value) {
-            throw new Error("No se pudo clasificar la petición automáticamente.");
+        // Asegurar division_id final desde userData o form
+        const finalDivisionId =
+          toIntOrNull(userData.value?.IdDivisionAdm) ??
+          toIntOrNull(formData.value.division_id);
+
+        // Generar folio local (fallback si el backend no devuelve folio)
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, "0");
+        generatedFolio.value = `PET-${timestamp.toString().slice(-8)}-${random}`;
+
+        // Payload para backend
+        const petitionData = {
+          folio: generatedFolio.value, // se actualizará si backend regresa otro
+          nombre: formData.value.nombre,
+          email: formData.value.email,
+          telefono: formData.value.telefono,
+          direccion: formData.value.direccion,
+          localidad: formData.value.localidad,
+          descripcion: formData.value.descripcion,
+          red_social: formData.value.red_social || null,
+          NivelImportancia: parseInt(formData.value.nivel_importancia, 10),
+          division_id: finalDivisionId,          // 🔒 numérico o null
+          usuario_id: toIntOrNull(userData.value?.Id) ?? null,
+          estado: "Sin revisar",
+        };
+
+        // Adjuntar IA
+        if (classification.value && Array.isArray(classification.value)) {
+          petitionData.sugerencias_ia = classification.value;
+        }
+        if (selectedClassification.value) {
+          petitionData.clasificacion_seleccionada = selectedClassification.value;
+        }
+
+        console.log("📤 Enviando petición:", petitionData);
+
+        const response = await fetch(PETITION_API, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(petitionData),
+        });
+
+        const responseData = await response.json().catch(() => ({}));
+        console.log("📥 Respuesta del servidor:", responseData);
+
+        if (!response.ok) {
+          throw new Error(responseData.message || `Error ${response.status}`);
+        }
+
+        if (responseData.success) {
+          // ✅ confiar en el folio del backend si lo devuelve
+          if (responseData.folio) {
+            generatedFolio.value = responseData.folio;
           }
+
+          lastClassification.value = selectedClassification.value;
+          showSuccess.value = true;
+          successMessage.value = "¡Petición enviada exitosamente!";
+
+          console.log("✅ Petición guardada. Folio:", generatedFolio.value);
+          await scrollToSuccessMessage();
+        } else {
+          throw new Error(responseData.message || "Error desconocido al guardar");
         }
-
-        if (!formData.value.dependencia_seleccionada) {
-          throw new Error("Debe seleccionar una dependencia sugerida antes de enviar.");
-        }
-
-        const seleccion = classification.value.find(
-          (item) => item.dependencia === formData.value.dependencia_seleccionada
-        );
-
-        formData.value.tipo_peticion_seleccionado = seleccion?.tipo_peticion || "";
-
-        generatedFolio.value = "PET-" + Date.now().toString().slice(-8);
-        lastClassification.value = seleccion ? [seleccion] : [...classification.value];
-        successMessage.value = "¡Petición enviada exitosamente!";
-
-        // Aquí podrías enviar petitionData al backend si lo deseas
-        // const petitionData = { ...formData.value, clasificacion: seleccion, folio: generatedFolio.value }
       } catch (error) {
-        console.error("Error al enviar formulario:", error);
-        errorMessage.value = error.message;
+        console.error("❌ Error al enviar formulario:", error);
+        errorMessage.value = error.message || "Ocurrió un error inesperado";
+        generatedFolio.value = ""; // limpiar folio solo en error
+        await nextTick();
+        const errorElement = document.querySelector(".error-message");
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
       } finally {
         isLoading.value = false;
       }
     };
 
+    // -----------------------
+    // Utilidades UI
+    // -----------------------
     const resetForm = () => {
+      const preserveName = userData.value ? userFullName.value : "";
+      const preserveDivision =
+        toIntOrNull(userData.value?.IdDivisionAdm) ??
+        toIntOrNull(formData.value.division_id) ??
+        null;
+
       formData.value = {
-        nombre: "",
+        nombre: preserveName,
+        email: "",
         telefono: "",
         direccion: "",
         localidad: "",
         nivel_importancia: "",
         descripcion: "",
         red_social: "",
-        dependencia_seleccionada: "",
-        tipo_peticion_seleccionado: "",
+        division_id: preserveDivision, // 🔒 preservar división
       };
+
       errors.value = {};
       classification.value = null;
+      selectedClassification.value = null;
       lastClassification.value = null;
+      showSuccess.value = false;
       successMessage.value = "";
       errorMessage.value = "";
       generatedFolio.value = "";
+
+      nextTick(() => {
+        const formElement = document.querySelector(".form-container");
+        if (formElement) {
+          formElement.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
     };
 
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        console.log("Folio copiado al portapapeles");
+      } catch (err) {
+        console.error("Error al copiar:", err);
+      }
+    };
+
+    const printFolio = () => {
+      const printContent = `
+        <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+          <h2>Petición Ciudadana</h2>
+          <p><strong>Folio de seguimiento:</strong></p>
+          <h1 style="font-size: 24px; border: 2px solid #000; padding: 10px; display: inline-block;">
+            ${generatedFolio.value}
+          </h1>
+          <p style="margin-top: 20px;">Guarde este folio para dar seguimiento a su petición.</p>
+          <p><small>Fecha: ${new Date().toLocaleString()}</small></p>
+        </div>
+      `;
+
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`
+        <html>
+          <head><title>Folio de Petición</title></head>
+          <body>${printContent}</body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    };
+
+    // -----------------------
+    // onMounted
+    // -----------------------
     onMounted(async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/clasificacion/categorias`);
-        if (response.ok) {
-          console.log("✅ Conexión con API exitosa");
-        } else {
-          console.warn("⚠️ API responde pero con error:", response.status);
+        // 1) Intentar localStorage
+        let userLoaded = await loadUserData();
+
+        // 2) Si falla, intentar API
+        if (!userLoaded) {
+          userLoaded = await loadUserDataFromAPI();
         }
-      } catch (error) {
-        console.error("❌ Error de conexión con API:", error);
-        errorMessage.value =
-          "Advertencia: No se pudo conectar con el servicio de clasificación automática.";
+
+        // 3) Si no hay usuario, trabajar en modo invitado
+        if (!userLoaded) {
+          userData.value = {
+            Id: null,
+            Nombre: "",
+            ApellidoP: "",
+            ApellidoM: "",
+            Usuario: "invitado",
+            IdUnidad: null,
+            IdDivisionAdm: null,
+            Puesto: "",
+            Estatus: "GUEST",
+          };
+          isUserDataLoaded.value = false;
+          // division_id se queda null
+        } else {
+          // asegurar que division_id esté poblado numéricamente
+          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
+        }
+      } catch (e) {
+        errorMessage.value = "Error al inicializar el componente: " + (e?.message || e);
+      }
+
+      // Checks opcionales
+      try {
+        const classResponse = await fetch(`${API_BASE}/api/clasificacion/categorias`);
+        if (classResponse.ok) console.log("✅ API de clasificación disponible");
+      } catch (e) {
+        console.warn("⚠️ API de clasificación no disponible:", e?.message);
+      }
+
+      try {
+        const petResponse = await fetch(PETITION_API, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        if (petResponse.ok) console.log("✅ API de peticiones disponible");
+      } catch (e) {
+        console.warn("⚠️ API de peticiones no disponible:", e?.message);
       }
     });
 
+    // -----------------------
+    // Expose to template
+    // -----------------------
     return {
+      // Datos
       formData,
       errors,
+      showSuccess,
       successMessage,
       errorMessage,
       generatedFolio,
@@ -753,20 +1208,32 @@ export default {
       classification,
       isClassifying,
       lastClassification,
+      selectedClassification,
       userData,
-      divisionNombre,
+      isUserDataLoaded,
+      unidadNombre,
+
+      // Computed
+      userFullName,
       canSubmit,
       canClassify,
+
+      // Métodos
       validateField,
       validatePhone,
       onDescriptionChange,
       testClassification,
       reclassifyDescription,
+      selectClassification,
       submitForm,
       resetForm,
+      scrollToSuccessMessage,
+      copyToClipboard,
+      printFolio,
     };
   },
 };
 </script>
+
 
 <style src="@/assets/css/PetionPage.css"></style>

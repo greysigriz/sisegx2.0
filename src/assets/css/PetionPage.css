@@ -385,12 +385,18 @@ body {
 
 /* Mensajes */
 .success-message {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  color: var(--success);
-  padding: 1.5rem;
-  border-radius: var(--border-radius-sm);
-  margin-bottom: 2rem;
-  border: 1px solid #a7f3d0;
+  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
+  text-align: center;
+  margin: 20px 0;
+  animation: successSlideIn 0.6s ease-out;
+}
+
+.success-header {
+  margin-bottom: 25px;
 }
 
 .success-message svg {
@@ -410,12 +416,13 @@ body {
   margin-right: 0.5rem;
 }
 
+/* Información de clasificación */
 .classification-success {
-  background: var(--white);
-  padding: 1rem;
-  border-radius: var(--border-radius-sm);
-  margin-top: 1rem;
-  border: 1px solid #a7f3d0;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: left;
 }
 
 .classification-success p {
@@ -495,6 +502,56 @@ body {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+/* Tarjetas de clasificación seleccionables */
+.classification-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f9f9f9;
+  position: relative;
+}
+
+.classification-card:hover {
+  border-color: #4CAF50;
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.1);
+  transform: translateY(-2px);
+}
+
+.classification-card.selected {
+  border-color: #4CAF50;
+  background: #f0f8f0;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.classification-card .classification-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.classification-card .classification-description {
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.classification-card .classification-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.25rem;
+  color: #4CAF50;
+  display: none;
+}
+
+.classification-card.selected .classification-icon {
+  display: block;
 }
 
 /* Responsive */
