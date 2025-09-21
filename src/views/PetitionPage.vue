@@ -25,7 +25,7 @@
         }"
       >
         <h2>Formulario de Petición</h2>
-        <p class="form-description">Complete todos los campos para enviar su petición</p>
+        <!-- <p class="form-description">Complete todos los campos para enviar su petición</p> -->
 
         <!-- Mensaje de éxito mejorado con folio destacado -->
         <div v-if="successMessage" class="success-message" ref="successMessageRef">
@@ -33,22 +33,14 @@
             <font-awesome-icon icon="fa-solid fa-check-circle" class="success-icon" />
             <h3>¡Petición enviada exitosamente!</h3>
           </div>
-          
+
           <div class="folio-display">
             <p class="folio-label">Su folio de seguimiento es:</p>
             <div class="folio-container">
               <h2 class="folio-number">{{ generatedFolio }}</h2>
-              <button 
-                type="button" 
-                class="copy-folio-btn" 
-                @click="copyToClipboard(generatedFolio)"
-                title="Copiar folio"
-              >
-                <font-awesome-icon icon="fa-solid fa-copy" />
-              </button>
             </div>
             <p class="folio-instructions">
-              <strong>¡IMPORTANTE!</strong> Guarde este folio para dar seguimiento a su petición. 
+              <strong>¡IMPORTANTE!</strong> Guarde este folio para dar seguimiento a su petición.
               Puede usarlo para consultar el estado de su solicitud.
             </p>
           </div>
@@ -85,7 +77,7 @@
           <!-- Botones de acción -->
           <div class="success-actions">
             <button class="primary-button new-petition-btn" @click="resetForm">
-              <font-awesome-icon icon="fa-solid fa-plus" /> 
+              <font-awesome-icon icon="fa-solid fa-plus" />
               Nueva Petición
             </button>
             <button class="secondary-button print-btn" @click="printFolio">
@@ -98,27 +90,6 @@
         <div v-if="errorMessage" class="error-message">
           <font-awesome-icon icon="fa-solid fa-exclamation-circle" />
           {{ errorMessage }}
-        </div>
-
-        <!-- Información del usuario -->
-        <div
-          v-if="userData && !successMessage"
-          class="user-info-section"
-          v-motion-fade-visible-once
-          :initial="{ opacity: 0, x: -30 }"
-          :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 400 } }"
-        >
-          <h3>Información del Usuario</h3>
-          <div class="user-info-card">
-            <div class="user-info-item">
-              <label>Usuario registrado:</label>
-              <span>{{ userFullName }}</span>
-            </div>
-            <div class="user-info-item">
-              <label>Unidad:</label>
-              <span>{{ unidadNombre || 'Sin unidad asignada' }}</span>
-            </div>
-          </div>
         </div>
 
         <div v-if="!successMessage" class="petition-form">
@@ -144,34 +115,12 @@
             <span v-if="errors.nombre" class="error-text">{{ errors.nombre }}</span>
           </div>
 
-          <!-- Email -->
-          <div
-            class="form-group"
-            v-motion-fade-visible-once
-            :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 550 } }"
-          >
-            <label for="email"
-              >Correo electrónico <span class="required">*</span></label
-            >
-            <input
-              type="email"
-              id="email"
-              v-model="formData.email"
-              required
-              placeholder="ejemplo@correo.com"
-              :class="{ 'error-input': errors.email }"
-              @blur="validateField('email', formData.email)"
-            />
-            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
-          </div>
-
           <!-- Teléfono -->
           <div
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 600 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 550 } }"
           >
             <label for="telefono"
               >Teléfono del solicitante <span class="required">*</span></label
@@ -194,7 +143,7 @@
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 700 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 600 } }"
           >
             <label for="direccion"
               >Dirección donde sucede el problema <span class="required">*</span></label
@@ -215,7 +164,7 @@
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 800 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 700 } }"
           >
             <label for="localidad">Localidad <span class="required">*</span></label>
             <input
@@ -234,7 +183,7 @@
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 900 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 800 } }"
           >
             <label for="nivel_importancia"
               >Nivel de Importancia <span class="required">*</span></label
@@ -265,7 +214,7 @@
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 1000 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 900 } }"
           >
             <label for="descripcion"
               >Descripción del problema <span class="required">*</span></label
@@ -381,7 +330,7 @@
                 <font-awesome-icon icon="fa-solid fa-refresh" />
                 {{ isClassifying ? "Reclasificando..." : "Reclasificar" }}
               </button>
-              
+
               <button
                 v-if="selectedClassification"
                 type="button"
@@ -399,7 +348,7 @@
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
-            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 1100 } }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 1000 } }"
           >
             <label for="red_social">Red social del solicitante</label>
             <input
@@ -418,7 +367,7 @@
             class="form-actions"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, y: 30 }"
-            :enter="{ opacity: 1, y: 0, transition: { duration: 800, delay: 1200 } }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 800, delay: 1100 } }"
           >
             <button
               type="button"
@@ -493,7 +442,7 @@
           }"
         >
           <div class="info-icon">
-            <font-awesome-icon icon="fa-solid fa-phone-alt" class="icon-animation" />
+            <font-awesome-icon icon="fa-solid fa-phone" class="icon-animation" />
           </div>
           <h3>Contacto directo</h3>
           <p>
@@ -538,7 +487,7 @@
           }"
         >
           <div class="info-icon">
-            <font-awesome-icon icon="fa-solid fa-robot" class="icon-animation" />
+            <font-awesome-icon icon="fa-solid fa-lightbulb" class="icon-animation" />
           </div>
           <h3>Clasificación Inteligente</h3>
           <p>
@@ -558,32 +507,19 @@ export default {
   name: "PetitionPage",
   setup() {
     // -----------------------
-    // Utils
-    // -----------------------
-    const toIntOrNull = (v) => {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : null;
-    };
-
-    const safeString = (v) => (typeof v === "string" ? v : v == null ? "" : String(v));
-
-    // -----------------------
     // State
     // -----------------------
     const formData = ref({
       nombre: "",
-      email: "",
       telefono: "",
       direccion: "",
       localidad: "",
       nivel_importancia: "",
       descripcion: "",
       red_social: "",
-      division_id: null, // <- se poblará con IdDivisionAdm del usuario
     });
 
     const errors = ref({});
-    const showSuccess = ref(false);         // <- booleano claro para la UI de éxito
     const successMessage = ref("");
     const errorMessage = ref("");
     const generatedFolio = ref("");
@@ -594,33 +530,17 @@ export default {
     const lastClassification = ref(null);
     const selectedClassification = ref(null);
 
-    const unidadNombre = ref("");
-
-    // Datos de usuario
-    const userData = ref(null);
-    const isUserDataLoaded = ref(false);
-
     // APIs
     const API_BASE = "http://127.0.0.1:8000";
-    const PETITION_API = "http://127.0.0.1/SISE/api/peticiones.php";
+    const PETITION_API = "http://127.0.0.1/SISEE/api/peticiones.php";
 
     // -----------------------
     // Computed
     // -----------------------
-    const userFullName = computed(() => {
-      if (!userData.value) return "Usuario no identificado";
-      const nombre = safeString(userData.value.Nombre);
-      const apellidoP = safeString(userData.value.ApellidoP);
-      const apellidoM = safeString(userData.value.ApellidoM);
-      const full = `${nombre} ${apellidoP} ${apellidoM}`.trim();
-      return full || "Usuario sin nombre";
-    });
-
     const canSubmit = computed(() => {
       return (
         Object.keys(errors.value).length === 0 &&
         formData.value.nombre.length >= 2 &&
-        formData.value.email.includes("@") &&
         formData.value.telefono.length >= 10 &&
         formData.value.direccion.length >= 5 &&
         formData.value.localidad.length >= 2 &&
@@ -631,148 +551,6 @@ export default {
     });
 
     const canClassify = computed(() => formData.value.descripcion.length >= 10);
-
-    // -----------------------
-    // Carga de usuario
-    // -----------------------
-    const loadUserData = async () => {
-      try {
-        const storedUser = localStorage.getItem("user");
-        if (!storedUser) return false;
-
-        const parsedUser = JSON.parse(storedUser);
-        let userInfo = null;
-
-        if (parsedUser.usuario) userInfo = parsedUser.usuario;
-        else if (parsedUser.user) userInfo = parsedUser.user;
-        else if (parsedUser.Id || parsedUser.Nombre) userInfo = parsedUser;
-
-        if (userInfo && (userInfo.Id || userInfo.Nombre)) {
-          userData.value = {
-            Id: userInfo.Id ?? null,
-            Nombre: userInfo.Nombre ?? "",
-            ApellidoP: userInfo.ApellidoP ?? "",
-            ApellidoM: userInfo.ApellidoM ?? "",
-            Usuario: userInfo.Usuario ?? "",
-            IdUnidad: userInfo.IdUnidad ?? null,
-            IdDivisionAdm: userInfo.IdDivisionAdm ?? null,
-            Puesto: userInfo.Puesto ?? "",
-            Estatus: userInfo.Estatus ?? "ACTIVO",
-          };
-
-          // Nombre de unidad (best effort)
-          if (userData.value.IdUnidad) {
-            try {
-              const r = await fetch(
-                `http://127.0.0.1/SISE/api/unidades.php?id=${userData.value.IdUnidad}`
-              );
-              if (r.ok) {
-                const unidadData = await r.json();
-                unidadNombre.value =
-                  unidadData.nombre_unidad || `Unidad ${userData.value.IdUnidad}`;
-              } else {
-                unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
-              }
-            } catch {
-              unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
-            }
-          }
-
-          // Prellenar nombre
-          const fullName = userFullName.value;
-          if (
-            fullName !== "Usuario no identificado" &&
-            fullName !== "Usuario sin nombre"
-          ) {
-            formData.value.nombre = fullName;
-          }
-
-          // 🔒 Asegurar division_id correcto desde el usuario
-          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
-
-          isUserDataLoaded.value = true;
-          return true;
-        }
-        return false;
-      } catch {
-        return false;
-      }
-    };
-
-    const loadUserDataFromAPI = async () => {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1/SISE/api/check-session.php",
-          {
-            method: "GET",
-            credentials: "include",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) return false;
-
-        const sessionData = await response.json();
-        if (sessionData.success && sessionData.user) {
-          userData.value = {
-            Id: sessionData.user.Id ?? null,
-            Nombre: sessionData.user.Nombre ?? "",
-            ApellidoP: sessionData.user.ApellidoP ?? "",
-            ApellidoM: sessionData.user.ApellidoM ?? "",
-            Usuario: sessionData.user.Usuario ?? "",
-            IdUnidad: sessionData.user.IdUnidad ?? null,
-            IdDivisionAdm: sessionData.user.IdDivisionAdm ?? null,
-            Puesto: sessionData.user.Puesto ?? "",
-            Estatus: sessionData.user.Estatus ?? "ACTIVO",
-          };
-
-          // Nombre de unidad (best effort)
-          if (userData.value.IdUnidad) {
-            try {
-              const r = await fetch(
-                `http://127.0.0.1/SISE/api/unidades.php?id=${userData.value.IdUnidad}`
-              );
-              if (r.ok) {
-                const unidadData = await r.json();
-                unidadNombre.value =
-                  unidadData.nombre_unidad || `Unidad ${userData.value.IdUnidad}`;
-              } else {
-                unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
-              }
-            } catch {
-              unidadNombre.value = `Unidad ${userData.value.IdUnidad}`;
-            }
-          }
-
-          // Prellenar nombre
-          const fullName = userFullName.value;
-          if (
-            fullName !== "Usuario no identificado" &&
-            fullName !== "Usuario sin nombre"
-          ) {
-            formData.value.nombre = fullName;
-          }
-
-          // 🔒 division_id desde usuario (y guardar en form)
-          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
-
-          // Refrescar localStorage con formato consistente
-          localStorage.setItem(
-            "user",
-            JSON.stringify({ usuario: sessionData.user })
-          );
-
-          isUserDataLoaded.value = true;
-          return true;
-        }
-        return false;
-      } catch {
-        return false;
-      }
-    };
 
     // -----------------------
     // Validaciones
@@ -786,12 +564,6 @@ export default {
           else if (value.length > 100)
             errors.value.nombre = "El nombre no puede exceder 100 caracteres";
           else delete errors.value.nombre;
-          break;
-        case "email":
-          if (!value) errors.value.email = "El email es requerido";
-          else if (!/\S+@\S+\.\S+/.test(value))
-            errors.value.email = "El email no tiene un formato válido";
-          else delete errors.value.email;
           break;
         case "telefono":
           if (!value) errors.value.telefono = "El teléfono es requerido";
@@ -968,13 +740,12 @@ export default {
       try {
         isLoading.value = true;
         errorMessage.value = "";
-        showSuccess.value = false;
         successMessage.value = "";
         lastClassification.value = null;
 
-        // Validar todos los campos salvo opcionales
+        // Validar todos los campos
         Object.entries(formData.value).forEach(([field, value]) => {
-          if (field !== "red_social" && field !== "division_id") {
+          if (field !== "red_social") {
             validateField(field, value);
           }
         });
@@ -983,21 +754,8 @@ export default {
           throw new Error("Corrige los errores en el formulario antes de enviar.");
         }
 
-        // Asegurar division_id final desde userData o form
-        const finalDivisionId =
-          toIntOrNull(userData.value?.IdDivisionAdm) ??
-          toIntOrNull(formData.value.division_id);
-
-        // Generar folio local (fallback si el backend no devuelve folio)
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0");
-        generatedFolio.value = `PET-${timestamp.toString().slice(-8)}-${random}`;
-
-        // Payload para backend
+        // Payload simple - solo datos del formulario
         const petitionData = {
-          folio: generatedFolio.value, // se actualizará si backend regresa otro
           nombre: formData.value.nombre,
           email: formData.value.email,
           telefono: formData.value.telefono,
@@ -1005,13 +763,11 @@ export default {
           localidad: formData.value.localidad,
           descripcion: formData.value.descripcion,
           red_social: formData.value.red_social || null,
-          NivelImportancia: parseInt(formData.value.nivel_importancia, 10),
-          division_id: finalDivisionId,          // 🔒 numérico o null
-          usuario_id: toIntOrNull(userData.value?.Id) ?? null,
-          estado: "Sin revisar",
+          NivelImportancia: parseInt(formData.value.nivel_importancia),
+          estado: "Sin revisar"
         };
 
-        // Adjuntar IA
+        // Adjuntar IA si existe
         if (classification.value && Array.isArray(classification.value)) {
           petitionData.sugerencias_ia = classification.value;
         }
@@ -1038,13 +794,8 @@ export default {
         }
 
         if (responseData.success) {
-          // ✅ confiar en el folio del backend si lo devuelve
-          if (responseData.folio) {
-            generatedFolio.value = responseData.folio;
-          }
-
+          generatedFolio.value = responseData.folio || "FOLIO-ERROR";
           lastClassification.value = selectedClassification.value;
-          showSuccess.value = true;
           successMessage.value = "¡Petición enviada exitosamente!";
 
           console.log("✅ Petición guardada. Folio:", generatedFolio.value);
@@ -1055,7 +806,7 @@ export default {
       } catch (error) {
         console.error("❌ Error al enviar formulario:", error);
         errorMessage.value = error.message || "Ocurrió un error inesperado";
-        generatedFolio.value = ""; // limpiar folio solo en error
+        generatedFolio.value = "";
         await nextTick();
         const errorElement = document.querySelector(".error-message");
         if (errorElement) {
@@ -1070,29 +821,20 @@ export default {
     // Utilidades UI
     // -----------------------
     const resetForm = () => {
-      const preserveName = userData.value ? userFullName.value : "";
-      const preserveDivision =
-        toIntOrNull(userData.value?.IdDivisionAdm) ??
-        toIntOrNull(formData.value.division_id) ??
-        null;
-
       formData.value = {
-        nombre: preserveName,
-        email: "",
+        nombre: "",
         telefono: "",
         direccion: "",
         localidad: "",
         nivel_importancia: "",
         descripcion: "",
         red_social: "",
-        division_id: preserveDivision, // 🔒 preservar división
       };
 
       errors.value = {};
       classification.value = null;
       selectedClassification.value = null;
       lastClassification.value = null;
-      showSuccess.value = false;
       successMessage.value = "";
       errorMessage.value = "";
       generatedFolio.value = "";
@@ -1142,54 +884,16 @@ export default {
     // onMounted
     // -----------------------
     onMounted(async () => {
+      // Checks opcionales de conectividad
       try {
-        // 1) Intentar localStorage
-        let userLoaded = await loadUserData();
-
-        // 2) Si falla, intentar API
-        if (!userLoaded) {
-          userLoaded = await loadUserDataFromAPI();
-        }
-
-        // 3) Si no hay usuario, trabajar en modo invitado
-        if (!userLoaded) {
-          userData.value = {
-            Id: null,
-            Nombre: "",
-            ApellidoP: "",
-            ApellidoM: "",
-            Usuario: "invitado",
-            IdUnidad: null,
-            IdDivisionAdm: null,
-            Puesto: "",
-            Estatus: "GUEST",
-          };
-          isUserDataLoaded.value = false;
-          // division_id se queda null
-        } else {
-          // asegurar que division_id esté poblado numéricamente
-          formData.value.division_id = toIntOrNull(userData.value.IdDivisionAdm);
-        }
-      } catch (e) {
-        errorMessage.value = "Error al inicializar el componente: " + (e?.message || e);
-      }
-
-      // Checks opcionales
-      try {
-        const classResponse = await fetch(`${API_BASE}/api/clasificacion/categorias`);
-        if (classResponse.ok) console.log("✅ API de clasificación disponible");
-      } catch (e) {
-        console.warn("⚠️ API de clasificación no disponible:", e?.message);
-      }
-
-      try {
-        const petResponse = await fetch(PETITION_API, {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
-        if (petResponse.ok) console.log("✅ API de peticiones disponible");
-      } catch (e) {
-        console.warn("⚠️ API de peticiones no disponible:", e?.message);
+        await Promise.allSettled([
+          fetch(`${API_BASE}/api/clasificacion/categorias`),
+          fetch("http://127.0.0.1/SISEE/api/peticiones.php", {
+            headers: { Accept: "application/json" }
+          })
+        ]);
+      } catch {
+        console.warn("APIs no disponibles");
       }
     });
 
@@ -1200,7 +904,6 @@ export default {
       // Datos
       formData,
       errors,
-      showSuccess,
       successMessage,
       errorMessage,
       generatedFolio,
@@ -1209,12 +912,8 @@ export default {
       isClassifying,
       lastClassification,
       selectedClassification,
-      userData,
-      isUserDataLoaded,
-      unidadNombre,
 
       // Computed
-      userFullName,
       canSubmit,
       canClassify,
 
@@ -1234,6 +933,5 @@ export default {
   },
 };
 </script>
-
 
 <style src="@/assets/css/PetionPage.css"></style>

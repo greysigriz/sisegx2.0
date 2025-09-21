@@ -1,26 +1,17 @@
 <?php
-// C:\xampp\htdocs\SISE\api\peticiones.php
+// C:\xampp\htdocs\SISEE\api\peticiones.php
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
 
-// Instanciar base de datos
 $database = new Database();
 $db = $database->getConnection();
-
-// Obtener método de solicitud
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Función para generar folio secuencial
 function generateSequentialFolio($db) {
-    error_log("🔄 Generando nuevo folio secuencial...");
-    
-    // Obtener el último folio
     $query = "SELECT folio FROM peticiones WHERE folio LIKE 'FOLIO-%' ORDER BY id DESC LIMIT 1";
     $stmt = $db->prepare($query);
     $stmt->execute();
     $lastFolio = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    error_log("📝 Último folio encontrado: " . ($lastFolio ? $lastFolio['folio'] : 'Ninguno'));
     
     if ($lastFolio && $lastFolio['folio']) {
         preg_match('/FOLIO-(\d+)/', $lastFolio['folio'], $matches);
@@ -30,24 +21,18 @@ function generateSequentialFolio($db) {
         $nextNumber = 1;
     }
     
-    $newFolio = 'FOLIO-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-    error_log("✨ Nuevo folio generado: " . $newFolio);
-    
-    return $newFolio;
+    return 'FOLIO-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 }
 
-// Función para construir consulta con filtros
 function buildQuery($baseQuery, $filters) {
     $whereClause = [];
     $params = [];
     
     $filterMap = [
         'estado' => 'p.estado = :estado',
-        'departamento' => 'EXISTS (SELECT 1 FROM peticion_departamento pd WHERE pd.peticion_id = p.id AND pd.departamento_id = :departamento)',
         'folio' => 'p.folio LIKE :folio',
         'nombre' => 'p.nombre LIKE :nombre',
-        'nivelImportancia' => 'p.NivelImportancia = :nivelImportancia',
-        'usuario_seguimiento' => 'p.usuario_id = :usuario_seguimiento'
+        'nivelImportancia' => 'p.NivelImportancia = :nivelImportancia'
     ];
     
     foreach ($filterMap as $key => $condition) {
@@ -56,19 +41,10 @@ function buildQuery($baseQuery, $filters) {
             $paramKey = ':' . $key;
             $params[$paramKey] = in_array($key, ['folio', 'nombre']) 
                 ? '%' . $filters[$key] . '%' 
-                : (in_array($key, ['nivelImportancia', 'departamento', 'usuario_seguimiento']) 
+                : (in_array($key, ['nivelImportancia']) 
                     ? intval($filters[$key]) 
                     : $filters[$key]);
         }
-    }
-    
-    // Filtro especial para mis peticiones
-    if (isset($filters['mis_peticiones']) && $filters['mis_peticiones'] === 'true') {
-        if (!isset($filters['current_user_id']) || empty($filters['current_user_id'])) {
-            throw new Exception("ID de usuario no proporcionado para filtrar 'mis peticiones'.");
-        }
-        $whereClause[] = 'p.usuario_id = :current_user_id';
-        $params[':current_user_id'] = intval($filters['current_user_id']);
     }
     
     if (!empty($whereClause)) {
@@ -78,22 +54,7 @@ function buildQuery($baseQuery, $filters) {
     return [$baseQuery . " ORDER BY p.fecha_registro DESC", $params];
 }
 
-// Función para obtener datos relacionados de una petición
 function getPetitionRelatedData($db, $petitionId) {
-    // Obtener departamentos asignados
-    $depQuery = "SELECT pd.id as asignacion_id, pd.departamento_id, pd.estado as estado_departamento, 
-                       pd.fecha_asignacion, u.nombre_unidad
-                FROM peticion_departamento pd
-                LEFT JOIN unidades u ON pd.departamento_id = u.id
-                WHERE pd.peticion_id = :peticion_id
-                ORDER BY pd.fecha_asignacion DESC";
-    
-    $depStmt = $db->prepare($depQuery);
-    $depStmt->bindParam(':peticion_id', $petitionId);
-    $depStmt->execute();
-    $departamentos = $depStmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Obtener sugerencias de IA
     $sugQuery = "SELECT id, departamento_nombre, estado_sugerencia, fecha_sugerencia
                 FROM peticion_sugerencias
                 WHERE peticion_id = :peticion_id
@@ -104,17 +65,11 @@ function getPetitionRelatedData($db, $petitionId) {
     $sugStmt->execute();
     $sugerencias = $sugStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    return ['departamentos' => $departamentos, 'sugerencias_ia' => $sugerencias];
+    return ['sugerencias_ia' => $sugerencias];
 }
 
 if ($method === 'GET') {
-    $baseQuery = "SELECT p.*, 
-                         us.Usuario as nombre_usuario_seguimiento,
-                         CONCAT(us.Nombre, ' ', us.ApellidoP, ' ', IFNULL(us.ApellidoM, '')) as nombre_completo_usuario,
-                         da.Nombre as nombre_division
-                  FROM peticiones p 
-                  LEFT JOIN Usuario us ON p.usuario_id = us.Id
-                  LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id";
+    $baseQuery = "SELECT p.* FROM peticiones p";
     
     if (isset($_GET['id'])) {
         $id = $_GET['id'];
@@ -165,234 +120,118 @@ if ($method === 'GET') {
 elseif ($method === 'POST') {
     $data = json_decode(file_get_contents("php://input"));
     
-    // Debug log
-    error_log("📥 Datos recibidos: " . print_r($data, true));
+    // ✅ Validación simplificada - solo campos obligatorios que existen
+    $requiredFields = ['nombre', 'telefono', 'direccion', 'localidad', 'descripcion', 'NivelImportancia'];
+    $camposFaltantes = [];
     
-    // Acción de seguimiento
-    if (isset($data->accion) && $data->accion === 'seguimiento') {
-        if (empty($data->peticion_id) || empty($data->usuario_id)) {
-            http_response_code(400);
-            echo json_encode(array("message" => "Datos incompletos para el seguimiento."));
-            exit;
-        }
-        
-        try {
-            // Verificar existencia de petición y usuario
-            $checks = [
-                ["SELECT id FROM peticiones WHERE id = :id", $data->peticion_id, "Petición no encontrada."],
-                ["SELECT Id FROM Usuario WHERE Id = :id", $data->usuario_id, "Usuario no encontrado."]
-            ];
-            
-            foreach ($checks as [$query, $id, $message]) {
-                $stmt = $db->prepare($query);
-                $stmt->bindParam(':id', $id);
-                $stmt->execute();
-                
-                if ($stmt->rowCount() === 0) {
-                    http_response_code(404);
-                    echo json_encode(array("message" => $message));
-                    exit;
-                }
-            }
-            
-            // Actualizar seguimiento
-            $update_query = "UPDATE peticiones SET usuario_id = :usuario_id WHERE id = :peticion_id";
-            $update_stmt = $db->prepare($update_query);
-            $update_stmt->bindParam(':usuario_id', $data->usuario_id);
-            $update_stmt->bindParam(':peticion_id', $data->peticion_id);
-            
-            if ($update_stmt->execute()) {
-                // Obtener info del usuario
-                $user_info_query = "SELECT Usuario, CONCAT(Nombre, ' ', ApellidoP, ' ', IFNULL(ApellidoM, '')) as nombre_completo 
-                                   FROM Usuario WHERE Id = :usuario_id";
-                $user_info_stmt = $db->prepare($user_info_query);
-                $user_info_stmt->bindParam(':usuario_id', $data->usuario_id);
-                $user_info_stmt->execute();
-                $user_info = $user_info_stmt->fetch(PDO::FETCH_ASSOC);
-                
-                http_response_code(200);
-                echo json_encode(array(
-                    "message" => "Seguimiento asignado correctamente.",
-                    "usuario_asignado" => $user_info['Usuario'],
-                    "nombre_completo" => $user_info['nombre_completo']
-                ));
-            } else {
-                http_response_code(503);
-                echo json_encode(array("message" => "No se pudo asignar el seguimiento."));
-            }
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+    foreach ($requiredFields as $field) {
+        if (!isset($data->$field) || empty(trim($data->$field))) {
+            $camposFaltantes[] = $field;
         }
     }
-    // Crear nueva petición - VERSIÓN FLEXIBLE
-    else {
-        // ESTRATEGIA 1: Solo validar campos mínimos esenciales
-        $criticalFields = [
-            'descripcion' => 'Descripción' // Solo descripción es realmente crítica
-        ];
+    
+    if (!empty($camposFaltantes)) {
+        http_response_code(400);
+        echo json_encode([
+            "success" => false,
+            "message" => "Campos requeridos faltantes: " . implode(', ', $camposFaltantes)
+        ]);
+        exit;
+    }
+    
+    try {
+        $db->beginTransaction();
         
-        // Validar solo campos críticos
-        $missingCriticalFields = [];
-        foreach ($criticalFields as $field => $label) {
-            if (!isset($data->$field) || (is_string($data->$field) && trim($data->$field) === '')) {
-                $missingCriticalFields[] = $label;
-                error_log("❌ Campo crítico faltante: {$label}");
-            }
+        $folio = generateSequentialFolio($db);
+        
+        // ✅ Procesar solo los campos que existen en la tabla
+        $nombre = trim($data->nombre);
+        $telefono = trim($data->telefono);
+        $direccion = trim($data->direccion);
+        $localidad = trim($data->localidad);
+        $descripcion = trim($data->descripcion);
+        $red_social = isset($data->red_social) && !empty(trim($data->red_social)) ? trim($data->red_social) : null;
+        $nivelImportancia = max(1, min(4, intval($data->NivelImportancia)));
+        
+        // ✅ INSERT sin email, con valores por defecto para division_id y usuario_id
+        $query = "INSERT INTO peticiones 
+                 (folio, nombre, telefono, direccion, localidad, descripcion, 
+                  red_social, estado, NivelImportancia, division_id, usuario_id) 
+                 VALUES 
+                 (?, ?, ?, ?, ?, ?, ?, 'Sin revisar', ?, 1, NULL)";
+        
+        $stmt = $db->prepare($query);
+        
+        $success = $stmt->execute([
+            $folio,
+            $nombre,
+            $telefono,
+            $direccion,
+            $localidad,
+            $descripcion,
+            $red_social,
+            $nivelImportancia
+        ]);
+        
+        if (!$success) {
+            throw new Exception("Error al insertar: " . implode(" ", $stmt->errorInfo()));
         }
         
-        if (!empty($missingCriticalFields)) {
-            error_log("❌ Validación fallida - campos críticos faltantes: " . implode(', ', $missingCriticalFields));
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Campos críticos requeridos faltantes: " . implode(', ', $missingCriticalFields),
-                "missing_fields" => $missingCriticalFields
-            ]);
-            exit;
-        }
-
-        error_log("✅ Validación exitosa - procediendo a crear petición con campos flexibles");
+        $peticion_id = $db->lastInsertId();
+        $sugerencias_guardadas = 0;
         
-        try {
-            $db->beginTransaction();
+        // ✅ Guardar sugerencias de IA si existen
+        if (isset($data->sugerencias_ia) && is_array($data->sugerencias_ia)) {
+            $sugQuery = "INSERT IGNORE INTO peticion_sugerencias 
+                        (peticion_id, departamento_nombre, estado_sugerencia) 
+                        VALUES (?, ?, ?)";
             
-            // Generar folio
-            $folio = generateSequentialFolio($db);
-            error_log("🎫 Folio generado: " . $folio);
+            $sugStmt = $db->prepare($sugQuery);
             
-            // Verificar folio único
-            $check_stmt = $db->prepare("SELECT id FROM peticiones WHERE folio = ?");
-            $check_stmt->execute([$folio]);
-            if ($check_stmt->rowCount() > 0) {
-                error_log("⚠️ Error: Folio duplicado detectado: " . $folio);
-                throw new Exception("Error: Folio duplicado.");
-            }
-            
-            // ESTRATEGIA 2: Valores por defecto para campos faltantes
-            $defaultValues = [
-                'nombre' => 'Sin especificar',
-                'telefono' => 'Sin especificar',
-                'direccion' => 'Sin especificar',
-                'localidad' => 'Sin especificar',
-                'red_social' => null,
-                'estado' => 'Sin revisar',
-                'NivelImportancia' => 3, // Importancia media por defecto
-                'division_id' => null,
-                'usuario_id' => null
-            ];
-            
-            // Insertar petición principal con valores flexibles
-            $query = "INSERT INTO peticiones 
-                     (folio, nombre, telefono, direccion, localidad, descripcion, 
-                      red_social, estado, NivelImportancia, division_id, usuario_id) 
-                     VALUES 
-                     (:folio, :nombre, :telefono, :direccion, :localidad, :descripcion,
-                      :red_social, :estado, :nivelImportancia, :division_id, :usuario_id)";
-            
-            $stmt = $db->prepare($query);
-            
-            // ESTRATEGIA 3: Función para obtener valor con fallback
-            function getValueOrDefault($data, $field, $defaultValue) {
-                if (isset($data->$field)) {
-                    $value = $data->$field;
-                    // Si es string y está vacío, usar default
-                    if (is_string($value) && trim($value) === '') {
-                        return $defaultValue;
+            foreach ($data->sugerencias_ia as $sugerencia) {
+                if (isset($sugerencia->dependencia) && !empty($sugerencia->dependencia)) {
+                    if ($sugStmt->execute([$peticion_id, $sugerencia->dependencia, 'Pendiente'])) {
+                        $sugerencias_guardadas++;
                     }
-                    return $value;
-                }
-                return $defaultValue;
-            }
-            
-            // Preparar datos con valores por defecto
-            $petitionData = [
-                ':folio' => $folio,
-                ':nombre' => htmlspecialchars(strip_tags(getValueOrDefault($data, 'nombre', $defaultValues['nombre']))),
-                ':telefono' => htmlspecialchars(strip_tags(getValueOrDefault($data, 'telefono', $defaultValues['telefono']))),
-                ':direccion' => htmlspecialchars(strip_tags(getValueOrDefault($data, 'direccion', $defaultValues['direccion']))),
-                ':localidad' => htmlspecialchars(strip_tags(getValueOrDefault($data, 'localidad', $defaultValues['localidad']))),
-                ':descripcion' => htmlspecialchars(strip_tags($data->descripcion)), // Este es obligatorio
-                ':red_social' => getValueOrDefault($data, 'red_social', $defaultValues['red_social']),
-                ':estado' => $defaultValues['estado'],
-                ':nivelImportancia' => isset($data->NivelImportancia) && is_numeric($data->NivelImportancia) 
-                    ? max(1, min(5, intval($data->NivelImportancia))) 
-                    : $defaultValues['NivelImportancia'],
-                ':division_id' => isset($data->division_id) && !empty($data->division_id) ? intval($data->division_id) : $defaultValues['division_id'],
-                ':usuario_id' => isset($data->usuario_id) && !empty($data->usuario_id) ? intval($data->usuario_id) : $defaultValues['usuario_id']
-            ];
-            
-            // Log de valores finales
-            error_log("📋 Datos finales para inserción: " . print_r($petitionData, true));
-            
-            // Bind y ejecutar
-            foreach ($petitionData as $key => $value) {
-                $stmt->bindValue($key, $value, $value === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
-            }
-            
-            if (!$stmt->execute()) {
-                throw new Exception("Error al crear la petición: " . implode(" ", $stmt->errorInfo()));
-            }
-            
-            $peticion_id = $db->lastInsertId();
-            
-            // Guardar sugerencia seleccionada si existe
-            $sugerencias_guardadas = 0;
-            if (isset($data->clasificacion_seleccionada) && 
-                isset($data->clasificacion_seleccionada->dependencia)) {
-                
-                $sugQuery = "INSERT INTO peticion_sugerencias 
-                            (peticion_id, departamento_nombre, estado_sugerencia) 
-                            VALUES (:peticion_id, :departamento_nombre, 'Aceptada')";
-                
-                $sugStmt = $db->prepare($sugQuery);
-                if ($sugStmt->execute([
-                    ':peticion_id' => $peticion_id,
-                    ':departamento_nombre' => htmlspecialchars(strip_tags($data->clasificacion_seleccionada->dependencia))
-                ])) {
-                    $sugerencias_guardadas = 1;
                 }
             }
-
-            $db->commit();
+        }
+        
+        // ✅ Marcar sugerencia seleccionada como Aceptada
+        if (isset($data->clasificacion_seleccionada) && 
+            isset($data->clasificacion_seleccionada->dependencia)) {
             
-            // ESTRATEGIA 4: Respuesta informativa sobre campos usados
-            $fieldsUsed = [];
-            $fieldsDefaulted = [];
+            $updateQuery = "UPDATE peticion_sugerencias 
+                           SET estado_sugerencia = 'Aceptada' 
+                           WHERE peticion_id = ? AND departamento_nombre = ?";
             
-            foreach ($defaultValues as $field => $defaultVal) {
-                if (isset($data->$field) && !empty($data->$field)) {
-                    $fieldsUsed[] = $field;
-                } else {
-                    $fieldsDefaulted[] = $field;
-                }
-            }
-            
-            http_response_code(201);
-            echo json_encode([
-                "success" => true,
-                "message" => "Petición creada con éxito.",
-                "id" => $peticion_id,
-                "folio" => $folio,
-                "sugerencias_guardadas" => $sugerencias_guardadas,
-                "info" => [
-                    "campos_proporcionados" => array_merge(['descripcion'], $fieldsUsed),
-                    "campos_con_valores_por_defecto" => $fieldsDefaulted,
-                    "campos_requeridos_futuros" => "Para completar la petición, considere proporcionar: nombre, teléfono, dirección y localidad"
-                ]
-            ]);
-            
-        } catch (Exception $e) {
-            if ($db->inTransaction()) {
-                $db->rollBack();
-            }
-            error_log("❌ Error en peticiones.php: " . $e->getMessage());
-            http_response_code(500);
-            echo json_encode([
-                "success" => false,
-                "message" => "Error al procesar la petición: " . $e->getMessage()
+            $updateStmt = $db->prepare($updateQuery);
+            $updateStmt->execute([
+                $peticion_id,
+                $data->clasificacion_seleccionada->dependencia
             ]);
         }
+
+        $db->commit();
+        
+        http_response_code(201);
+        echo json_encode([
+            "success" => true,
+            "message" => "Petición creada con éxito",
+            "id" => $peticion_id,
+            "folio" => $folio,
+            "sugerencias_guardadas" => $sugerencias_guardadas
+        ]);
+        
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => "Error interno: " . $e->getMessage()
+        ]);
     }
 }
 elseif ($method === 'PUT') {
@@ -410,7 +249,7 @@ elseif ($method === 'PUT') {
         
         $fieldMap = [
             'folio' => 'folio',
-            'nombre' => 'nombre',
+            'nombre' => 'nombre', 
             'telefono' => 'telefono',
             'direccion' => 'direccion',
             'localidad' => 'localidad',
@@ -426,21 +265,10 @@ elseif ($method === 'PUT') {
             }
         }
         
-        // Campos especiales
         if (isset($data->NivelImportancia)) {
             $nivel = max(1, min(5, intval($data->NivelImportancia)));
             $updateFields[] = "NivelImportancia = :nivelImportancia";
             $params[':nivelImportancia'] = $nivel;
-        }
-        
-        if (isset($data->division_id)) {
-            $updateFields[] = "division_id = :division_id";
-            $params[':division_id'] = $data->division_id ? intval($data->division_id) : null;
-        }
-        
-        if (isset($data->usuario_id)) {
-            $updateFields[] = "usuario_id = :usuario_id";
-            $params[':usuario_id'] = $data->usuario_id ? intval($data->usuario_id) : null;
         }
         
         if (empty($updateFields)) {
@@ -453,11 +281,7 @@ elseif ($method === 'PUT') {
         $stmt = $db->prepare($query);
         
         foreach ($params as $key => $value) {
-            if ($value === null) {
-                $stmt->bindValue($key, $value, PDO::PARAM_NULL);
-            } else {
-                $stmt->bindValue($key, $value);
-            }
+            $stmt->bindValue($key, $value);
         }
         
         if ($stmt->execute()) {
@@ -484,7 +308,7 @@ elseif ($method === 'DELETE') {
     try {
         $query = "DELETE FROM peticiones WHERE id = :id";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(':id', htmlspecialchars(strip_tags($data->id)));
+        $stmt->bindParam(':id', $data->id);
         
         if ($stmt->execute()) {
             http_response_code(200);

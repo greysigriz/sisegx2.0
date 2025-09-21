@@ -15,7 +15,7 @@
       </div>
       <div class="card-body">
         <p class="welcome-message">Administra las peticiones recibidas</p>
-        
+
         <!-- Filtros -->
         <div class="filtros-container">
           <div class="filtro">
@@ -69,7 +69,7 @@
             <input type="text" id="filtroNombre" v-model="filtros.nombre" placeholder="Buscar por nombre">
           </div>
         </div>
-        
+
         <!-- Tabla de peticiones -->
         <div class="peticiones-list">
           <div class="tabla-scroll-container">
@@ -85,34 +85,34 @@
                 <div>Prioridad/Semáforo</div>
                 <div>Fecha Registro</div>
               </div>
-              
+
               <div v-if="loading" class="loading-message">
                 <i class="fas fa-spinner fa-spin"></i> Cargando peticiones...
               </div>
-              
+
               <div v-else-if="peticionesFiltradas.length === 0" class="empty-message">
                 <i class="fas fa-inbox"></i> No se encontraron peticiones con los filtros aplicados
               </div>
-              
+
               <div v-else v-for="peticion in peticionesFiltradas" :key="peticion.id" class="peticion-item">
                 <div class="peticion-acciones">
-                  <button 
-                    :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]" 
-                    @click.stop="toggleAccionesMenu(peticion)" 
+                  <button
+                    :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
+                    @click.stop="toggleAccionesMenu(peticion)"
                     :title="peticionActiva === peticion.id ? 'Cerrar menú' : 'Mostrar acciones'"
                   >
                     <i class="fas fa-ellipsis-v"></i>
                   </button>
-                  
+
                   <!-- Overlay para cerrar el dropdown -->
-                  <div 
-                    v-if="peticionActiva === peticion.id" 
+                  <div
+                    v-if="peticionActiva === peticion.id"
                     class="dropdown-overlay"
                     @click="cerrarMenuAcciones"
                   ></div>
-                  
-                  <div 
-                    v-if="peticionActiva === peticion.id" 
+
+                  <div
+                    v-if="peticionActiva === peticion.id"
                     class="acciones-dropdown show"
                   >
                     <button class="dropdown-item" @click="editarPeticion(peticion); cerrarMenuAcciones()">
@@ -122,7 +122,7 @@
                       <i class="fas fa-tasks"></i> Cambiar Estado
                     </button>
                     <button class="dropdown-item" @click="seguimiento(peticion); cerrarMenuAcciones()">
-                      <i class="fas fa-clipboard-list"></i> 
+                      <i class="fas fa-clipboard-list"></i>
                       {{ esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento' }}
                     </button>
                     <button class="dropdown-item" @click="cambiarImportancia(peticion); cerrarMenuAcciones()">
@@ -133,38 +133,38 @@
                     </button>
                   </div>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="folio-badge">{{ peticion.folio }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="nombre-peticion">{{ peticion.nombre }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="telefono">{{ peticion.telefono }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="localidad">{{ peticion.localidad }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
                     {{ peticion.estado }}
                   </span>
                 </div>
-                
+
                 <div class="peticion-info departamentos-info">
                   <span class="departamentos-resumen">
                     {{ formatearDepartamentosResumen(peticion.departamentos) }}
                   </span>
                 </div>
-                
+
                 <div class="peticion-info prioridad-semaforo">
                   <div class="indicadores-container">
-                    <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`" 
+                    <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`"
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
                       {{ peticion.NivelImportancia }}
                     </div>
@@ -174,7 +174,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="fecha-registro">{{ formatearFecha(peticion.fecha_registro) }}</span>
                 </div>
@@ -184,7 +184,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para editar petición -->
     <div v-if="showEditModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -201,40 +201,40 @@
                 <label for="folio">Folio:</label>
                 <input type="text" id="folio" v-model="peticionForm.folio" required />
               </div>
-              
+
               <div class="form-group">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" v-model="peticionForm.nombre" required />
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
                 <label for="telefono">Teléfono:</label>
                 <input type="text" id="telefono" v-model="peticionForm.telefono" required />
               </div>
-              
+
               <div class="form-group">
                 <label for="localidad">Localidad:</label>
                 <input type="text" id="localidad" v-model="peticionForm.localidad" required />
               </div>
             </div>
-            
+
             <div class="form-group">
               <label for="direccion">Dirección:</label>
               <input type="text" id="direccion" v-model="peticionForm.direccion" required />
             </div>
-            
+
             <div class="form-group">
               <label for="descripcion">Descripción:</label>
               <textarea id="descripcion" v-model="peticionForm.descripcion" rows="4" required></textarea>
             </div>
-            
+
             <div class="form-group">
               <label for="red_social">Red Social:</label>
               <input type="text" id="red_social" v-model="peticionForm.red_social" />
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -247,7 +247,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para cambiar estado -->
     <div v-if="showEstadoModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -273,7 +273,7 @@
                 <option value="Esperando recepción">Esperando recepción</option>
               </select>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -286,7 +286,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para cambiar nivel de importancia -->
     <div v-if="showImportanciaModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -308,7 +308,7 @@
                 <option value="5">5 - Muy Baja</option>
               </select>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -321,7 +321,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para gestionar departamentos -->
     <div v-if="showDepartamentosModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content modal-departamentos">
@@ -335,19 +335,19 @@
           <div v-if="loadingDepartamentos" class="loading-message">
             <i class="fas fa-spinner fa-spin"></i> Cargando departamentos...
           </div>
-          
+
           <div v-else>
             <!-- Departamentos Asignados -->
             <div class="departamentos-section">
               <h4 class="departamentos-section-title">Departamentos Asignados</h4>
-              
+
               <div v-if="departamentosAsignados.length === 0" class="no-departamentos">
                 <i class="fas fa-info-circle"></i> No hay departamentos asignados
               </div>
-              
+
               <div v-else class="departamentos-asignados-list">
-                <div 
-                  v-for="depAsignado in departamentosAsignados" 
+                <div
+                  v-for="depAsignado in departamentosAsignados"
                   :key="depAsignado.id"
                   class="departamento-asignado-item"
                 >
@@ -355,10 +355,10 @@
                     <span class="departamento-nombre">{{ depAsignado.nombre_unidad }}</span>
                     <span class="departamento-siglas">{{ depAsignado.siglas || depAsignado.abreviatura }}</span>
                   </div>
-                  
+
                   <div class="departamento-estado">
-                    <select 
-                      :value="depAsignado.estado" 
+                    <select
+                      :value="depAsignado.estado"
                       @change="cambiarEstadoAsignacion(depAsignado.id, $event.target.value)"
                       class="estado-select"
                     >
@@ -368,10 +368,10 @@
                       <option value="Rechazado por departamento">Rechazado</option>
                     </select>
                   </div>
-                  
+
                   <div class="departamento-acciones">
-                    <button 
-                      class="btn-danger btn-sm" 
+                    <button
+                      class="btn-danger btn-sm"
                       @click="eliminarDepartamentoAsignado(depAsignado.id)"
                       title="Eliminar asignación"
                     >
@@ -381,26 +381,26 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Asignar Nuevos Departamentos -->
             <div class="departamentos-section">
               <h4 class="departamentos-section-title">Asignar Nuevos Departamentos</h4>
-              
+
               <div v-if="departamentosDisponibles.length === 0" class="no-departamentos">
                 <i class="fas fa-check-circle"></i> Todos los departamentos están asignados
               </div>
-              
+
               <div v-else class="asignar-departamentos-form">
                 <div class="departamentos-checkboxes">
-                  <div 
-                    v-for="departamento in departamentosDisponibles" 
+                  <div
+                    v-for="departamento in departamentosDisponibles"
                     :key="departamento.id"
                     class="departamento-checkbox"
                   >
                     <label class="checkbox-label">
-                      <input 
-                        type="checkbox" 
-                        :value="departamento.id" 
+                      <input
+                        type="checkbox"
+                        :value="departamento.id"
                         v-model="departamentosSeleccionados"
                         class="checkbox-input"
                       />
@@ -416,19 +416,19 @@
                 </div>
 
                 <div class="asignar-actions">
-                  <button 
+                  <button
                     @click="asignarDepartamentos"
                     :disabled="departamentosSeleccionados.length === 0"
                     class="btn-primary"
                   >
-                    <i class="fas fa-plus"></i> 
+                    <i class="fas fa-plus"></i>
                     Asignar Seleccionados ({{ departamentosSeleccionados.length }})
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <button type="button" class="btn-secondary" @click="cancelarAccion">
               <i class="fas fa-times"></i> Cerrar
@@ -444,7 +444,7 @@ import axios from 'axios';
 import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue';
 
 export default {
-  name: 'Peticiones',
+  name: 'GestionPeticiones',
   setup() {
     const loading = ref(true);
     const peticiones = ref([]);
@@ -456,13 +456,13 @@ export default {
     const showImportanciaModal = ref(false);
     const peticionActiva = ref(null);
     const usuarioLogueado = ref(null);
-    
+
     // Estado para gestión de departamentos
     const departamentosAsignados = ref([]);
     const departamentosDisponibles = ref([]);
     const departamentosSeleccionados = ref([]);
     const loadingDepartamentos = ref(false);
-    
+
     const peticionForm = reactive({
       id: null,
       folio: '',
@@ -475,7 +475,7 @@ export default {
       estado: '',
       NivelImportancia: 3
     });
-    
+
     const filtros = reactive({
       estado: '',
       departamento: '',
@@ -484,23 +484,23 @@ export default {
       nivelImportancia: '',
       usuario_seguimiento: ''
     });
-    
+
     const backendUrl = import.meta.env.VITE_API_URL;
-    
+
     // Función mejorada para obtener el usuario logueado
     const obtenerUsuarioLogueado = async () => {
       try {
         if (usuarioLogueado.value && usuarioLogueado.value.Id) {
           return usuarioLogueado.value.Id;
         }
-        
+
         const response = await axios.get(`${backendUrl}/check-session.php`);
-        
+
         if (response.data.success && response.data.user) {
           usuarioLogueado.value = response.data.user;
           return response.data.user.Id;
         }
-        
+
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         if (userData) {
           try {
@@ -511,12 +511,12 @@ export default {
             console.error('Error al parsear datos del usuario del almacenamiento local:', e);
           }
         }
-        
+
         console.warn('No se pudo obtener la información del usuario logueado');
         return null;
       } catch (error) {
         console.error('Error al obtener usuario logueado:', error);
-        
+
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         if (userData) {
           try {
@@ -527,63 +527,63 @@ export default {
             console.error('Error en fallback al almacenamiento local:', e);
           }
         }
-        
+
         return null;
       }
     };
-    
+
     const obtenerInfoUsuarioLogueado = () => {
       return usuarioLogueado.value;
     };
-    
+
     // Función mejorada para ordenar peticiones por prioridad
     const ordenarPeticionesPorPrioridad = (peticiones) => {
       return peticiones.sort((a, b) => {
         // Primero separamos por color de semáforo
         const colorA = obtenerColorSemaforo(a);
         const colorB = obtenerColorSemaforo(b);
-        
+
         // Si uno es verde y el otro no, el verde va al final
         if (colorA === 'verde' && colorB !== 'verde') return 1;
         if (colorB === 'verde' && colorA !== 'verde') return -1;
-        
+
         // Si ambos son verdes, ordenamos por fecha más reciente
         if (colorA === 'verde' && colorB === 'verde') {
           const fechaA = new Date(a.fecha_registro);
           const fechaB = new Date(b.fecha_registro);
           return fechaB - fechaA;
         }
-        
+
         // Para registros no verdes, aplicamos la lógica de prioridad
         // 1. Primero por nivel de importancia (1 es más importante que 4)
         const importanciaA = parseInt(a.NivelImportancia) || 3;
         const importanciaB = parseInt(b.NivelImportancia) || 3;
-        
+
         if (importanciaA !== importanciaB) {
           return importanciaA - importanciaB;
         }
-        
+
         // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
         const fechaA = new Date(a.fecha_registro);
         const fechaB = new Date(b.fecha_registro);
-        
+
         return fechaA - fechaB;
       });
     };
-    
+
     const cargarPeticiones = async () => {
       try {
         loading.value = true;
-        
+
         const response = await axios.get(`${backendUrl}/peticiones.php`);
         const peticionesRaw = response.data.records || [];
-        
+
         // Ordenamos las peticiones por prioridad
         peticiones.value = ordenarPeticionesPorPrioridad(peticionesRaw);
-        
+
         // Aplicamos filtros después de cargar
         aplicarFiltros();
-        
+
         loading.value = false;
       } catch (error) {
         console.error('Error al cargar peticiones:', error);
@@ -593,7 +593,7 @@ export default {
         }
       }
     };
-    
+
     const cargarDepartamentos = async () => {
       try {
         const response = await axios.get(`${backendUrl}/unidades.php?activos=true`);
@@ -605,21 +605,21 @@ export default {
         }
       }
     };
-    
+
     // Función para cargar departamentos asignados a una petición específica
     const cargarDepartamentosAsignados = async (peticionId) => {
       try {
         loadingDepartamentos.value = true;
         const response = await axios.get(`${backendUrl}/peticion_departamento.php?peticion_id=${peticionId}`);
-        
+
         if (response.data.success) {
           departamentosAsignados.value = response.data.departamentos || [];
-          
+
           // Filtrar departamentos disponibles (excluir los ya asignados)
           const idsAsignados = departamentosAsignados.value.map(d => d.departamento_id);
           departamentosDisponibles.value = departamentos.value.filter(d => !idsAsignados.includes(d.id));
         }
-        
+
         loadingDepartamentos.value = false;
       } catch (error) {
         console.error('Error al cargar departamentos asignados:', error);
@@ -629,7 +629,7 @@ export default {
         }
       }
     };
-    
+
     // Función para obtener departamentos de una petición (para mostrar en la tabla)
     const obtenerDepartamentosPeticion = async (peticionId) => {
       try {
@@ -643,48 +643,48 @@ export default {
         return [];
       }
     };
-    
+
     // Función para mostrar departamentos en formato resumido
     const formatearDepartamentosResumen = (departamentos) => {
       if (!departamentos || departamentos.length === 0) {
         return 'Sin asignar';
       }
-      
+
       if (departamentos.length === 1) {
         return departamentos[0].siglas || departamentos[0].abreviatura || departamentos[0].nombre_unidad;
       }
-      
+
       return `${departamentos.length} depts.`;
     };
-    
+
     const formatearFecha = (fechaStr) => {
       if (!fechaStr) return '';
-      
+
       const fecha = new Date(fechaStr);
       const dia = fecha.getDate().toString().padStart(2, '0');
       const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
       const anio = fecha.getFullYear();
       const hora = fecha.getHours().toString().padStart(2, '0');
       const minutos = fecha.getMinutes().toString().padStart(2, '0');
-      
+
       return `${dia}/${mes}/${anio} ${hora}:${minutos}`;
     };
-    
+
     const obtenerNombreDepartamento = (departamentoId) => {
       if (!departamentoId) return 'Sin asignar';
-      
+
       const departamento = departamentos.value.find(d => d.id === departamentoId);
       return departamento ? departamento.nombre_unidad : 'Sin asignar';
     };
-    
+
     const tieneUsuarioAsignado = (peticion) => {
       return peticion.usuario_id !== null && peticion.usuario_id !== undefined && peticion.usuario_id !== '' && peticion.usuario_id !== 0;
     };
-    
+
     const obtenerIconoSeguimiento = (peticion) => {
       return tieneUsuarioAsignado(peticion) ? 'fas fa-user-check' : 'fas fa-user-times';
     };
-    
+
     const obtenerTituloSeguimiento = (peticion) => {
       if (tieneUsuarioAsignado(peticion)) {
         const nombreUsuario = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario asignado';
@@ -692,30 +692,30 @@ export default {
       }
       return 'Sin usuario asignado para seguimiento';
     };
-    
+
     const obtenerClaseSeguimiento = (peticion) => {
       return tieneUsuarioAsignado(peticion) ? 'seguimiento-asignado text-success' : 'seguimiento-sin-asignar text-muted';
     };
-    
+
     const esUsuarioAsignado = (peticion) => {
       if (!usuarioLogueado.value || !tieneUsuarioAsignado(peticion)) {
         return false;
       }
       return peticion.usuario_id === usuarioLogueado.value.Id;
     };
-    
+
     const obtenerColorSemaforo = (peticion) => {
-      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento', 
+      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento',
                                   'Por asignar departamento', 'Esperando recepción'];
-      
+
       if (!estadosParaSemaforo.includes(peticion.estado)) {
         return 'verde';
       }
-      
+
       const fechaRegistro = new Date(peticion.fecha_registro);
       const ahora = new Date();
       const horasTranscurridas = (ahora - fechaRegistro) / (1000 * 60 * 60);
-      
+
       if (horasTranscurridas <= 24) return 'verde';
       if (horasTranscurridas <= 48) return 'amarillo';
       if (horasTranscurridas <= 72) return 'naranja';
@@ -723,110 +723,110 @@ export default {
     };
 
     const obtenerTituloSemaforo = (peticion) => {
-      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento', 
+      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento',
                                   'Por asignar departamento', 'Esperando recepción'];
-      
+
       if (!estadosParaSemaforo.includes(peticion.estado)) {
         return 'Petición procesada';
       }
-      
+
       const fechaRegistro = new Date(peticion.fecha_registro);
       const ahora = new Date();
       const horasTranscurridas = Math.floor((ahora - fechaRegistro) / (1000 * 60 * 60));
       const dias = Math.floor(horasTranscurridas / 24);
       const horasRestantes = horasTranscurridas % 24;
-      
+
       let mensaje = `Tiempo de espera: ${horasTranscurridas} horas`;
       if (dias > 0) {
         mensaje = `Tiempo de espera: ${dias} día${dias !== 1 ? 's' : ''} y ${horasRestantes} hora${horasRestantes !== 1 ? 's' : ''}`;
       }
-      
+
       if (horasTranscurridas <= 24) return `${mensaje} (Normal)`;
       if (horasTranscurridas <= 48) return `${mensaje} (Atención recomendable)`;
       if (horasTranscurridas <= 72) return `${mensaje} (Atención prioritaria)`;
       return `${mensaje} (¡ATENCIÓN URGENTE!)`;
     };
-    
+
     // Función mejorada de aplicarFiltros
     const aplicarFiltros = () => {
       let peticionesFiltradas_temp = [...peticiones.value];
-      
+
       // Aplicar filtros
       peticionesFiltradas_temp = peticionesFiltradas_temp.filter(peticion => {
         // Filtrar por estado
         if (filtros.estado && peticion.estado !== filtros.estado) {
           return false;
         }
-        
+
         // Filtrar por nivel de importancia
-        if (filtros.nivelImportancia && 
+        if (filtros.nivelImportancia &&
             peticion.NivelImportancia !== parseInt(filtros.nivelImportancia)) {
           return false;
         }
-        
+
         // Filtrar por usuario de seguimiento
-        if (filtros.usuario_seguimiento && 
+        if (filtros.usuario_seguimiento &&
             peticion.usuario_id !== parseInt(filtros.usuario_seguimiento)) {
           return false;
         }
-        
+
         // Filtrar por folio
-        if (filtros.folio && 
+        if (filtros.folio &&
             !peticion.folio.toLowerCase().includes(filtros.folio.toLowerCase())) {
           return false;
         }
-        
+
         // Filtrar por nombre
-        if (filtros.nombre && 
+        if (filtros.nombre &&
             !peticion.nombre.toLowerCase().includes(filtros.nombre.toLowerCase())) {
           return false;
         }
-        
+
         return true;
       });
-      
+
       // Aplicamos el ordenamiento a los resultados filtrados
       peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
     };
-    
+
     // Watchers para los filtros
     watch(() => filtros.estado, () => {
       aplicarFiltros();
     });
-    
+
     watch(() => filtros.nivelImportancia, () => {
       aplicarFiltros();
     });
-    
+
     watch(() => filtros.usuario_seguimiento, () => {
       aplicarFiltros();
     });
-    
+
     watch(() => filtros.folio, () => {
       aplicarFiltros();
     });
-    
+
     watch(() => filtros.nombre, () => {
       aplicarFiltros();
     });
-    
+
     const editarPeticion = (peticion) => {
       Object.assign(peticionForm, peticion);
       showEditModal.value = true;
     };
-    
+
     const cambiarEstado = (peticion) => {
       peticionForm.id = peticion.id;
       peticionForm.estado = peticion.estado;
       showEstadoModal.value = true;
     };
-    
+
     const cambiarImportancia = (peticion) => {
       peticionForm.id = peticion.id;
       peticionForm.NivelImportancia = peticion.NivelImportancia || 3;
       showImportanciaModal.value = true;
     };
-    
+
     // Nueva función para gestionar departamentos
     const gestionarDepartamentos = async (peticion) => {
       peticionForm.id = peticion.id;
@@ -834,7 +834,7 @@ export default {
       await cargarDepartamentosAsignados(peticion.id);
       showDepartamentosModal.value = true;
     };
-    
+
     // Función para asignar departamentos seleccionados
     const asignarDepartamentos = async () => {
       if (departamentosSeleccionados.value.length === 0) {
@@ -843,31 +843,31 @@ export default {
         }
         return;
       }
-      
+
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.post(`${backendUrl}/peticion_departamento.php`, {
           accion: 'asignar_departamentos',
           peticion_id: peticionForm.id,
           departamentos: departamentosSeleccionados.value
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success(response.data.message);
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
           departamentosSeleccionados.value = [];
-          
+
           // Recargar peticiones para actualizar estados
           await cargarPeticiones();
         }
-        
+
       } catch (error) {
         console.error('Error al asignar departamentos:', error);
         if (window.$toast) {
@@ -883,34 +883,34 @@ export default {
         }
       }
     };
-    
+
     // Función para eliminar departamento asignado
     const eliminarDepartamentoAsignado = async (asignacionId) => {
       if (!confirm('¿Está seguro de que desea eliminar esta asignación de departamento?')) {
         return;
       }
-      
+
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.delete(`${backendUrl}/peticion_departamento.php`, {
           data: { id: asignacionId }
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success('Asignación eliminada correctamente');
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
-          
+
           // Recargar peticiones para actualizar estados
           await cargarPeticiones();
         }
-        
+
       } catch (error) {
         console.error('Error al eliminar asignación:', error);
         if (window.$toast) {
@@ -922,28 +922,28 @@ export default {
         }
       }
     };
-    
+
     // Función para cambiar estado de asignación
     const cambiarEstadoAsignacion = async (asignacionId, nuevoEstado) => {
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.put(`${backendUrl}/peticion_departamento.php`, {
           id: asignacionId,
           estado: nuevoEstado
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success('Estado actualizado correctamente');
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
         }
-        
+
       } catch (error) {
         console.error('Error al cambiar estado:', error);
         if (window.$toast) {
@@ -955,11 +955,11 @@ export default {
         }
       }
     };
-    
+
     const seguimiento = async (peticion) => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
-        
+
         if (!usuarioId) {
           if (window.$toast) {
             window.$toast.error('No se pudo obtener la información del usuario logueado. Por favor, inicie sesión nuevamente.');
@@ -967,7 +967,7 @@ export default {
           console.error('No se pudo obtener el ID del usuario logueado');
           return;
         }
-        
+
         if (tieneUsuarioAsignado(peticion)) {
           if (peticion.usuario_id === usuarioId) {
             if (window.$toast) {
@@ -975,40 +975,40 @@ export default {
             }
             return;
           }
-          
+
           const nombreUsuarioAsignado = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario desconocido';
           const confirmar = confirm(`Esta petición ya está asignada a: ${nombreUsuarioAsignado}.\n¿Desea reasignarla a su usuario?`);
           if (!confirmar) {
             return;
           }
         }
-        
+
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const datosFollowup = {
           accion: 'seguimiento',
           peticion_id: peticion.id,
           usuario_id: usuarioId
         };
-        
+
         const response = await axios.post(`${backendUrl}/peticiones.php`, datosFollowup);
-        
+
         if (response.status === 200) {
           const nombreCompleto = response.data.nombre_completo || response.data.usuario_asignado || usuarioLogueado.value?.Nombre || 'Usuario';
-          
+
           if (window.$toast) {
             window.$toast.success(`Seguimiento asignado correctamente a ${nombreCompleto}`);
           }
-          
+
           await cargarPeticiones();
           peticionActiva.value = null;
         }
-        
+
       } catch (error) {
         console.error('Error al asignar seguimiento:', error);
-        
+
         let mensajeError = 'Error al asignar seguimiento';
         if (error.response) {
           if (error.response.status === 404) {
@@ -1017,7 +1017,7 @@ export default {
             mensajeError = error.response.data.message;
           }
         }
-        
+
         if (window.$toast) {
           window.$toast.error(mensajeError);
         }
@@ -1027,15 +1027,15 @@ export default {
         }
       }
     };
-    
+
     const guardarPeticion = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, peticionForm);
-        
+
         if (window.$toast) {
           window.$toast.success('Petición actualizada correctamente');
         }
-        
+
         showEditModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1045,18 +1045,18 @@ export default {
         }
       }
     };
-    
+
     const guardarEstado = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, {
           id: peticionForm.id,
           estado: peticionForm.estado
         });
-        
+
         if (window.$toast) {
           window.$toast.success('Estado actualizado correctamente');
         }
-        
+
         showEstadoModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1066,18 +1066,18 @@ export default {
         }
       }
     };
-    
+
     const guardarImportancia = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, {
           id: peticionForm.id,
           NivelImportancia: parseInt(peticionForm.NivelImportancia)
         });
-        
+
         if (window.$toast) {
           window.$toast.success('Nivel de importancia actualizado correctamente');
         }
-        
+
         showImportanciaModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1098,7 +1098,7 @@ export default {
       };
       return etiquetas[nivel] || 'No definida';
     };
-    
+
     const toggleAccionesMenu = (peticion) => {
       if (peticionActiva.value === peticion.id) {
         peticionActiva.value = null;
@@ -1106,27 +1106,27 @@ export default {
         peticionActiva.value = peticion.id;
       }
     };
-    
+
     const cerrarMenuAcciones = () => {
       peticionActiva.value = null;
     };
-    
+
     const cerrarMenusAcciones = (event) => {
-      if (event.target.closest('.acciones-dropdown') || 
+      if (event.target.closest('.acciones-dropdown') ||
           event.target.closest('.action-btn.menu')) {
         return;
       }
-      
+
       peticionActiva.value = null;
     };
-    
+
     const cancelarAccion = () => {
       showEditModal.value = false;
       showEstadoModal.value = false;
       showDepartamentosModal.value = false;
       showImportanciaModal.value = false;
     };
-    
+
     const filtrarMisPeticiones = async () => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
@@ -1137,27 +1137,27 @@ export default {
         console.error('Error al filtrar mis peticiones:', error);
       }
     };
-    
+
     const limpiarFiltros = () => {
       Object.keys(filtros).forEach(key => {
         filtros[key] = '';
       });
     };
-    
+
     onMounted(async () => {
       await obtenerUsuarioLogueado();
       await Promise.all([
         cargarPeticiones(),
         cargarDepartamentos()
       ]);
-      
+
       document.addEventListener('click', cerrarMenusAcciones);
     });
-    
+
     onBeforeUnmount(() => {
       document.removeEventListener('click', cerrarMenusAcciones);
     });
-    
+
     return {
       loading,
       peticiones,
@@ -1175,7 +1175,7 @@ export default {
       departamentosDisponibles,
       departamentosSeleccionados,
       loadingDepartamentos,
-      
+
       cargarPeticiones,
       cargarDepartamentos,
       formatearFecha,
@@ -1193,7 +1193,7 @@ export default {
       cambiarEstadoAsignacion,
       obtenerDepartamentosPeticion,
       formatearDepartamentosResumen,
-      
+
       guardarPeticion,
       guardarEstado,
       guardarImportancia,

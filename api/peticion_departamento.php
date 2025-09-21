@@ -1,5 +1,5 @@
 <?php
-// C:\xampp\htdocs\SISE\api\peticion-departamento.php
+// C:\xampp\htdocs\SISEE\api\peticion-departamento.php
 
 // CORS headers - DEBEN IR ANTES DE CUALQUIER OTRA SALIDA
 require_once __DIR__ . '/cors.php';

@@ -96,6 +96,12 @@ body {
   position: relative;
 }
 
+.content-container {
+    margin-top: 15px;
+}
+
+
+
 /* Formulario */
 .form-container {
   background: var(--white);
@@ -108,7 +114,7 @@ body {
 .form-container h2 {
   font-size: 1.75rem;
   font-weight: 600;
-  color: var(--primary-blue);
+  color: white;
   margin-bottom: 0.5rem;
 }
 
@@ -281,6 +287,7 @@ body {
   background: var(--accent-blue);
   color: white;
   margin-top: 1rem;
+  margin-right: 15px;
 }
 
 .classify-button:hover:not(:disabled),
@@ -289,12 +296,13 @@ body {
 }
 
 .new-petition-btn {
-  background: var(--success);
+  background: #0055ff;
   color: white;
+  margin-right: 15px;
 }
 
 .new-petition-btn:hover {
-  background: #047857;
+  background: #007acc;
 }
 
 /* Acciones del formulario */
@@ -385,11 +393,11 @@ body {
 
 /* Mensajes */
 .success-message {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  background: linear-gradient(135deg, #0a6abe 0%, #4889f2 100%);
   color: white;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
+  box-shadow: 0 10px 30px rgba(46, 143, 204, 0.3);
   text-align: center;
   margin: 20px 0;
   animation: successSlideIn 0.6s ease-out;
@@ -561,33 +569,33 @@ body {
     gap: 2rem;
     padding: 1rem;
   }
-  
+
   .form-container {
     padding: 1.5rem;
   }
-  
+
   .hero-content h1 {
     font-size: 2rem;
   }
-  
+
   .hero-content p {
     font-size: 1.125rem;
   }
-  
+
   .hero-banner {
     padding: 3rem 1rem;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .classification-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .info-card {
     padding: 1.5rem;
   }
@@ -597,19 +605,19 @@ body {
   .hero-content h1 {
     font-size: 1.75rem;
   }
-  
+
   .hero-content p {
     font-size: 1rem;
   }
-  
+
   .form-container {
     padding: 1rem;
   }
-  
+
   .classification-section {
     padding: 1rem;
   }
-  
+
   .classification-info {
     padding: 1rem;
   }

@@ -3,8 +3,8 @@ import axios from 'axios';
 
 // Configurar Axios para enviar cookies con todas las peticiones
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost/SISE/api/';
-axios.defaults.timeout = 15000; // 15 segundos de timeout
+axios.defaults.baseURL = 'http://localhost/SISEE/api/';
+axios.defaults.timeout = 30000; // 15 segundos de timeout
 
 // Variables para evitar múltiples redirects y requests
 let isRedirecting = false;
@@ -20,7 +20,7 @@ const processQueue = (error, token = null) => {
       resolve(token);
     }
   });
-  
+
   failedQueue = [];
 };
 
@@ -34,19 +34,19 @@ axios.interceptors.request.use(
         _t: Date.now()
       };
     }
-    
+
     // ✅ AGREGAR headers de autenticación si existen
     const token = localStorage.getItem('authToken');
     if (token) {
       // Usar el nombre correcto del header (minúsculas con guiones)
       config.headers['X-Auth-Token'] = token;
     }
-    
+
     // ✅ Asegurar que Content-Type esté configurado para requests POST/PUT
     if (['post', 'put', 'patch'].includes(config.method) && !config.headers['Content-Type']) {
       config.headers['Content-Type'] = 'application/json';
     }
-    
+
     return config;
   },
   (error) => {
@@ -61,9 +61,9 @@ axios.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     console.error('Axios Error:', error);
-    
+
     // Manejar errores de autenticación
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -93,26 +93,26 @@ axios.interceptors.response.use(
         isRefreshing = false;
       }
     }
-    
+
     // Manejar errores de conexión y timeout
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
       console.error('Timeout de conexión');
       showNetworkError('Timeout de conexión. Por favor, intente nuevamente.');
       return Promise.reject(error);
     }
-    
+
     // Manejar errores de red
     if (!error.response) {
       console.error('Error de red');
       showNetworkError('Error de conexión con el servidor. Verifique su conexión a internet.');
       return Promise.reject(error);
     }
-    
+
     // Manejar errores del servidor
     if (error.response?.status >= 500) {
       showNetworkError('Error del servidor. Por favor, intente más tarde.');
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -120,20 +120,20 @@ axios.interceptors.response.use(
 // Función mejorada para manejar errores de autenticación
 async function handleAuthError() {
   if (isRedirecting) return;
-  
+
   isRedirecting = true;
-  
+
   try {
     // Limpiar datos locales
     const keysToRemove = ['user', 'authToken', 'loginTime', 'lastActivity'];
     keysToRemove.forEach(key => {
       localStorage.removeItem(key);
     });
-    
+
     // Mostrar mensaje de sesión expirada solo si no estamos en login
     if (!window.location.pathname.includes('/login')) {
       showSessionExpiredMessage();
-      
+
       // Redirigir al login después de un breve delay
       setTimeout(() => {
         if (!window.location.pathname.includes('/login')) {
@@ -154,7 +154,7 @@ async function handleAuthError() {
 function showSessionExpiredMessage() {
   // Evitar múltiples notificaciones
   if (document.querySelector('.session-expired-notification')) return;
-  
+
   const notification = document.createElement('div');
   notification.className = 'session-expired-notification';
   notification.style.cssText = `
@@ -172,7 +172,7 @@ function showSessionExpiredMessage() {
     max-width: 300px;
     animation: slideInRight 0.3s ease-out;
   `;
-  
+
   // Agregar animación CSS
   if (!document.querySelector('#notification-styles')) {
     const style = document.createElement('style');
@@ -189,16 +189,16 @@ function showSessionExpiredMessage() {
     `;
     document.head.appendChild(style);
   }
-  
+
   notification.innerHTML = `
     <div style="display: flex; align-items: center;">
       <div style="margin-right: 10px;">⚠️</div>
       <div>Su sesión ha expirado. Redirigiendo al login...</div>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Remover después de 3 segundos
   setTimeout(() => {
     if (notification.parentNode) {
@@ -216,7 +216,7 @@ function showSessionExpiredMessage() {
 function showNetworkError(message) {
   // Evitar múltiples notificaciones del mismo tipo
   if (document.querySelector('.network-error-notification')) return;
-  
+
   const notification = document.createElement('div');
   notification.className = 'network-error-notification';
   notification.style.cssText = `
@@ -234,16 +234,16 @@ function showNetworkError(message) {
     max-width: 300px;
     animation: slideInRight 0.3s ease-out;
   `;
-  
+
   notification.innerHTML = `
     <div style="display: flex; align-items: center;">
       <div style="margin-right: 10px;">🌐</div>
       <div>${message}</div>
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Remover después de 4 segundos
   setTimeout(() => {
     if (notification.parentNode) {
