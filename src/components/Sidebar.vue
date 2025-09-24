@@ -5,7 +5,7 @@
         <h1 class="logo" :class="{ 'fade-scale': !isCollapsed }">{{ isCollapsed ? '' : 'SISEGX' }}</h1>
         <p class="tagline" v-if="!isCollapsed" :class="{ 'fade-in': !isCollapsed }">Sistema de Trámites</p>
       </div>
-      
+
       <div class="user-info" :class="{ 'collapsed': isCollapsed }">
         <div class="avatar" :class="{ 'pulse': !isCollapsed }">{{ userInitial }}</div>
         <div class="user-details slide-fade" v-if="!isCollapsed">
@@ -13,12 +13,12 @@
           <p class="user-role">{{ userRole }}</p>
         </div>
       </div>
-      
+
       <nav class="navigation">
         <ul v-if="userReady">
-          <li v-for="(item, index) in filteredMenuItems" 
-              :key="`menu-${item.name}-${index}`" 
-              :class="{ active: isActive(item.path) }" 
+          <li v-for="(item, index) in filteredMenuItems"
+              :key="`menu-${item.name}-${index}`"
+              :class="{ active: isActive(item.path) }"
               @click="navigateTo(item.path)"
               :style="{ transitionDelay: !isCollapsed ? `${index * 50}ms` : '0ms' }">
             <i :class="[item.icon, isCollapsed ? 'icon-centered' : '']"></i>
@@ -26,15 +26,15 @@
           </li>
         </ul>
       </nav>
-      
+
       <div class="logout-container slide-up" v-if="!isCollapsed">
         <button class="logout-button" @click="handleLogout" :disabled="isLoggingOut">
-          <i class="fas fa-sign-out-alt"></i> 
+          <i class="fas fa-sign-out-alt"></i>
           {{ isLoggingOut ? 'Cerrando...' : 'Cerrar sesión' }}
         </button>
       </div>
     </aside>
-    
+
     <button class="toggle-button" @click="toggleSidebar" :class="{ 'rotate': isCollapsed }">
       <i :class="isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
     </button>
@@ -46,7 +46,7 @@ import { useRouter } from 'vue-router'
 import authService from '@/services/auth.js'
 
 export default {
-  name: 'Sidebar',
+  name: 'AppSidebar',
   setup() {
     const router = useRouter()
     return { router }
@@ -76,44 +76,44 @@ export default {
   computed: {
     userInitial() {
       if (!this.currentUser || !this.currentUser.usuario) return 'U';
-      
+
       const usuario = this.currentUser.usuario;
       if (usuario.Nombre && typeof usuario.Nombre === 'string') {
         return usuario.Nombre.charAt(0).toUpperCase();
       }
-      
+
       if (usuario.Usuario && typeof usuario.Usuario === 'string') {
         return usuario.Usuario.charAt(0).toUpperCase();
       }
-      
+
       return 'U';
     },
     userName() {
       if (!this.currentUser || !this.currentUser.usuario) return 'Cargando...';
-      
+
       const usuario = this.currentUser.usuario;
-      
+
       if (usuario.Nombre && typeof usuario.Nombre === 'string') {
         const apellido = usuario.ApellidoP || '';
         return `${usuario.Nombre} ${apellido}`.trim();
       }
-      
+
       if (usuario.Usuario && typeof usuario.Usuario === 'string') {
         return usuario.Usuario;
       }
-      
+
       return 'Usuario';
     },
     userRole() {
       if (!this.currentUser || !this.currentUser.rol) return 'Usuario';
-      
+
       return this.currentUser.rol.nombre || 'Usuario';
     },
     filteredMenuItems() {
       if (!this.currentUser || !Array.isArray(this.currentUser.permisos)) {
         return [];
       }
-      
+
       // Filtrar elementos del menú según los permisos del usuario
       return this.allMenuItems.filter(item => {
         return this.currentUser.permisos.includes(item.requiredPermission);
@@ -137,10 +137,10 @@ export default {
     async initializeComponent() {
       try {
         this.isInitialized = true;
-        
+
         // Cargar datos del usuario
         await this.loadUserData();
-        
+
         // Verificar si hay una preferencia guardada para el estado del sidebar
         const savedState = localStorage.getItem('sidebarCollapsed');
         if (savedState !== null) {
@@ -149,20 +149,20 @@ export default {
 
         // Verificar autenticación periódicamente
         this.startPeriodicAuthCheck();
-        
+
       } catch (error) {
         console.error('Error al inicializar componente:', error);
         this.handleInitializationError(error);
       }
     },
-    
+
     handleInitializationError(error) {
       // Si hay error de autenticación, redirigir al login
       if (error.message && error.message.includes('auth')) {
         this.router.push('/login');
         return;
       }
-      
+
       // Para otros errores, intentar recuperar
       console.warn('Error en inicialización, intentando recuperar...');
       setTimeout(() => {
@@ -174,7 +174,7 @@ export default {
       if (!this.$route || !this.$route.path) return false;
       return this.$route.path === path;
     },
-    
+
     async navigateTo(path) {
       try {
         // Verificar autenticación antes de navegar
@@ -182,20 +182,20 @@ export default {
           this.router.push('/login');
           return;
         }
-        
+
         // Evitar navegación innecesaria a la misma ruta
         if (this.$route.path === path) {
           return;
         }
-        
+
         // Forzar navegación usando replace y luego push
         await this.$router.replace({ path: '/' });
         await this.$nextTick();
         await this.$router.push(path);
-        
+
       } catch (error) {
         console.error('Error en navegación:', error);
-        
+
         // Fallback: navegación directa
         try {
           await this.$router.push(path);
@@ -206,7 +206,7 @@ export default {
         }
       }
     },
-    
+
 async loadUserData() {
   if (this.isLoadingUser) return;
 
@@ -252,7 +252,7 @@ async loadUserData() {
 },
 
 
-    
+
     async backgroundSync() {
       try {
         const freshUserData = await authService.syncUserData();
@@ -264,22 +264,22 @@ async loadUserData() {
         // No hacer nada crítico, solo log
       }
     },
-    
+
     async handleUserDataError(error) {
       // Implementar retry logic
       if (this.retryCount < this.maxRetries) {
         this.retryCount++;
         console.log(`Reintentando carga de usuario (${this.retryCount}/${this.maxRetries})`);
-        
+
         const retryDelay = 1000 * Math.pow(2, this.retryCount); // Backoff exponencial
         setTimeout(() => {
           this.loadUserData();
         }, retryDelay);
-        
+
       } else {
         // Si no hay datos válidos después de varios intentos
         console.error('No se pudo cargar datos del usuario después de varios intentos');
-        
+
         if (error.message && error.message.includes('auth')) {
           this.showErrorMessage('Error de autenticación. Redirigiendo al login...');
           setTimeout(() => {
@@ -290,12 +290,12 @@ async loadUserData() {
         }
       }
     },
-    
+
     async handleLogout() {
       if (this.isLoggingOut) return;
-      
+
       this.isLoggingOut = true;
-      
+
       try {
         // Confirmar logout
         const confirmLogout = confirm('¿Está seguro que desea cerrar sesión?');
@@ -306,40 +306,40 @@ async loadUserData() {
 
         // Limpiar intervals
         this.cleanup();
-        
+
         // Mostrar mensaje de despedida
         this.showSuccessMessage('Cerrando sesión...');
-        
+
         // Realizar logout
         await authService.logout();
-        
+
         // Limpiar datos locales del componente
         this.currentUser = null;
-        
+
         // Pequeño delay para mejor UX
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         // Redirigir al login
         this.router.push('/login');
-        
+
       } catch (error) {
         console.error('Error al cerrar sesión:', error);
-        
+
         // Incluso si hay error en el servidor, limpiar localmente y redirigir
         this.currentUser = null;
         authService.clearAllData();
-        
+
         this.showErrorMessage('Error al cerrar sesión, pero se limpiaron los datos locales.');
-        
+
         setTimeout(() => {
           this.router.push('/login');
         }, 1500);
-        
+
       } finally {
         this.isLoggingOut = false;
       }
     },
-    
+
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed;
       // Guardar la preferencia del usuario solo si hay una sesión válida
@@ -347,13 +347,13 @@ async loadUserData() {
         localStorage.setItem('sidebarCollapsed', this.isCollapsed);
       }
     },
-    
+
     startPeriodicAuthCheck() {
       // Limpiar interval anterior si existe
       if (this.authCheckInterval) {
         clearInterval(this.authCheckInterval);
       }
-      
+
       // Verificar autenticación cada 2 minutos
       this.authCheckInterval = setInterval(async () => {
         if (!authService.isAuthenticated()) {
@@ -368,30 +368,30 @@ async loadUserData() {
         }
       }, 2 * 60 * 1000);
     },
-    
+
     cleanup() {
       if (this.authCheckInterval) {
         clearInterval(this.authCheckInterval);
         this.authCheckInterval = null;
       }
     },
-    
+
     showSuccessMessage(message) {
       this.showMessage(message, 'success');
     },
-    
+
     showErrorMessage(message) {
       this.showMessage(message, 'error');
     },
-    
+
     showMessage(message, type = 'info') {
       // Evitar múltiples notificaciones del mismo tipo
       const existingNotification = document.querySelector(`.${type}-notification`);
       if (existingNotification) return;
-      
+
       const notification = document.createElement('div');
       const bgColor = type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3';
-      
+
       notification.className = `${type}-notification`;
       notification.style.cssText = `
         position: fixed;
@@ -408,10 +408,10 @@ async loadUserData() {
         max-width: 300px;
         animation: slideIn 0.3s ease-out;
       `;
-      
+
       notification.textContent = message;
       document.body.appendChild(notification);
-      
+
       // Remover después de 3 segundos
       setTimeout(() => {
         if (notification.parentNode) {
@@ -449,9 +449,9 @@ async loadUserData() {
   height: 60px;
   width: 70%;
   padding: 0 1rem;
-  background: rgba(70, 130, 180, 0.2);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgb(4, 106, 189);
+  /* backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   margin: 0 auto;
@@ -483,24 +483,25 @@ async loadUserData() {
   height: 100%;
   display: flex;
   cursor: pointer;
-  color: var(--secondary-color);
+  color: white; /* ✅ Cambiado a blanco */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .navigation li:hover {
-  background-color: rgba(22, 48, 177, 0.1);
-  color: var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.2); /* ✅ Hover con blanco transparente */
+  color: white; /* ✅ Mantener blanco en hover */
 }
 
 .navigation li.active {
-  background-color: rgba(22, 48, 177, 0.1);
-  color: var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.3); /* ✅ Active con blanco transparente */
+  color: white; /* ✅ Mantener blanco cuando está activo */
   font-weight: 500;
 }
 
 .navigation li i {
   margin: 0;
   font-size: 18px;
+  color: white; /* ✅ Iconos específicamente en blanco */
 }
 
 .menu-text {
@@ -518,21 +519,29 @@ async loadUserData() {
 .logout-button {
   background: none;
   border: none;
-  color: var(--secondary-color);
+  color: white; /* ✅ Botón logout en blanco */
   font-size: 18px;
   cursor: pointer;
   padding: 0 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: all 0.3s ease; /* ✅ Transición suave */
 }
 
 .logout-button i {
   font-size: 18px;
+  color: white; /* ✅ Icono logout específicamente en blanco */
 }
 
 .logout-button:hover {
-  color: var(--primary-color);
+  color: rgba(255, 255, 255, 0.8); /* ✅ Hover con blanco ligeramente transparente */
+  background-color: rgba(255, 255, 255, 0.1); /* ✅ Fondo sutil en hover */
+  border-radius: 4px;
+}
+
+.logout-button:hover i {
+  color: rgba(255, 255, 255, 0.8); /* ✅ Icono en hover */
 }
 
 /* Ocultar otros elementos no necesarios */
@@ -540,5 +549,16 @@ async loadUserData() {
 .user-info,
 .toggle-button {
   display: none;
+}
+
+/* ✅ Asegurar que todos los iconos sean blancos */
+.sidebar i {
+  color: white !important;
+}
+
+/* ✅ Estados de hover y active más consistentes */
+.navigation li:hover i,
+.navigation li.active i {
+  color: white !important;
 }
 </style>

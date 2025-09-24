@@ -1,0 +1,1410 @@
+/* ESTILOS FIJOS PARA BOTÓN DE ACCIONES - ALTA ESPECIFICIDAD */
+.peticion-acciones .action-btn.menu {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background-color: #518dce !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  z-index: 1 !important;
+  /* Sin transiciones para evitar animaciones */
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.peticion-acciones .action-btn.menu:hover {
+  background-color: #043c74 !important;
+  color: #ffffff !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+.peticion-acciones .action-btn.menu.active {
+  background-color: #013c7c !important;
+  color: white !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+.peticion-acciones .action-btn.menu i {
+  font-size: 14px !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Contenedor de acciones con posición relativa */
+.peticion-acciones {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 50px !important;
+}
+
+/* Dropdown de acciones - alta especificidad */
+.peticion-acciones .acciones-dropdown {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  background: white !important;
+  border: 1px solid #dee2e6 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 1000 !important;
+  min-width: 200px !important;
+  padding: 8px 0 !important;
+  margin-top: 4px !important;
+  display: none !important;
+  /* Sin animaciones */
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.peticion-acciones .acciones-dropdown.show {
+  display: block !important;
+}
+
+.peticion-acciones .dropdown-item {
+  width: 100% !important;
+  padding: 10px 16px !important;
+  background: none !important;
+  border: none !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  color: #495057 !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+.peticion-acciones .dropdown-item:hover {
+  background-color: #f8f9fa !important;
+  color: #007bff !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+.peticion-acciones .dropdown-item i {
+  width: 16px !important;
+  text-align: center !important;
+  /* Sin transiciones */
+  transition: none !important;
+  transform: none !important;
+}
+
+/* Overlay para cerrar dropdown */
+.peticion-acciones .dropdown-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999 !important;
+  background: transparent !important;
+  cursor: default !important;
+}
+
+/* Asegurar que el contenedor de la petición no interfiera */
+.peticion-item {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Cuando hay dropdown activo, aumentar z-index del contenedor */
+.peticion-item:has(.acciones-dropdown.show) {
+  z-index: 1001 !important;
+}
+
+/* Fallback para navegadores sin soporte :has() */
+.peticion-acciones:has(.acciones-dropdown.show) {
+  z-index: 1001 !important;
+}
+
+.peticion-acciones .acciones-dropdown.show ~ * {
+  z-index: auto !important;
+}
+/* --------------------------------------------------------------------------------------- */
+ * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        /* Contenedor principal */
+        .peticiones-container {
+            margin: 2rem auto;
+            padding: 1.5rem;
+            width: 95%;
+            max-width: 1600px;
+        }
+
+        .card {
+            background: #ffffff;
+            color: black;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0, 74, 217, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #0074D9, #0056b3);
+            color: white;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-filter, .btn-clear {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-filter:hover, .btn-clear:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .welcome-message {
+            font-size: 16px;
+            font-weight: 500;
+            color: #0074D9;
+            margin-bottom: 1rem;
+        }
+
+        /* Filtros */
+        .filtros-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(0, 116, 217, 0.05), rgba(0, 86, 179, 0.08));
+            border-radius: 12px;
+            border: 1px solid rgba(0, 116, 217, 0.1);
+        }
+
+        .filtro label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .filtro input, .filtro select {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid #0074D9;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+
+        .filtro input:focus, .filtro select:focus {
+            outline: none;
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
+        }
+
+        /* TABLA CON SCROLL HORIZONTAL MEJORADO */
+        .peticiones-list {
+            margin-top: 1.5rem;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 116, 217, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tabla-scroll-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            position: relative;
+            /* Scrollbar personalizado */
+            scrollbar-width: thin;
+            scrollbar-color: #0074D9 #f1f3f4;
+        }
+
+        .tabla-scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .tabla-scroll-container::-webkit-scrollbar-track {
+            background: #f1f3f4;
+            border-radius: 4px;
+        }
+
+        .tabla-scroll-container::-webkit-scrollbar-thumb {
+            background: #0074D9;
+            border-radius: 4px;
+        }
+
+        .tabla-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #0056b3;
+        }
+
+        .tabla-contenido {
+            min-width: 1200px; /* Ancho mínimo para evitar compresión */
+            width: 100%;
+        }
+
+        /* HEADER FIJO QUE CUBRE TODO EL ANCHO */
+        .list-header {
+            display: grid;
+            grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
+            background: linear-gradient(135deg, #0074D9, #0056b3);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            /* ASEGURAR QUE CUBRA TODO EL ANCHO */
+            width: 100%;
+            min-width: 1200px;
+        }
+
+        .peticion-item {
+            display: grid;
+            grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 116, 217, 0.1);
+            transition: background-color 0.3s ease;
+            background: white;
+            position: relative;
+            min-height: 70px;
+            align-items: center;
+        }
+
+        .peticion-item:hover {
+            background: linear-gradient(135deg, rgba(0, 116, 217, 0.03), rgba(0, 86, 179, 0.05));
+        }
+
+        .peticion-item:last-child {
+            border-bottom: none;
+        }
+
+        .peticion-info {
+            display: flex;
+            align-items: center;
+            min-height: 40px;
+            padding: 0.25rem;
+            word-break: break-word;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* INDICADORES HORIZONTALES MEJORADOS */
+        .indicadores-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            min-width: 160px;
+        }
+
+        .nivel-importancia {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            cursor: help;
+            flex-shrink: 0;
+        }
+
+        .nivel-importancia:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .nivel-importancia.nivel-1 {
+            background: linear-gradient(135deg, #FF4136, #e74c3c);
+        }
+
+        .nivel-importancia.nivel-2 {
+            background: linear-gradient(135deg, #FF851B, #e67600);
+        }
+
+        .nivel-importancia.nivel-3 {
+            background: linear-gradient(135deg, #FFDC00, #f1c40f);
+            color: #333;
+        }
+
+        .nivel-importancia.nivel-4 {
+            background: linear-gradient(135deg, #2ECC40, #27ae60);
+        }
+
+        .nivel-importancia.nivel-5 {
+            background: linear-gradient(135deg, #2ECC40, #1e8e3e);
+        }
+
+        .semaforo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: help;
+            flex-shrink: 0;
+        }
+
+        .semaforo:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .semaforo.verde {
+            background: linear-gradient(135deg, #2ECC40, #27ae60);
+        }
+
+        .semaforo.amarillo {
+            background: linear-gradient(135deg, #FFDC00, #f1c40f);
+        }
+
+        .semaforo.naranja {
+            background: linear-gradient(135deg, #FF851B, #e67600);
+        }
+
+        .semaforo.rojo {
+            background: linear-gradient(135deg, #FF4136, #e74c3c);
+        }
+
+        .seguimiento-indicator {
+            font-size: 20px;
+            cursor: help;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+        }
+
+        .seguimiento-indicator:hover {
+            transform: scale(1.1);
+        }
+
+        .seguimiento-asignado {
+            color: #28a745;
+        }
+
+        .seguimiento-sin-asignar {
+            color: #6c757d;
+        }
+
+        /* ACCIONES Y DROPDOWN MEJORADO */
+        .peticion-acciones {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 5; /* Z-index base para el contenedor */
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+
+        /* .action-btn.menu {
+            background: linear-gradient(135deg, #0074D9, #0056b3);
+        } */
+
+        /* .action-btn.menu:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-btn.menu.active {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        } */
+
+        /* DROPDOWN DE ACCIONES CON Z-INDEX ALTO */
+        .acciones-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 220px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 116, 217, 0.1);
+            z-index: 9999; /* Z-index muy alto para estar encima de todo */
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .acciones-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        /* Ajuste automático del dropdown */
+        .acciones-dropdown.show-up {
+            top: auto;
+            bottom: calc(100% + 8px);
+        }
+
+        .acciones-dropdown.show-left {
+            left: auto;
+            right: 0;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, rgba(0, 116, 217, 0.08), rgba(0, 86, 179, 0.1));
+            color: #0074D9;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        /* OVERLAY PARA CERRAR DROPDOWN - REMOVIDO PARA PERMITIR SCROLL */
+        /* Ya no necesitamos el overlay que bloquea el scroll */
+        .dropdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9998;
+            background: transparent;
+            /* PERMITIR EVENTOS DE SCROLL */
+            pointer-events: none;
+        }
+
+        /* Asegurar que el dropdown mantenga su funcionalidad */
+        .acciones-dropdown {
+            /* PERMITIR QUE EL DROPDOWN CAPTURE EVENTOS MIENTRAS PERMITE SCROLL EN EL FONDO */
+            pointer-events: auto;
+        }
+
+        /* Estados y badges */
+        .estado-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .folio-badge {
+            background: linear-gradient(135deg, #0074D9, #0056b3);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .nombre-peticion {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .telefono, .localidad {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .departamentos-resumen {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .fecha-registro {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Estados específicos */
+        .estado-sin-revisar {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .estado-completado {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .estado-en-proceso {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .estado-pendiente {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .estado-rechazado-por-departamento {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .estado-por-asignar-departamento {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .estado-aceptada-en-proceso {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .estado-devuelto {
+            background: #ffeaa7;
+            color: #856404;
+        }
+
+        .estado-improcedente {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .estado-cancelada {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .estado-esperando-recepcion {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Mensajes de estado */
+        .loading-message, .empty-message {
+            padding: 3rem;
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .loading-message i {
+            margin-right: 0.5rem;
+            color: #0074D9;
+        }
+
+        .empty-message i {
+            margin-right: 0.5rem;
+            color: #6c757d;
+        }
+
+        /* Tooltips */
+        [title] {
+            position: relative;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .peticiones-container {
+                width: 100%;
+                padding: 1rem;
+            }
+
+            .card-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-actions {
+                justify-content: center;
+            }
+
+            .filtros-container {
+                grid-template-columns: 1fr;
+            }
+
+            .tabla-contenido {
+                min-width: 900px;
+            }
+
+            .list-header,
+            .peticion-item {
+                grid-template-columns: 80px 100px 150px 100px 120px 140px 160px 140px 120px;
+            }
+
+            .list-header {
+                min-width: 900px;
+            }
+
+            .indicadores-container {
+                gap: 4px;
+                min-width: 120px;
+            }
+
+            .nivel-importancia {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+
+            .semaforo {
+                width: 20px;
+                height: 20px;
+            }
+
+            .seguimiento-indicator {
+                width: 24px;
+                height: 24px;
+                font-size: 16px;
+            }
+
+            .acciones-dropdown {
+                width: 180px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .tabla-contenido {
+                min-width: 800px;
+            }
+
+            .list-header,
+            .peticion-item {
+                grid-template-columns: 70px 90px 140px 90px 100px 120px 140px 120px 100px;
+                padding: 0.75rem;
+                font-size: 0.85rem;
+            }
+
+            .list-header {
+                min-width: 800px;
+            }
+        }
+
+
+
+
+        /*-------------------------------------------------------------------*/
+              /* Estilos para modales */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(3px);
+      }
+
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 116, 217, 0.1);
+      }
+
+      .modal-departamentos {
+        max-width: 800px;
+      }
+
+      .modal-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #0074D9, #0056b3);
+        color: white;
+        border-radius: 12px 12px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+      }
+
+      .close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(0, 116, 217, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+      }
+
+      /* Estilos para formularios */
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #0074D9;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #0056b3;
+        box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 116, 217, 0.1);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #0074D9, #0056b3);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Estilos para gestión de departamentos */
+      .departamentos-section {
+        margin-bottom: 2rem;
+      }
+
+      .departamentos-section-title {
+        color: #0074D9;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(0, 116, 217, 0.2);
+      }
+
+      .no-departamentos {
+        padding: 1rem;
+        text-align: center;
+        color: #666;
+        background: rgba(0, 116, 217, 0.05);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 116, 217, 0.1);
+      }
+
+      .no-departamentos i {
+        margin-right: 0.5rem;
+        color: #0074D9;
+      }
+
+      .departamentos-asignados-list {
+        border: 1px solid rgba(0, 116, 217, 0.1);
+        border-radius: 8px;
+        background: white;
+      }
+
+      .departamento-asignado-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(0, 116, 217, 0.1);
+        align-items: center;
+      }
+
+      .departamento-asignado-item:last-child {
+        border-bottom: none;
+      }
+
+      .departamento-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .departamento-nombre {
+        font-weight: 600;
+        color: #333;
+      }
+
+      .departamento-siglas {
+        font-size: 0.85rem;
+        color: #666;
+        font-style: italic;
+      }
+
+      .estado-select {
+        padding: 0.5rem;
+        border: 1px solid #0074D9;
+        border-radius: 6px;
+        background: white;
+        min-width: 150px;
+      }
+
+      .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333, #a71e2a);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+      }
+
+      .btn-sm {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+      }
+
+      .departamentos-checkboxes {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .departamento-checkbox {
+        background: rgba(0, 116, 217, 0.03);
+        border: 1px solid rgba(0, 116, 217, 0.1);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+      }
+
+      .departamento-checkbox:hover {
+        background: rgba(0, 116, 217, 0.05);
+        border-color: rgba(0, 116, 217, 0.2);
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        margin: 0;
+      }
+
+      .checkbox-input {
+        width: auto;
+        margin: 0;
+      }
+
+      .checkmark {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #0074D9;
+        border-radius: 3px;
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .checkbox-input:checked + .checkmark {
+        background: #0074D9;
+      }
+
+      .checkbox-input:checked + .checkmark::after {
+        content: '✓';
+        position: absolute;
+        top: -2px;
+        left: 2px;
+        color: white;
+        font-weight: bold;
+        font-size: 0.8rem;
+      }
+
+      .departamento-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .departamento-small {
+        color: #666;
+        font-weight: 400;
+      }
+
+      .asignar-actions {
+        text-align: center;
+      }
+      .sugerencias-list {
+  border: 1px solid rgba(0, 116, 217, 0.1);
+  border-radius: 8px;
+  background: white;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.sugerencia-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 116, 217, 0.1);
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.sugerencia-item:last-child {
+  border-bottom: none;
+}
+
+.sugerencia-item:hover {
+  background: rgba(0, 116, 217, 0.03);
+}
+
+.sugerencia-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sugerencia-nombre {
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sugerencia-nombre i {
+  color: #0074D9;
+}
+
+.sugerencia-fecha {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.sugerencia-estado .estado-badge {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.estado-pendiente {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.estado-aceptada {
+  background: #d4edda;
+  color: #155724;
+}
+
+.estado-rechazada {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.btn-asignar-sugerencia {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.btn-asignar-sugerencia:hover {
+  background: linear-gradient(135deg, #20c997, #17a2b8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.departamentos-section-title i {
+  margin-right: 0.5rem;
+}
+/* Agregar al final de Petition.css */
+
+/* ESTILOS DE PAGINACIÓN */
+.paginacion-container {
+  background: white;
+  border-top: 1px solid rgba(0, 116, 217, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.paginacion-controles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.registros-por-pagina {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.registros-por-pagina label {
+  font-weight: 600;
+  color: #333;
+}
+
+.select-registros {
+  padding: 0.5rem;
+  border: 1px solid #0074D9;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.9rem;
+  min-width: 70px;
+}
+
+.select-registros:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 2px rgba(0, 116, 217, 0.1);
+}
+
+.registros-info {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.info-registros {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.paginacion-navegacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.btn-paginacion:hover:not(:disabled):not(.puntos) {
+  background: #0074D9;
+  color: white;
+  border-color: #0074D9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.2);
+}
+
+.btn-paginacion:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  border-color: #dee2e6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-paginacion.activa {
+  background: #0074D9;
+  color: white;
+  border-color: #0074D9;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.3);
+}
+
+.btn-paginacion.puntos {
+  background: transparent;
+  border: none;
+  color: #6c757d;
+  cursor: default;
+  font-weight: bold;
+}
+
+.btn-paginacion.puntos:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.numeros-pagina {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.btn-extremo {
+  font-size: 0.8rem;
+}
+
+.btn-nav {
+  font-size: 1rem;
+}
+
+.btn-numero {
+  min-width: 36px;
+  font-weight: 500;
+}
+
+/* Responsive para paginación */
+@media (max-width: 768px) {
+  .paginacion-container {
+    padding: 1rem;
+  }
+
+  .paginacion-controles {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .info-registros {
+    order: -1;
+    margin-bottom: 0.5rem;
+  }
+
+  .paginacion-navegacion {
+    gap: 0.25rem;
+  }
+
+  .btn-paginacion {
+    min-width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .numeros-pagina {
+    gap: 0.1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .paginacion-navegacion {
+    justify-content: space-between;
+  }
+
+  .numeros-pagina {
+    order: 2;
+    flex: 1;
+    justify-content: center;
+    max-width: 200px;
+    overflow-x: auto;
+    padding: 0 0.5rem;
+  }
+
+  .btn-extremo,
+  .btn-nav {
+    flex-shrink: 0;
+  }
+}
+
+/* Animación suave para cambios de página */
+.peticion-item {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
