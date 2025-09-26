@@ -122,20 +122,50 @@
                     v-if="peticionActiva === peticion.id"
                     class="acciones-dropdown show"
                   >
-                    <button class="dropdown-item" @click="editarPeticion(peticion); cerrarMenuAcciones()">
+                    <!-- ✅ ACTUALIZADO: Botones condicionalmente deshabilitados -->
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (editarPeticion(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede editar esta petición' : 'Editar petición'"
+                    >
                       <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="dropdown-item" @click="cambiarEstado(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (cambiarEstado(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar el estado' : 'Cambiar estado'"
+                    >
                       <i class="fas fa-tasks"></i> Cambiar Estado
                     </button>
+
+                    <!-- ✅ El botón de seguimiento siempre está disponible -->
                     <button class="dropdown-item" @click="seguimiento(peticion); cerrarMenuAcciones()">
                       <i class="fas fa-clipboard-list"></i>
                       {{ esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento' }}
                     </button>
-                    <button class="dropdown-item" @click="cambiarImportancia(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (cambiarImportancia(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar la importancia' : 'Cambiar importancia'"
+                    >
                       <i class="fas fa-star"></i> Cambiar Importancia
                     </button>
-                    <button class="dropdown-item" @click="gestionarDepartamentos(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (gestionarDepartamentos(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede gestionar departamentos' : 'Gestionar departamentos'"
+                    >
                       <i class="fas fa-building"></i> Gestionar Departamentos
                     </button>
                   </div>
@@ -914,28 +944,10 @@ export default {
       return tieneUsuarioAsignado(peticion) ? 'fas fa-user-check' : 'fas fa-user-times';
     };
 
-    // Esta función ya debería funcionar correctamente con los cambios del API
     const obtenerTituloSeguimiento = (peticion) => {
       if (tieneUsuarioAsignado(peticion)) {
-        // ✅ Ahora estos campos vendrán del API con el JOIN
-        let nombreUsuario = '';
-
-        if (peticion.nombre_completo_usuario) {
-          nombreUsuario = peticion.nombre_completo_usuario;
-        } else if (peticion.nombre_usuario_seguimiento) {
-          // Construir nombre completo si tenemos los componentes
-          const nombre = peticion.nombre_usuario_seguimiento || '';
-          const paterno = peticion.apellido_paterno_usuario || '';
-          const materno = peticion.apellido_materno_usuario || '';
-          nombreUsuario = `${nombre} ${paterno} ${materno}`.trim();
-        } else {
-          nombreUsuario = 'Usuario asignado (ID: ' + peticion.usuario_id + ')';
-        }
-
-        // Limpiar espacios extra
-        nombreUsuario = nombreUsuario.replace(/\s+/g, ' ').trim();
-
-        return `Seguimiento asignado a: ${nombreUsuario || 'Usuario desconocido'}`;
+        const nombreUsuario = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario asignado';
+        return `Seguimiento asignado a: ${nombreUsuario}`;
       }
       return 'Sin usuario asignado para seguimiento';
     };
@@ -1561,61 +1573,21 @@ export default {
       showImportanciaModal.value = false;
     };
 
-    // ✅ CORREGIDA: Función filtrarMisPeticiones mejorada
     const filtrarMisPeticiones = async () => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
         if (usuarioId) {
-          // Limpiar otros filtros primero
-          filtros.estado = '';
-          filtros.departamento = '';
-          filtros.folio = '';
-          filtros.nombre = '';
-          filtros.nivelImportancia = '';
-
-          // Aplicar filtro de mis peticiones
           filtros.usuario_seguimiento = usuarioId.toString();
-
-          // Forzar aplicación de filtros
-          aplicarFiltros();
-
-          // Resetear paginación a la primera página
-          paginacion.paginaActual = 1;
-
-          const misPeticiones = peticionesFiltradas.value.length;
-          if (window.$toast) {
-            window.$toast.info(`Mostrando ${misPeticiones} de sus peticiones asignadas`);
-          }
         }
       } catch (error) {
         console.error('Error al filtrar mis peticiones:', error);
-        if (window.$toast) {
-          window.$toast.error('Error al filtrar sus peticiones');
-        }
       }
     };
 
     // ✅ NUEVA: Función para filtrar peticiones sin seguimiento
     const filtrarSinSeguimiento = () => {
-      // Limpiar otros filtros primero para evitar conflictos
-      filtros.estado = '';
-      filtros.departamento = '';
-      filtros.folio = '';
-      filtros.nombre = '';
-      filtros.nivelImportancia = '';
-
-      // Aplicar filtro de sin seguimiento
-      filtros.usuario_seguimiento = 'sin_asignar';
-
-      // Forzar aplicación de filtros
-      aplicarFiltros();
-
-      // Resetear paginación a la primera página
-      paginacion.paginaActual = 1;
-
-      if (window.$toast) {
-        window.$toast.info(`Mostrando ${contadorSinSeguimiento.value} peticiones sin seguimiento`);
-      }
+      // Filtrar peticiones que no tienen usuario asignado (usuario_id es null, undefined, 0 o vacío)
+      filtros.usuario_seguimiento = 'sin_asignar'; // Usamos un valor especial
     };
 
     // ✅ CORREGIDA: Función limpiarFiltros mejorada
@@ -1686,6 +1658,15 @@ export default {
       return `Departamentos asignados:\n${departamentos.map(d =>
         `• ${d.nombre_unidad} (${d.estado_asignacion})`
       ).join('\n')}`;
+    };
+
+    // En el setup(), agregar esta función después de esUsuarioAsignado:
+
+    const puedeEditarPeticion = (peticion) => {
+      if (!usuarioLogueado.value) return false;
+
+      // El usuario solo puede editar si es el asignado para seguimiento
+      return tieneUsuarioAsignado(peticion) && peticion.usuario_id === usuarioLogueado.value.Id;
     };
 
     return {
@@ -1768,6 +1749,10 @@ export default {
       contadorSinSeguimiento, // ✅ NUEVO
       filtrarSinSeguimiento,
       limpiarFiltros,
+
+
+      // Function to check if user can edit petition
+      puedeEditarPeticion,
     };
   }
 };
