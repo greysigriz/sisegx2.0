@@ -7,6 +7,12 @@
           <button @click="filtrarMisPeticiones" class="btn-filter">
             <i class="fas fa-user"></i> Mis Peticiones
           </button>
+          <!-- ✅ NUEVO: Botón para peticiones sin seguimiento -->
+          <button @click="filtrarSinSeguimiento" class="btn-filter btn-warning">
+            <i class="fas fa-user-slash"></i>
+            Sin Seguimiento
+            <span v-if="contadorSinSeguimiento > 0" class="badge-count">{{ contadorSinSeguimiento }}</span>
+          </button>
           <button @click="limpiarFiltros" class="btn-clear">
             <i class="fas fa-times"></i> Limpiar Filtros
           </button>
@@ -57,6 +63,8 @@
             <select id="filtroUsuarioSeguimiento" v-model="filtros.usuario_seguimiento">
               <option value="">Todos</option>
               <option v-if="usuarioLogueado" :value="usuarioLogueado.Id">Mis peticiones</option>
+              <!-- ✅ NUEVA: Opción para peticiones sin seguimiento -->
+              <option value="sin_asignar">Sin seguimiento asignado</option>
             </select>
           </div>
           <div class="filtro">
@@ -156,7 +164,16 @@
                 </div>
 
                 <div class="peticion-info departamentos-info">
-                  <span class="departamentos-resumen">
+                  <span
+                    :class="[
+
+                      'departamentos-resumen',
+                      peticion.departamentos && peticion.departamentos.length > 0
+                        ? 'con-departamentos'
+                        : 'sin-asignar'
+                    ]"
+                    :title="obtenerTituloDepartamentos(peticion.departamentos)"
+                  >
                     {{ formatearDepartamentosResumen(peticion.departamentos) }}
                   </span>
                 </div>
@@ -294,7 +311,14 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="folio">Folio:</label>
-                <input type="text" id="folio" v-model="peticionForm.folio" required />
+                <input
+                  type="text"
+                  id="folio"
+                  v-model="peticionForm.folio"
+                  disabled
+                  class="input-disabled"
+                  title="El folio no puede ser modificado"
+                />
               </div>
 
               <div class="form-group">
@@ -432,7 +456,13 @@
           </div>
 
           <div v-else>
-            <!-- ✅ NUEVA SECCIÓN: Sugerencias de IA -->
+            <!-- Mensaje informativo -->
+            <div class="info-message">
+              <i class="fas fa-info-circle"></i>
+              <strong>Nota:</strong> Las sugerencias no fuerzan a ese departamento a trabajar la petición, únicamente ayudan a seleccionar departamentos en base al problema de la petición.
+            </div>
+
+            <!-- ✅ ACTUALIZADA: Sección de Sugerencias de IA -->
             <div v-if="sugerenciasIA && sugerenciasIA.length > 0" class="departamentos-section">
               <h4 class="departamentos-section-title">
                 <i class="fas fa-robot"></i> Sugerencias de IA
@@ -455,22 +485,14 @@
                     </div>
                   </div>
 
-                  <div class="sugerencia-estado">
-                    <span class="estado-badge" :class="`estado-${sugerencia.estado.toLowerCase()}`">
-                      {{ sugerencia.estado }}
+                  <!-- ✅ CAMBIO: Mostrar estado solo si es "Aceptada" -->
+                  <div class="sugerencia-estado" v-if="sugerencia.estado === 'Aceptada'">
+                    <span class="estado-badge estado-sugerida-creador">
+                      Sugerida por el creador del folio
                     </span>
                   </div>
 
-                  <!-- Botón para asignar si está disponible -->
-                  <div class="sugerencia-acciones" v-if="sugerencia.estado === 'Pendiente'">
-                    <button
-                      @click="asignarDesdeSugerencia(sugerencia)"
-                      class="btn-asignar-sugerencia"
-                      title="Asignar este departamento"
-                    >
-                      <i class="fas fa-plus"></i>
-                    </button>
-                  </div>
+                  <!-- ✅ REMOVIDO: Botón de asignar desde sugerencia -->
                 </div>
               </div>
             </div>
@@ -503,9 +525,10 @@
                       class="estado-select"
                     >
                       <option value="Esperando recepción">Esperando recepción</option>
-                      <option value="En proceso">En proceso</option>
+                      <option value="Aceptado en proceso">Aceptado en proceso</option>
+                      <option value="Devuelto a seguimiento">Devuelto a seguimiento</option>
+                      <option value="Rechazado">Rechazado</option>
                       <option value="Completado">Completado</option>
-                      <option value="Rechazado por departamento">Rechazado</option>
                     </select>
                   </div>
 
@@ -522,22 +545,53 @@
               </div>
             </div>
 
-            <!-- Asignar Nuevos Departamentos -->
+            <!-- ✅ ACTUALIZADA: Asignar Nuevos Departamentos con buscador -->
             <div class="departamentos-section">
               <h4 class="departamentos-section-title">
                 <i class="fas fa-plus-circle"></i> Asignar Nuevos Departamentos
               </h4>
 
-              <div v-if="departamentosDisponibles.length === 0" class="no-departamentos">
-                <i class="fas fa-check-circle"></i> Todos los departamentos están asignados
+              <!-- ✅ NUEVA: Barra de búsqueda con sugerencias rápidas -->
+              <div class="busqueda-departamentos">
+                <div class="busqueda-input-container">
+                  <input
+                    type="text"
+                    v-model="busquedaDepartamento"
+                    @input="filtrarDepartamentos"
+                    placeholder="Buscar departamentos..."
+                    class="busqueda-input"
+                  >
+                  <i class="fas fa-search busqueda-icon"></i>
+                </div>
+
+                <!-- ✅ NUEVO: Botones de sugerencias rápidas -->
+                <div v-if="sugerenciasRapidas.length > 0" class="sugerencias-rapidas">
+                  <span class="sugerencias-label">Sugerencias rápidas:</span>
+                  <button
+                    v-for="sugerencia in sugerenciasRapidas"
+                    :key="'rapid-' + sugerencia"
+                    @click="buscarSugerencia(sugerencia)"
+                    class="btn-sugerencia-rapida"
+                    :title="`Buscar: ${sugerencia}`"
+                  >
+                    <i class="fas fa-lightbulb"></i> {{ sugerencia }}
+                  </button>
+                </div>
+              </div>
+
+              <div v-if="departamentosFiltrados.length === 0" class="no-departamentos">
+                <i class="fas fa-search"></i>
+                <span v-if="busquedaDepartamento">No se encontraron departamentos con "<strong>{{ busquedaDepartamento }}</strong>"</span>
+                <span v-else>Todos los departamentos están asignados</span>
               </div>
 
               <div v-else class="asignar-departamentos-form">
                 <div class="departamentos-checkboxes">
                   <div
-                    v-for="departamento in departamentosDisponibles"
+                    v-for="departamento in departamentosFiltrados"
                     :key="departamento.id"
                     class="departamento-checkbox"
+                    :class="{ 'sugerido': esDepartamentoSugerido(departamento.nombre_unidad) }"
                   >
                     <label class="checkbox-label">
                       <input
@@ -549,6 +603,10 @@
                       <span class="checkmark"></span>
                       <span class="departamento-label">
                         {{ departamento.nombre_unidad }}
+                        <!-- ✅ NUEVO: Indicador de sugerencia -->
+                        <i v-if="esDepartamentoSugerido(departamento.nombre_unidad)"
+                           class="fas fa-star sugerencia-star"
+                           title="Sugerido por IA"></i>
                         <small v-if="departamento.siglas || departamento.abreviatura" class="departamento-small">
                           ({{ departamento.siglas || departamento.abreviatura }})
                         </small>
@@ -782,6 +840,9 @@ export default {
           // Filtrar departamentos disponibles (excluir los ya asignados)
           const idsAsignados = departamentosAsignados.value.map(d => d.id_unidad || d.departamento_id);
           departamentosDisponibles.value = departamentos.value.filter(d => !idsAsignados.includes(d.id));
+
+          // ✅ NUEVO: Inicializar filtros
+          departamentosFiltrados.value = [...departamentosDisponibles.value];
         }
 
         loadingDepartamentos.value = false;
@@ -815,10 +876,14 @@ export default {
       }
 
       if (departamentos.length === 1) {
-        return departamentos[0].siglas || departamentos[0].abreviatura || departamentos[0].nombre_unidad;
+        return departamentos[0].nombre_unidad || 'Sin nombre';
       }
 
-      return `${departamentos.length} depts.`;
+      if (departamentos.length <= 3) {
+        return departamentos.map(d => d.nombre_unidad || 'Sin nombre').join(', ');
+      }
+
+      return `${departamentos.length} departamentos`;
     };
 
     const formatearFecha = (fechaStr) => {
@@ -849,10 +914,28 @@ export default {
       return tieneUsuarioAsignado(peticion) ? 'fas fa-user-check' : 'fas fa-user-times';
     };
 
+    // Esta función ya debería funcionar correctamente con los cambios del API
     const obtenerTituloSeguimiento = (peticion) => {
       if (tieneUsuarioAsignado(peticion)) {
-        const nombreUsuario = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario asignado';
-        return `Seguimiento asignado a: ${nombreUsuario}`;
+        // ✅ Ahora estos campos vendrán del API con el JOIN
+        let nombreUsuario = '';
+
+        if (peticion.nombre_completo_usuario) {
+          nombreUsuario = peticion.nombre_completo_usuario;
+        } else if (peticion.nombre_usuario_seguimiento) {
+          // Construir nombre completo si tenemos los componentes
+          const nombre = peticion.nombre_usuario_seguimiento || '';
+          const paterno = peticion.apellido_paterno_usuario || '';
+          const materno = peticion.apellido_materno_usuario || '';
+          nombreUsuario = `${nombre} ${paterno} ${materno}`.trim();
+        } else {
+          nombreUsuario = 'Usuario asignado (ID: ' + peticion.usuario_id + ')';
+        }
+
+        // Limpiar espacios extra
+        nombreUsuario = nombreUsuario.replace(/\s+/g, ' ').trim();
+
+        return `Seguimiento asignado a: ${nombreUsuario || 'Usuario desconocido'}`;
       }
       return 'Sin usuario asignado para seguimiento';
     };
@@ -926,6 +1009,11 @@ export default {
       const inicio = (paginacion.paginaActual - 1) * paginacion.registrosPorPagina;
       const fin = inicio + paginacion.registrosPorPagina;
       return peticionesFiltradas.value.slice(inicio, fin);
+    });
+
+    // Computed para contar peticiones sin seguimiento
+    const contadorSinSeguimiento = computed(() => {
+      return peticiones.value.filter(p => !tieneUsuarioAsignado(p)).length;
     });
 
     // Función para actualizar paginación cuando cambian los filtros
@@ -1024,6 +1112,22 @@ export default {
             return false;
           }
 
+          // Filtrar por departamento
+          if (filtros.departamento) {
+            const departamentoFiltro = parseInt(filtros.departamento);
+            if (!peticion.departamentos || peticion.departamentos.length === 0) {
+              return false;
+            }
+
+            const tieneDepartamento = peticion.departamentos.some(dept =>
+              parseInt(dept.departamento_id) === departamentoFiltro
+            );
+
+            if (!tieneDepartamento) {
+              return false;
+            }
+          }
+
           // Filtrar por nivel de importancia
           if (filtros.nivelImportancia) {
             const nivel = parseInt(filtros.nivelImportancia);
@@ -1033,16 +1137,24 @@ export default {
             }
           }
 
-          // Filtrar por usuario de seguimiento
+          // ✅ ACTUALIZADO: Filtrar por usuario de seguimiento (incluyendo sin seguimiento)
           if (filtros.usuario_seguimiento) {
-            const usuarioFiltro = parseInt(filtros.usuario_seguimiento);
-            const usuarioPeticion = parseInt(peticion.usuario_id);
-            if (isNaN(usuarioPeticion) || usuarioPeticion !== usuarioFiltro) {
-              return false;
+            if (filtros.usuario_seguimiento === 'sin_asignar') {
+              // Mostrar solo peticiones SIN usuario asignado
+              if (tieneUsuarioAsignado(peticion)) {
+                return false;
+              }
+            } else {
+              // Filtrar por usuario específico
+              const usuarioFiltro = parseInt(filtros.usuario_seguimiento);
+              const usuarioPeticion = parseInt(peticion.usuario_id);
+              if (isNaN(usuarioPeticion) || usuarioPeticion !== usuarioFiltro) {
+                return false;
+              }
             }
           }
 
-          // ✅ Filtrar por folio con validación robusta
+          // Filtrar por folio con validación robusta
           if (filtros.folio && filtros.folio.trim() !== '') {
             const folioPeticion = peticion.folio || '';
             const folioFiltro = filtros.folio.trim();
@@ -1052,7 +1164,7 @@ export default {
             }
           }
 
-          // ✅ Filtrar por nombre con validación robusta
+          // Filtrar por nombre con validación robusta
           if (filtros.nombre && filtros.nombre.trim() !== '') {
             const nombrePeticion = peticion.nombre || '';
             const nombreFiltro = filtros.nombre.trim();
@@ -1068,7 +1180,7 @@ export default {
         // Aplicamos el ordenamiento a los resultados filtrados
         peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
 
-        // ✅ NUEVO: Actualizar paginación después de filtrar
+        // Actualizar paginación después de filtrar
         actualizarPaginacion();
 
       } catch (error) {
@@ -1080,25 +1192,55 @@ export default {
     };
 
     // Watchers para los filtros
-    watch(() => filtros.estado, () => {
+    watch(
+      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.folio, filtros.nombre],
+      () => {
+        aplicarFiltros();
+      },
+      { deep: true }
+    );
+
+    // ✅ AGREGAR: Watcher para filtro de departamento
+    watch(() => filtros.departamento, () => {
       aplicarFiltros();
     });
 
-    watch(() => filtros.nivelImportancia, () => {
-      aplicarFiltros();
+    // En el setup(), agregar nuevas variables reactivas:
+    const busquedaDepartamento = ref('');
+    const departamentosFiltrados = ref([]);
+    const sugerenciasRapidas = computed(() => {
+      return sugerenciasIA.value
+        .filter(s => s.departamento_nombre && s.departamento_nombre.trim() !== '')
+        .map(s => s.departamento_nombre)
+        .filter((nombre, index, arr) => arr.indexOf(nombre) === index); // Eliminar duplicados
     });
 
-    watch(() => filtros.usuario_seguimiento, () => {
-      aplicarFiltros();
-    });
+    // ✅ NUEVA: Función para filtrar departamentos
+    const filtrarDepartamentos = () => {
+      if (!busquedaDepartamento.value || busquedaDepartamento.value.trim() === '') {
+        departamentosFiltrados.value = [...departamentosDisponibles.value];
+        return;
+      }
 
-    watch(() => filtros.folio, () => {
-      aplicarFiltros();
-    });
+      const busqueda = busquedaDepartamento.value.toLowerCase().trim();
+      departamentosFiltrados.value = departamentosDisponibles.value.filter(dept =>
+        dept.nombre_unidad.toLowerCase().includes(busqueda)
+      );
+    };
 
-    watch(() => filtros.nombre, () => {
-      aplicarFiltros();
-    });
+    // ✅ NUEVA: Función para buscar sugerencia rápida
+    const buscarSugerencia = (nombreSugerencia) => {
+      busquedaDepartamento.value = nombreSugerencia;
+      filtrarDepartamentos();
+    };
+
+    // ✅ NUEVA: Función para verificar si un departamento está sugerido
+    const esDepartamentoSugerido = (nombreDepartamento) => {
+      return sugerenciasIA.value.some(s =>
+        s.departamento_nombre &&
+        s.departamento_nombre.toLowerCase().includes(nombreDepartamento.toLowerCase())
+      );
+    };
 
     const editarPeticion = (peticion) => {
       Object.assign(peticionForm, peticion);
@@ -1121,6 +1263,8 @@ export default {
     const gestionarDepartamentos = async (peticion) => {
       peticionForm.id = peticion.id;
       departamentosSeleccionados.value = [];
+      busquedaDepartamento.value = ''; // ✅ Resetear búsqueda
+
       await cargarDepartamentosAsignados(peticion.id);
       showDepartamentosModal.value = true;
     };
@@ -1417,21 +1561,82 @@ export default {
       showImportanciaModal.value = false;
     };
 
+    // ✅ CORREGIDA: Función filtrarMisPeticiones mejorada
     const filtrarMisPeticiones = async () => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
         if (usuarioId) {
+          // Limpiar otros filtros primero
+          filtros.estado = '';
+          filtros.departamento = '';
+          filtros.folio = '';
+          filtros.nombre = '';
+          filtros.nivelImportancia = '';
+
+          // Aplicar filtro de mis peticiones
           filtros.usuario_seguimiento = usuarioId.toString();
+
+          // Forzar aplicación de filtros
+          aplicarFiltros();
+
+          // Resetear paginación a la primera página
+          paginacion.paginaActual = 1;
+
+          const misPeticiones = peticionesFiltradas.value.length;
+          if (window.$toast) {
+            window.$toast.info(`Mostrando ${misPeticiones} de sus peticiones asignadas`);
+          }
         }
       } catch (error) {
         console.error('Error al filtrar mis peticiones:', error);
+        if (window.$toast) {
+          window.$toast.error('Error al filtrar sus peticiones');
+        }
       }
     };
 
+    // ✅ NUEVA: Función para filtrar peticiones sin seguimiento
+    const filtrarSinSeguimiento = () => {
+      // Limpiar otros filtros primero para evitar conflictos
+      filtros.estado = '';
+      filtros.departamento = '';
+      filtros.folio = '';
+      filtros.nombre = '';
+      filtros.nivelImportancia = '';
+
+      // Aplicar filtro de sin seguimiento
+      filtros.usuario_seguimiento = 'sin_asignar';
+
+      // Forzar aplicación de filtros
+      aplicarFiltros();
+
+      // Resetear paginación a la primera página
+      paginacion.paginaActual = 1;
+
+      if (window.$toast) {
+        window.$toast.info(`Mostrando ${contadorSinSeguimiento.value} peticiones sin seguimiento`);
+      }
+    };
+
+    // ✅ CORREGIDA: Función limpiarFiltros mejorada
     const limpiarFiltros = () => {
-      Object.keys(filtros).forEach(key => {
-        filtros[key] = '';
-      });
+      // Limpiar todos los filtros
+      filtros.estado = '';
+      filtros.departamento = '';
+      filtros.folio = '';
+      filtros.nombre = '';
+      filtros.nivelImportancia = '';
+      filtros.usuario_seguimiento = '';
+
+      // Forzar aplicación de filtros
+      aplicarFiltros();
+
+      // Resetear paginación a la primera página
+      paginacion.paginaActual = 1;
+
+      if (window.$toast) {
+        window.$toast.info('Filtros limpiados');
+      }
     };
 
     onMounted(async () => {
@@ -1466,6 +1671,21 @@ export default {
       // Asignar el departamento encontrado
       departamentosSeleccionados.value = [departamento.id];
       await asignarDepartamentos();
+    };
+
+    const obtenerTituloDepartamentos = (departamentos) => {
+      if (!departamentos || departamentos.length === 0) {
+        return 'Esta petición no tiene departamentos asignados';
+      }
+
+      if (departamentos.length === 1) {
+        const dept = departamentos[0];
+        return `Departamento: ${dept.nombre_unidad}\nEstado: ${dept.estado_asignacion}\nFecha: ${formatearFecha(dept.fecha_asignacion)}`;
+      }
+
+      return `Departamentos asignados:\n${departamentos.map(d =>
+        `• ${d.nombre_unidad} (${d.estado_asignacion})`
+      ).join('\n')}`;
     };
 
     return {
@@ -1509,6 +1729,7 @@ export default {
       cambiarEstadoAsignacion,
       obtenerDepartamentosPeticion,
       formatearDepartamentosResumen,
+      obtenerTituloDepartamentos,
 
       guardarPeticion,
       guardarEstado,
@@ -1517,7 +1738,6 @@ export default {
       cerrarMenuAcciones,
       cancelarAccion,
       filtrarMisPeticiones,
-      limpiarFiltros,
       tieneUsuarioAsignado,
       obtenerIconoSeguimiento,
       obtenerTituloSeguimiento,
@@ -1536,6 +1756,18 @@ export default {
       paginaSiguiente,
       cambiarRegistrosPorPagina,
       actualizarPaginacion,
+
+      // Nuevas variables y funciones para gestión de departamentos
+      busquedaDepartamento,
+      departamentosFiltrados,
+      sugerenciasRapidas,
+      filtrarDepartamentos,
+      buscarSugerencia,
+      esDepartamentoSugerido,
+
+      contadorSinSeguimiento, // ✅ NUEVO
+      filtrarSinSeguimiento,
+      limpiarFiltros,
     };
   }
 };
