@@ -1,0 +1,464 @@
+# SISEE - Sistema de Sugerencias de IA
+
+## DESCRIPCIÓN GENERAL
+
+El Sistema de Sugerencias de IA de SISEE es un componente inteligente que analiza automáticamente las peticiones ciudadanas y sugiere los departamentos o dependencias municipales más apropiados para su atención. Utiliza procesamiento de lenguaje natural y coincidencia de patrones para clasificar peticiones en tiempo real.
+
+## ARQUITECTURA DEL SISTEMA
+
+### Componentes Principales:
+
+```
+Frontend (Vue.js)
+    ↓
+API FastAPI (Python)
+    ↓
+Clasificador de Dependencias
+    ↓
+Base de Conocimiento (JSON)
+```
+
+### Tecnologías Utilizadas:
+- **Backend IA:** FastAPI (Python 3.8+)
+- **Algoritmo:** Procesamiento de texto con coincidencias de patrones
+- **Base de conocimiento:** JSON estructurado (3,000+ palabras clave)
+- **Cliente:** Integración con Vue.js frontend
+
+---
+
+## FLUJO DE FUNCIONAMIENTO
+
+### 1. **Captura de Texto**
+El usuario escribe la descripción de su petición en el formulario web:
+```javascript
+// PetitionPage.vue
+onDescriptionChange() {
+  // Se activa cuando el usuario escribe
+  if (formData.value.descripcion.length >= 20) {
+    debounceTimeout = setTimeout(() => {
+      classifyDescription(formData.value.descripcion);
+    }, 1000); // Debounce de 1 segundo
+  }
+}
+```
+
+### 2. **Envío a API de Clasificación**
+```javascript
+const classifyDescription = async (texto) => {
+  const response = await fetch(`${API_BASE}/api/clasificacion/clasificar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto })
+  });
+  
+  const data = await response.json();
+  classification.value = data.resultado; // Array de sugerencias
+};
+```
+
+### 3. **Procesamiento en Backend**
+```python
+# routes/clasificacion.py
+@router.post("/clasificar")
+async def clasificar_varias_dependencias(request: ClasificacionRequest):
+    resultados = clasificador.clasificar_multiple(request.texto)
+    return {
+        "resultado": resultados,
+        "total_encontradas": len(resultados)
+    }
+```
+
+### 4. **Algoritmo de Clasificación**
+```python
+# services/clasificador.py
+def clasificar_multiple(self, texto: str) -> List[Dict]:
+    # 1. Normalizar texto (acentos, minúsculas, puntuación)
+    # 2. Aplicar reglas especiales (emergencias, violencia de género)
+    # 3. Buscar coincidencias en palabras clave
+    # 4. Calcular puntuaciones por dependencia
+    # 5. Devolver mejores coincidencias
+```
+
+### 5. **Presentación de Resultados**
+El frontend muestra tarjetas interactivas con las sugerencias:
+```vue
+<div class="classification-card" @click="selectClassification(sugerencia)">
+  <div class="classification-header">
+    <h4>Opción {{ index + 1 }}</h4>
+    <div class="classification-score">
+      Confianza: {{ (sugerencia.puntuacion * 100).toFixed(1) }}%
+    </div>
+  </div>
+  <!-- Detalles de la clasificación -->
+</div>
+```
+
+---
+
+## BASE DE CONOCIMIENTO
+
+### Estructura del archivo `dependencias_cancun.json`:
+
+```json
+{
+  "sistema_clasificacion_dependencias": {
+    "version": "1.0",
+    "municipio": "Benito Juárez (Cancún)",
+    "categorias": {
+      "obras_servicios_publicos": {
+        "nombre": "Obras y Servicios Públicos",
+        "dependencia_principal": "Primera Regiduría de la Comisión de Obras y Servicios Públicos",
+        "dependencias_relacionadas": [...],
+        "palabras_clave": [
+          {
+            "tipo_peticion": "Reparación de baches",
+            "palabra_clave": "bache",
+            "dependencia": "Dirección de Bacheo y Pipas"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+### Categorías Principales:
+
+1. **Obras y Servicios Públicos** (600+ palabras clave)
+   - Reparación de baches y carpeta asfáltica
+   - Suministro de agua potable con pipa
+   - Alumbrado público
+   - Limpieza y mantenimiento de parques
+   - Recolección de residuos sólidos
+
+2. **Seguridad y Tránsito** (150+ palabras clave)
+   - Semáforos y señalización vial
+   - Retiro de vehículos abandonados
+   - Patrullaje preventivo
+   - Policía turística
+   - Protección civil y bomberos
+
+3. **Desarrollo Urbano y Ecología**
+   - Planeación urbana
+   - Licencias de construcción
+   - Protección ambiental
+
+4. **Salud y Bienestar Social**
+   - Servicios de salud
+   - Asistencia social
+   - Instituto Municipal de la Mujer
+
+5. **Otras categorías:** Hacienda, Turismo, Educación, Transparencia
+
+---
+
+## ALGORITMO DE CLASIFICACIÓN
+
+### 1. **Normalización de Texto**
+```python
+def _normalizar_texto(self, texto: str) -> str:
+    texto = texto.lower()
+    # Remover acentos: á->a, é->e, í->i, ó->o, ú->u
+    reemplazos = {'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u', 'ñ': 'n'}
+    for acento, sin_acento in reemplazos.items():
+        texto = texto.replace(acento, sin_acento)
+    
+    # Remover puntuación y espacios extra
+    texto = re.sub(r'[^\w\s]', ' ', texto)
+    return re.sub(r'\s+', ' ', texto).strip()
+```
+
+### 2. **Búsqueda de Coincidencias**
+```python
+def _buscar_coincidencias_frases(self, texto: str, palabra_clave: str) -> bool:
+    # Para palabras simples (≥4 caracteres)
+    if len(palabra_norm.split()) == 1:
+        return palabra_norm in texto_norm and len(palabra_norm) >= 4
+    
+    # Para frases complejas
+    palabras_clave = palabra_norm.split()
+    palabras_texto = texto_norm.split()
+    
+    coincidencias = sum(1 for pc in palabras_clave if pc in palabras_texto)
+    ratio = coincidencias / len(palabras_clave)
+    
+    # Requiere 70% de coincidencia y mínimo 2 palabras
+    return ratio >= 0.7 and coincidencias >= 2
+```
+
+### 3. **Reglas Especiales**
+```python
+reglas_especiales = {
+    "emergencias": {
+        "palabras": ["incendio", "explosion", "derrumbe", "urgente"],
+        "dependencia_directa": "Dirección General de Protección Civil"
+    },
+    "violencia_genero": {
+        "palabras": ["violencia", "acoso", "maltrato", "agresion"],
+        "dependencia_directa": "Instituto Municipal de la Mujer (IMM)"
+    }
+}
+```
+
+### 4. **Cálculo de Puntuaciones**
+- **Coincidencia exacta:** 1.0 puntos
+- **Coincidencia parcial:** 0.7-0.9 puntos
+- **Reglas especiales:** 1.0 puntos (prioridad)
+- **Sin coincidencia:** 0.0 puntos
+
+---
+
+## EJEMPLOS DE FUNCIONAMIENTO
+
+### Ejemplo 1: Petición de bacheo
+**Entrada:** "Hay muchos baches en mi calle que necesitan reparación"
+
+**Procesamiento:**
+1. Normalización: "hay muchos baches en mi calle que necesitan reparacion"
+2. Palabras encontradas: ["baches", "reparacion"]
+3. Coincidencias en categoría "obras_servicios_publicos"
+
+**Resultado:**
+```javascript
+{
+  "categoria": "obras_servicios_publicos",
+  "dependencia": "Dirección de Bacheo y Pipas",
+  "tipo_peticion": "Reparación de baches",
+  "puntuacion": 1.0,
+  "palabras_encontradas": ["baches", "reparacion"]
+}
+```
+
+### Ejemplo 2: Problema de alumbrado
+**Entrada:** "Las luminarias de mi colonia no funcionan y está muy oscuro"
+
+**Resultado:**
+```javascript
+{
+  "categoria": "obras_servicios_publicos",
+  "dependencia": "Dirección de Alumbrado Público",
+  "tipo_peticion": "Reparación de alumbrado público",
+  "puntuacion": 0.95,
+  "palabras_encontradas": ["luminarias", "oscuro"]
+}
+```
+
+### Ejemplo 3: Emergencia
+**Entrada:** "Hay un incendio en mi casa, necesito ayuda urgente"
+
+**Resultado (Regla especial activada):**
+```javascript
+{
+  "categoria": "especial",
+  "dependencia": "Dirección General de Protección Civil",
+  "tipo_peticion": "Caso especial: emergencias",
+  "puntuacion": 1.0,
+  "palabras_encontradas": ["incendio", "urgente"]
+}
+```
+
+---
+
+## INTEGRACIÓN FRONTEND-BACKEND
+
+### Configuración del API Base:
+```javascript
+// PetitionPage.vue
+const API_BASE = "http://127.0.0.1:8000";  // FastAPI server
+const PETITION_API = "http://127.0.0.1/SISEE/api/peticiones.php";  // PHP API
+```
+
+### Flujo de Datos:
+1. **Usuario escribe** → Debounce 1 segundo
+2. **Frontend → FastAPI** → Clasificación de texto
+3. **FastAPI → Frontend** → Sugerencias múltiples
+4. **Usuario selecciona** → Clasificación confirmada
+5. **Frontend → PHP API** → Guardado con sugerencias IA
+
+### Estructura de Respuesta:
+```javascript
+{
+  "resultado": [
+    {
+      "categoria": "obras_servicios_publicos",
+      "dependencia": "Dirección de Bacheo y Pipas",
+      "tipo_peticion": "Reparación de baches",
+      "puntuacion": 1.0,
+      "palabras_encontradas": ["baches"]
+    }
+  ],
+  "total_encontradas": 1
+}
+```
+
+---
+
+## CARACTERÍSTICAS AVANZADAS
+
+### 1. **Clasificación Múltiple**
+El sistema puede devolver varias sugerencias cuando una petición involucra múltiples departamentos:
+```javascript
+// Ejemplo: "Hay baches y las luminarias no funcionan"
+// Devuelve: Bacheo Y Alumbrado Público
+```
+
+### 2. **Debouncing Inteligente**
+```javascript
+let debounceTimeout = null;
+const onDescriptionChange = () => {
+  if (debounceTimeout) clearTimeout(debounceTimeout);
+  
+  if (formData.value.descripcion.length >= 20) {
+    debounceTimeout = setTimeout(() => {
+      classifyDescription(formData.value.descripcion);
+    }, 1000);
+  }
+};
+```
+
+### 3. **Reclasificación Dinámica**
+```javascript
+const reclassifyDescription = () => {
+  classification.value = null;  // Limpiar resultados previos
+  classifyDescription(formData.value.descripcion);
+};
+```
+
+### 4. **Validación de Cambios**
+```javascript
+// Si el texto cambia significativamente, limpiar clasificación
+if (Math.abs(newVal.length - classification.value[0].texto_original.length) > 10) {
+  classification.value = null;
+}
+```
+
+---
+
+## INTERFACE DE USUARIO
+
+### Botón de Clasificación Manual:
+```vue
+<button @click="testClassification" :disabled="isClassifying" class="classify-button">
+  <font-awesome-icon icon="fa-solid fa-magic" />
+  {{ isClassifying ? "Clasificando..." : "Clasificar Automáticamente" }}
+</button>
+```
+
+### Tarjetas de Sugerencias:
+```vue
+<div class="classification-card" :class="{ 'selected': selectedClassification === sugerencia }">
+  <div class="classification-header">
+    <h4>Opción {{ index + 1 }}</h4>
+    <div class="classification-score">
+      Confianza: {{ (sugerencia.puntuacion * 100).toFixed(1) }}%
+    </div>
+  </div>
+  
+  <div class="classification-content">
+    <div class="classification-item">
+      <strong>Categoría:</strong>
+      <span class="classification-value">{{ sugerencia.categoria }}</span>
+    </div>
+    
+    <div class="classification-item">
+      <strong>Dependencia:</strong>
+      <span class="classification-value">{{ sugerencia.dependencia }}</span>
+    </div>
+    
+    <div class="classification-item">
+      <strong>Tipo de petición:</strong>
+      <span class="classification-value">{{ sugerencia.tipo_peticion }}</span>
+    </div>
+    
+    <div class="classification-item">
+      <strong>Palabras clave:</strong>
+      <div class="keywords">
+        <span v-for="palabra in sugerencia.palabras_encontradas" class="keyword-tag">
+          {{ palabra }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+### Acciones de Control:
+```vue
+<div class="classification-actions">
+  <button @click="reclassifyDescription" :disabled="isClassifying" class="reclassify-btn">
+    <font-awesome-icon icon="fa-solid fa-refresh" />
+    {{ isClassifying ? "Reclasificando..." : "Reclasificar" }}
+  </button>
+  
+  <button @click="selectedClassification = null" class="clear-selection-btn">
+    <font-awesome-icon icon="fa-solid fa-times" />
+    Limpiar selección
+  </button>
+</div>
+```
+
+---
+
+## VENTAJAS DEL SISTEMA
+
+### 1. **Velocidad de Clasificación**
+- Respuesta en menos de 500ms
+- Procesamiento local sin dependencias externas
+- Debouncing para evitar requests innecesarios
+
+### 2. **Precisión**
+- Base de conocimiento con 3,000+ palabras clave
+- Algoritmo de coincidencia de patrones optimizado
+- Reglas especiales para casos críticos
+
+### 3. **Experiencia de Usuario**
+- Sugerencias en tiempo real mientras escribe
+- Selección visual de clasificaciones
+- Reclasificación manual disponible
+- Feedback visual con porcentajes de confianza
+
+### 4. **Flexibilidad**
+- Sistema modular y extensible
+- Fácil actualización de la base de conocimiento
+- Soporte para múltiples dependencias por petición
+
+### 5. **Integración Completa**
+- Guardado automático de sugerencias con la petición
+- Marcado de clasificación seleccionada por el usuario
+- Disponible para revisión por personal del hub
+
+---
+
+## MANTENIMIENTO Y EXPANSIÓN
+
+### Actualización de Base de Conocimiento:
+1. Editar archivo `dependencias_cancun.json`
+2. Agregar nuevas palabras clave en la categoría correspondiente
+3. Reiniciar servidor FastAPI para aplicar cambios
+4. Probar con casos reales
+
+### Agregar Nuevas Dependencias:
+```json
+{
+  "tipo_peticion": "Nueva función",
+  "palabra_clave": "palabra nueva",
+  "dependencia": "Nueva Dependencia Municipal"
+}
+```
+
+### Métricas y Monitoreo:
+- Tracking de precisión por tipo de petición
+- Análisis de palabras clave más utilizadas
+- Feedback del personal del hub sobre clasificaciones
+
+### Futuras Mejoras:
+- Machine Learning con clasificaciones confirmadas
+- Integración con APIs externas de NLP
+- Clasificación semántica avanzada
+- Soporte para múltiples idiomas
+
+---
+
+**El Sistema de Sugerencias de IA de SISEE transforma la gestión manual de peticiones en un proceso inteligente y automatizado, mejorando significativamente la eficiencia del hub de atención ciudadana y asegurando que cada petición llegue al departamento correcto desde el primer momento.**
+
+**Última actualización:** [Sept-27-09]

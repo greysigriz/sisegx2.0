@@ -1,0 +1,409 @@
+# SISEE - Documentación de Configuración
+
+## VARIABLES DE ENTORNO Y VALORES POR DEFECTO
+
+Esta documentación describe todas las variables de configuración del sistema SISEE, sus valores por defecto y cómo modificarlas según el entorno de despliegue.
+
+---
+
+## 1. CONFIGURACIÓN DE BASE DE DATOS
+
+### Archivo: `config/database.php`
+
+```php
+class Database {
+    // Configuración de producción actual
+    private $host = 'nice-dubinsky.192-99-212-154.plesk.page';
+    private $db_name = 'sisegestion';
+    private $username = 'siseg';
+    private $password = 'NK!Igudh306ameu?';
+    private $port = 3306;
+}
+```
+
+### Variables de Base de Datos:
+
+| Variable | Valor Producción | Valor Local (XAMPP) | Descripción |
+|----------|------------------|---------------------|-------------|
+| `$host` | `nice-dubinsky.192-99-212-154.plesk.page` | `localhost` | Servidor de base de datos |
+| `$db_name` | `sisegestion` | `sisegestion` | Nombre de la base de datos |
+| `$username` | `siseg` | `root` | Usuario de base de datos |
+| `$password` | `NK!Igudh306ameu?` | `` (vacío) | Contraseña de base de datos |
+| `$port` | `3306` | `3306` | Puerto de conexión MySQL |
+
+### Para Desarrollo Local (XAMPP):
+```php
+private $host = 'localhost';
+private $db_name = 'sisegestion';
+private $username = 'root';
+private $password = '';
+private $port = 3306;
+```
+
+---
+
+## 2. CONFIGURACIÓN FRONTEND (VUE.JS)
+
+### Archivo: `.env`
+```
+VITE_API_URL=http://localhost/SISEE/api
+```
+
+### Variables de Entorno Frontend:
+
+| Variable | Valor Local | Valor Producción | Descripción |
+|----------|-------------|------------------|-------------|
+| `VITE_API_URL` | `http://localhost/SISEE/api` | `https://tu-dominio.com/SISEE/api` | URL base de la API |
+| `VITE_APP_NAME` | `SISEE` | `SISEE` | Nombre de la aplicación |
+| `VITE_DEBUG_MODE` | `true` | `false` | Modo debug para desarrollo |
+
+### Para Producción:
+```
+VITE_API_URL=https://tu-dominio.com/SISEE/api
+VITE_DEBUG_MODE=false
+```
+
+---
+
+## 3. CONFIGURACIÓN CORS
+
+### Archivo: `api/cors.php`
+
+```php
+$allowed_origins = [
+    'http://localhost:5173',    // Vite dev server
+    'http://localhost:3000',    // React/Node dev
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    'http://sise.local:5173',
+    'http://localhost:5175',
+    'http://localhost:5174'
+];
+```
+
+### Variables CORS:
+
+| Configuración | Valor Desarrollo | Valor Producción |
+|---------------|------------------|------------------|
+| `Access-Control-Allow-Origin` | `*` (todos) | Dominios específicos |
+| `Access-Control-Allow-Credentials` | `true` | `true` |
+| `Access-Control-Allow-Methods` | `GET, POST, PUT, DELETE, OPTIONS, PATCH` | Mismo |
+| `Access-Control-Max-Age` | `86400` (24 horas) | `86400` |
+
+### Para Producción - Modificar `$allowed_origins`:
+```php
+$allowed_origins = [
+    'https://tu-dominio.com',
+    'https://www.tu-dominio.com'
+];
+```
+
+---
+
+## 4. CONFIGURACIÓN DE SESIONES PHP
+
+### Configuración en `api/login.php`:
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| `session.gc_maxlifetime` | `28800` (8 horas) | Tiempo de vida máximo de sesión |
+| `session.cookie_httponly` | `true` | Cookies solo por HTTP |
+| `session.use_strict_mode` | `true` | Modo estricto de sesiones |
+| `session.cookie_secure` | `false` (dev) / `true` (prod) | Cookies solo HTTPS |
+
+### Para Producción en `php.ini`:
+```ini
+session.gc_maxlifetime = 28800
+session.cookie_httponly = 1
+session.use_strict_mode = 1
+session.cookie_secure = 1
+session.cookie_samesite = "Lax"
+```
+
+---
+
+## 5. CONFIGURACIÓN DE LOGGING
+
+### Configuración de Errores PHP:
+
+| Entorno | display_errors | log_errors | error_log |
+|---------|----------------|------------|-----------|
+| **Desarrollo** | `1` | `1` | `logs/php_errors.log` |
+| **Producción** | `0` | `1` | `/var/log/php_errors.log` |
+
+### Archivos de Log Generados:
+```
+api/logs/
+├── php_errors.log          # Errores PHP generales
+├── login_debug.log         # Debug de proceso login
+├── login_success.log       # Logs de login exitoso
+└── api_requests.log        # Requests de API (opcional)
+```
+
+---
+
+## 6. CONFIGURACIÓN DE APACHE (.htaccess)
+
+### Archivo: `api/.htaccess`
+
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /SISEE/api/
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^division/([0-9]+)$ division.php?id=$1 [QSA,L]
+</IfModule>
+```
+
+### Variables Apache:
+
+| Configuración | Valor | Descripción |
+|---------------|-------|-------------|
+| `RewriteBase` | `/SISEE/api/` | Base URL para reescritura |
+| `DirectoryIndex` | `index.php` | Archivo índice por defecto |
+| `AllowOverride` | `All` | Permitir .htaccess |
+
+---
+
+## 7. CONFIGURACIÓN DE SEGURIDAD
+
+### Headers de Seguridad Recomendados:
+
+```php
+// Para producción agregar en config/security.php:
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Content-Security-Policy: default-src \'self\'');
+```
+
+### Configuración de Contraseñas:
+
+| Parámetro | Valor | Descripción |
+|-----------|-------|-------------|
+| `PASSWORD_DEFAULT` | `BCRYPT` | Algoritmo de hash |
+| `Password Cost` | `12` | Costo computacional |
+| `Min Length` | `8` caracteres | Longitud mínima |
+| `Session Timeout` | `8 horas` | Tiempo de expiración |
+
+---
+
+## 8. CONFIGURACIÓN POR ENTORNOS
+
+### 8.1 ENTORNO DE DESARROLLO
+
+**Características:**
+- Debug habilitado
+- CORS permisivo
+- Logs detallados
+- Conexión DB local
+
+**Variables clave:**
+```php
+// database.php
+private $host = 'localhost';
+private $username = 'root';
+private $password = '';
+
+// .env
+VITE_API_URL=http://localhost/SISEE/api
+VITE_DEBUG_MODE=true
+
+// cors.php
+header("Access-Control-Allow-Origin: *");
+```
+
+### 8.2 ENTORNO DE STAGING/PRUEBAS
+
+**Características:**
+- Debug limitado
+- CORS restrictivo
+- Logs moderados
+- Base de datos de prueba
+
+**Variables clave:**
+```php
+// database.php
+private $host = 'staging-db.example.com';
+private $db_name = 'sisegestion_test';
+
+// .env
+VITE_API_URL=https://staging.example.com/SISEE/api
+VITE_DEBUG_MODE=false
+```
+
+### 8.3 ENTORNO DE PRODUCCIÓN
+
+**Características:**
+- Debug deshabilitado
+- CORS muy restrictivo
+- Logs solo errores críticos
+- Base de datos de producción
+
+**Variables clave:**
+```php
+// database.php
+private $host = 'nice-dubinsky.192-99-212-154.plesk.page';
+private $db_name = 'sisegestion';
+private $username = 'siseg';
+private $password = 'NK!Igudh306ameu?';
+
+// .env
+VITE_API_URL=https://tu-dominio.com/SISEE/api
+VITE_DEBUG_MODE=false
+
+// cors.php
+$allowed_origins = ['https://tu-dominio.com'];
+```
+
+---
+
+## 9. CONFIGURACIÓN DE PERFORMANCE
+
+### PHP Settings Recomendados:
+
+```ini
+; Producción
+memory_limit = 256M
+max_execution_time = 300
+max_input_time = 300
+upload_max_filesize = 10M
+post_max_size = 10M
+
+; MySQL
+max_connections = 100
+innodb_buffer_pool_size = 256M
+query_cache_size = 64M
+```
+
+### Apache Settings:
+
+```apache
+# httpd.conf o .htaccess
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+```
+
+---
+
+## 10. VARIABLES DE CONFIGURACIÓN PERSONALIZABLES
+
+### 10.1 Configuración de Folios
+
+```php
+// En peticiones.php - función generateSequentialFolio()
+$folioPrefix = 'FOLIO-';        // Prefijo de folios
+$folioLength = 6;               // Longitud del número (ej: 000001)
+$folioFormat = 'FOLIO-%06d';    // Formato sprintf
+```
+
+### 10.2 Configuración de Paginación
+
+```javascript
+// En Peticiones.vue
+const paginacionOpciones = [10, 20, 50, 100];  // Opciones de registros por página
+const paginacionDefault = 20;                   // Valor por defecto
+```
+
+### 10.3 Configuración de Estados
+
+```php
+// Estados válidos de peticiones
+$estadosValidos = [
+    'Sin revisar',
+    'En proceso', 
+    'Esperando recepción',
+    'Completado',
+    'Rechazado'
+];
+
+// Estados de asignación departamental
+$estadosAsignacion = [
+    'Esperando recepción',
+    'Aceptado en proceso',
+    'Devuelto a seguimiento', 
+    'Rechazado',
+    'Completado'
+];
+```
+
+---
+
+## 11. CONFIGURACIÓN DE BACKUP Y MANTENIMIENTO
+
+### 11.1 Backup de Base de Datos
+
+```bash
+# Script diario (cron)
+mysqldump -h nice-dubinsky.192-99-212-154.plesk.page \
+          -u siseg -p'NK!Igudh306ameu?' \
+          sisegestion > backup_$(date +%Y%m%d).sql
+```
+
+### 11.2 Rotación de Logs
+
+```bash
+# Script semanal para limpiar logs
+find api/logs/ -name "*.log" -mtime +7 -delete
+```
+
+---
+
+## 12. TROUBLESHOOTING DE CONFIGURACIÓN
+
+### Problemas Comunes:
+
+1. **Error de conexión DB:**
+   - Verificar credenciales en `database.php`
+   - Confirmar que MySQL está ejecutándose
+   - Verificar firewall/puerto 3306
+
+2. **Error CORS:**
+   - Verificar origins permitidos en `cors.php`
+   - Confirmar que `mod_headers` está habilitado en Apache
+
+3. **Sesiones no funcionan:**
+   - Verificar permisos en directorio de sesiones
+   - Confirmar configuración de cookies
+
+4. **API no responde:**
+   - Verificar logs de Apache
+   - Confirmar que `mod_rewrite` está habilitado
+
+---
+
+## 13. CHECKLIST DE CONFIGURACIÓN
+
+### Para Desarrollo Local:
+- [ ] XAMPP instalado y ejecutándose
+- [ ] Base de datos `sisegestion` creada
+- [ ] Archivo `database.php` configurado para localhost
+- [ ] Variable `VITE_API_URL` apunta a localhost
+- [ ] CORS permite origen localhost
+
+### Para Producción:
+- [ ] Servidor web configurado con HTTPS
+- [ ] Base de datos remota accesible
+- [ ] Credenciales de producción en `database.php`
+- [ ] Variable `VITE_API_URL` apunta al dominio de producción
+- [ ] CORS restrictivo solo para dominio de producción
+- [ ] Debug deshabilitado
+- [ ] Logs configurados apropiadamente
+- [ ] Headers de seguridad implementados
+- [ ] Backup programado
+
+---
+
+**Nota:** Para cambiar entre entornos, se recomienda usar diferentes archivos de configuración (ej: `database.dev.php`, `database.prod.php`) y usar variables de entorno del sistema para determinar cuál cargar.
+
+**Última actualización:** [Sept-27-25]

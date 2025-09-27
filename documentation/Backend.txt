@@ -1,0 +1,422 @@
+# SISEE - Documentación del Backend
+
+## ARQUITECTURA BACKEND
+
+El backend de SISEE está construido con **PHP 8+** y utiliza una arquitectura **API REST** para la comunicación con el frontend. Utiliza **PDO** para el acceso seguro a la base de datos MySQL/MariaDB.
+
+### Estructura de Directorios:
+```
+SISEE/
+├── api/                    # Endpoints de la API REST
+├── config/                 # Configuraciones del sistema
+├── models/                 # Modelos de datos (POO)
+└── logs/                   # Archivos de logging (generados automáticamente)
+```
+
+---
+
+## ARCHIVOS DE CONFIGURACIÓN
+
+### 1. `config/database.php`
+**Propósito:** Gestión centralizada de la conexión a base de datos
+**Funciones principales:**
+- Configuración de credenciales de BD (host, usuario, contraseña, puerto)
+- Establecimiento de conexión PDO con manejo de errores
+- Configuración de atributos PDO para seguridad (errores en excepciones)
+- Soporte para múltiples entornos (desarrollo/producción)
+
+**Características clave:**
+- Singleton pattern para conexión única
+- Manejo de excepciones personalizado
+- Logging de errores de conexión
+- Configuración de charset UTF-8
+
+**Variables de configuración:**
+```php
+private $host = 'servidor-bd';           // Servidor de base de datos
+private $db_name = 'sisegestion';        // Nombre de la base de datos
+private $username = 'usuario_bd';        // Usuario de BD
+private $password = 'contraseña_bd';     // Contraseña de BD
+private $port = 3306;                    // Puerto MySQL
+```
+
+---
+
+## ARCHIVOS DE API REST
+
+### 2. `api/cors.php`
+**Propósito:** Configuración de CORS (Cross-Origin Resource Sharing) para permitir peticiones entre dominios
+**Funciones principales:**
+- Configuración de headers CORS para desarrollo y producción
+- Manejo de preflight requests (OPTIONS)
+- Lista blanca de orígenes permitidos
+- Configuración de métodos HTTP permitidos
+
+**Headers configurados:**
+```php
+Access-Control-Allow-Origin: *                    // Orígenes permitidos
+Access-Control-Allow-Methods: GET,POST,PUT,DELETE // Métodos HTTP
+Access-Control-Allow-Headers: Content-Type        // Headers permitidos
+Access-Control-Allow-Credentials: true            // Cookies/sesiones
+Access-Control-Max-Age: 86400                     // Cache preflight
+```
+
+**Orígenes permitidos para desarrollo:**
+- `http://localhost:5173` (Vite dev server)
+- `http://127.0.0.1:5173`
+- `http://localhost:3000`
+
+### 3. `api/login.php`
+**Propósito:** Autenticación de usuarios y gestión de sesiones
+**Funciones principales:**
+- Validación de credenciales usuario/contraseña
+- Verificación de hash de contraseñas (bcrypt)
+- Migración automática de contraseñas en texto plano a hash
+- Creación y gestión de sesiones PHP
+- Obtención de datos completos del usuario (rol, división, unidades)
+- Logging detallado de intentos de login
+
+**Características de seguridad:**
+- Hashing con `PASSWORD_DEFAULT` (bcrypt)
+- Regeneración de ID de sesión
+- Validación de estado de usuario (ACTIVO/INACTIVO)
+- Headers de seguridad anti-cache
+- Logging de actividad sospechosa
+
+**Datos de respuesta incluidos:**
+```php
+'user' => [
+    'usuario' => [...],      // Datos personales
+    'rol' => [...],          // Información del rol
+    'division' => [...],     // División administrativa
+    'unidades' => [...],     // Unidades asignadas
+    'permisos' => [...]      // Permisos del sistema
+]
+```
+
+### 4. `api/check-session.php`
+**Propósito:** Validación y renovación de sesiones activas
+**Funciones principales:**
+- Verificación de existencia de sesión PHP
+- Validación de timeouts (8 horas máximo, 30 min inactividad)
+- Actualización de timestamp de última actividad
+- Verificación de estado activo del usuario en BD
+- Respuesta con información de tiempo restante
+
+**Tipos de timeout:**
+- **Sesión total:** 8 horas desde login
+- **Inactividad:** 30 minutos sin actividad
+- **Actualización automática:** Cada request válido
+
+**Códigos de respuesta:**
+- `SESSION_VALID`: Sesión válida y activa
+- `NO_SESSION`: No hay sesión iniciada
+- `SESSION_EXPIRED_TIME`: Expiró por tiempo total
+- `SESSION_EXPIRED_INACTIVITY`: Expiró por inactividad
+- `USER_NOT_FOUND`: Usuario no existe o inactivo
+
+### 5. `api/peticiones.php`
+**Propósito:** CRUD completo de peticiones ciudadanas
+**Funciones principales:**
+- **GET:** Listado con filtros, búsqueda y paginación
+- **POST:** Creación de nuevas peticiones con folio automático
+- **PUT:** Actualización de peticiones existentes
+- **DELETE:** Eliminación de peticiones
+- **Acción especial:** Asignación de seguimiento a usuarios
+
+**Características GET:**
+- Filtros múltiples: estado, departamento, nivel, usuario, folio, nombre
+- JOIN con tabla Usuario para obtener nombre del responsable
+- Paginación automática
+- Ordenamiento por fecha descendente
+- Inclusión de datos relacionados (departamentos, sugerencias IA)
+
+**Características POST:**
+- Generación automática de folio secuencial (FOLIO-000001, FOLIO-000002...)
+- Validación de campos obligatorios
+- Guardado de sugerencias de IA asociadas
+- Marcado de clasificación seleccionada como "Aceptada"
+- Transacciones para integridad de datos
+
+**Acción de seguimiento:**
+```php
+{
+    "accion": "seguimiento",
+    "peticion_id": 123,
+    "usuario_id": 456
+}
+```
+
+### 6. `api/peticion_departamento.php`
+**Propósito:** Gestión de asignación de departamentos a peticiones
+**Funciones principales:**
+- **GET:** Obtener departamentos asignados y sugerencias de IA por petición
+- **POST:** Asignar uno o múltiples departamentos a una petición
+- **PUT:** Cambiar estado de asignación departamental
+- **DELETE:** Eliminar asignaciones departamentales
+
+**Estados de asignación disponibles:**
+- `Esperando recepción`
+- `Aceptado en proceso`
+- `Devuelto a seguimiento`
+- `Rechazado`
+- `Completado`
+
+**Características especiales:**
+- Asignación múltiple en lote
+- Validación de duplicados
+- Actualización automática del estado de petición
+- JOIN con tabla unidades para nombres
+- Respuesta con contadores de éxito/duplicados
+
+### 7. `api/peticion-sugerencias.php`
+**Propósito:** Gestión de sugerencias de IA para clasificación de peticiones
+**Funciones principales:**
+- **GET:** Listar sugerencias con filtros (estado, departamento, fechas)
+- **POST:** Crear nuevas sugerencias de IA
+- **PUT:** Actualizar sugerencias existentes
+- **DELETE:** Eliminar sugerencias
+- **PATCH:** Operaciones específicas (cambio de estado en lote)
+
+**Estados de sugerencias:**
+- `Pendiente`: Sugerencia generada por IA, sin revisar
+- `Aceptada`: Confirmada por el operador del hub
+- `Rechazada`: Descartada por el operador
+
+**Características avanzadas:**
+- Paginación con límites configurables (máx 100)
+- Filtros por fecha, departamento y estado
+- Operaciones en lote para cambios masivos
+- Validación de duplicados por petición/departamento
+- JOIN con peticiones para datos contextuales
+
+### 8. `api/unidades.php`
+**Propósito:** Gestión del catálogo de departamentos/unidades responsables
+**Funciones principales:**
+- **GET:** Listado completo de unidades ordenado alfabéticamente
+- Formateo para compatibilidad con frontend
+- Campos adicionales para extensibilidad futura
+
+**Estructura de respuesta:**
+```php
+{
+    "records": [
+        {
+            "id": 1,
+            "nombre_unidad": "Departamento de...",
+            "clave": null,
+            "estatus": "ACTIVA",
+            "abreviatura": null,
+            "siglas": null
+        }
+    ]
+}
+```
+
+### 9. `api/usuarios.php`
+**Propósito:** CRUD de usuarios del sistema
+**Funciones principales:**
+- **GET:** Listado de usuarios con información de rol y división
+- **POST:** Creación de nuevos usuarios con hash de contraseña
+- **PUT:** Actualización de datos de usuario
+- **DELETE:** Eliminación de usuarios
+
+**Campos de usuario:**
+- Datos personales: Nombre, ApellidoP, ApellidoM, Puesto
+- Credenciales: Usuario, Password (hasheada)
+- Organización: IdDivisionAdm, IdUnidad, IdRolSistema
+- Estado: Estatus (ACTIVO/INACTIVO)
+
+**Características de seguridad:**
+- Contraseñas hasheadas automáticamente con `password_hash()`
+- Validación de campos requeridos
+- No exposición de contraseñas en respuestas
+- JOIN con tablas relacionadas para info completa
+
+---
+
+## ARCHIVOS DE CONFIGURACIÓN ADICIONALES
+
+### 10. `api/.htaccess`
+**Propósito:** Configuración de Apache para reescritura de URLs
+**Funciones principales:**
+- Habilitación de `mod_rewrite`
+- Configuración de base URL para API
+- Reglas de reescritura para endpoints específicos
+- Manejo de rutas amigables
+
+**Reglas configuradas:**
+```apache
+RewriteEngine On
+RewriteBase /SISEE/api/
+RewriteRule ^division/([0-9]+)$ division.php?id=$1 [QSA,L]
+```
+
+---
+
+## FLUJO DE DATOS TÍPICO
+
+### 1. **Autenticación:**
+```
+Frontend → cors.php → login.php → Database → Session → Response
+```
+
+### 2. **Operaciones CRUD:**
+```
+Frontend → cors.php → [endpoint].php → Database → Response
+```
+
+### 3. **Validación de sesión:**
+```
+Frontend → cors.php → check-session.php → Session validation → Response
+```
+
+---
+
+## SISTEMA DE LOGGING
+
+### Tipos de logs generados:
+1. **`php_errors.log`**: Errores PHP generales
+2. **`login_debug.log`**: Debug detallado del proceso de login
+3. **`login_success.log`**: Registro de logins exitosos
+4. **`session_errors.log`**: Errores de validación de sesión
+
+### Información registrada:
+- Timestamp de eventos
+- IP del cliente
+- User Agent del navegador
+- Datos de contexto (usuario, acción, errores)
+- Stack traces para debugging
+
+---
+
+## CARACTERÍSTICAS DE SEGURIDAD
+
+### 1. **Sanitización de datos:**
+- `htmlspecialchars()` para prevenir XSS
+- `strip_tags()` para limpiar HTML
+- Validación de tipos de datos (enteros, strings)
+- Límites de longitud en campos
+
+### 2. **Protección SQL:**
+- Uso exclusivo de **prepared statements**
+- Binding de parámetros con tipo específico
+- Validación de existencia de registros antes de operaciones
+
+### 3. **Gestión de sesiones:**
+- Configuración segura de cookies
+- Regeneración de session ID
+- Timeouts configurables
+- Validación en cada request
+
+### 4. **Headers de seguridad:**
+- Prevención de cache en endpoints sensibles
+- CORS restrictivo en producción
+- Content-Type apropiado para JSON
+
+---
+
+## MANEJO DE ERRORES
+
+### Niveles de error:
+1. **HTTP 200-299**: Operaciones exitosas
+2. **HTTP 400-499**: Errores del cliente (datos inválidos, no autorizado)
+3. **HTTP 500-599**: Errores del servidor (BD, sistema)
+
+### Estructura de respuesta de error:
+```php
+{
+    "success": false,
+    "message": "Descripción del error",
+    "errors": [...],          // Detalles específicos (opcional)
+    "code": "ERROR_CODE"      // Código interno (opcional)
+}
+```
+
+---
+
+## OPTIMIZACIONES DE RENDIMIENTO
+
+### 1. **Base de datos:**
+- Uso de índices en campos de búsqueda frecuente
+- JOINs optimizados con LEFT JOIN
+- LIMIT y OFFSET para paginación
+- Prepared statements reutilizables
+
+### 2. **Código PHP:**
+- Conexión singleton a BD
+- Lazy loading de datos relacionados
+- Validación temprana de parámetros
+- Cache de queries repetitivas
+
+### 3. **Respuestas:**
+- Compresión JSON automática
+- Headers de cache apropiados
+- Paginación para datasets grandes
+- Filtros en base de datos (no PHP)
+
+---
+
+## DEPENDENCIAS Y REQUIREMENTS
+
+### PHP Extensions requeridas:
+- `PDO` y `PDO_MySQL`: Acceso a base de datos
+- `JSON`: Manejo de datos JSON
+- `Session`: Gestión de sesiones
+- `Hash`: Funciones de hashing de contraseñas
+
+### Configuración PHP recomendada:
+```ini
+memory_limit = 256M
+max_execution_time = 300
+upload_max_filesize = 10M
+post_max_size = 10M
+session.gc_maxlifetime = 28800
+```
+
+---
+
+## TESTING Y DEBUGGING
+
+### URLs de prueba:
+- `GET /api/peticiones.php` - Listar peticiones
+- `POST /api/login.php` - Test de autenticación
+- `GET /api/check-session.php` - Validar sesión
+- `GET /api/unidades.php` - Listar departamentos
+
+### Headers requeridos para testing:
+```
+Content-Type: application/json
+Accept: application/json
+```
+
+### Datos de prueba para login:
+```json
+{
+    "usuario": "admin",
+    "password": "admin123"
+}
+```
+
+---
+
+## ESCALABILIDAD Y FUTURO
+
+### Preparado para:
+- Múltiples instancias de BD (master/slave)
+- Cache de Redis/Memcached
+- Load balancing
+- Microservicios
+- API versioning
+
+### Arquitectura extensible:
+- Modelos separados para lógica de negocio
+- Controllers reutilizables
+- Middleware para validaciones
+- Sistema de plugins
+
+---
+
+**Última actualización:** [Sept-27-25]
+**Versión del Backend:** 1.0
+**Compatibilidad:** PHP 8.0+, MySQL 5.7+, Apache 2.4+
