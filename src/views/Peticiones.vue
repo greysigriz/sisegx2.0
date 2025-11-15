@@ -81,7 +81,9 @@
         <div class="peticiones-list">
           <div class="tabla-scroll-container">
             <div class="tabla-contenido">
-              <div class="list-header">
+              <div
+                class="list-header header-forzado"
+              >
                 <div>Acciones</div>
                 <div>Folio</div>
                 <div>Nombre</div>
@@ -194,25 +196,28 @@
                 </div>
 
                 <div class="peticion-info departamentos-info">
-                  <span
-                    :class="[
-
-                      'departamentos-resumen',
-                      peticion.departamentos && peticion.departamentos.length > 0
-                        ? 'con-departamentos'
-                        : 'sin-asignar'
-                    ]"
-                    :title="obtenerTituloDepartamentos(peticion.departamentos)"
-                  >
-                    {{ formatearDepartamentosResumen(peticion.departamentos) }}
-                  </span>
+                  <!-- ✅ NUEVO: Botón simple para ver departamentos -->
+                  <div v-if="!peticion.departamentos || peticion.departamentos.length === 0" class="sin-departamentos">
+                    <span class="departamentos-resumen sin-asignar">Sin asignar</span>
+                  </div>
+                  <div v-else class="departamentos-con-boton">
+                    <button
+                      @click="abrirModalDepartamentosEstados(peticion)"
+                      class="btn-ver-departamentos"
+                      :title="`Ver estados de ${peticion.departamentos.length} departamento(s)`"
+                    >
+                      <i class="fas fa-building"></i>
+                      {{ peticion.departamentos.length }} Dept.
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="peticion-info prioridad-semaforo">
                   <div class="indicadores-container">
                     <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`"
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
-                      {{ peticion.NivelImportancia }}
+                      {{ obtenerTextoNivelImportancia(peticion.NivelImportancia) }}
                     </div>
                     <div class="semaforo" :class="obtenerColorSemaforo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
                     <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
@@ -667,8 +672,144 @@
         </div>
       </div>
     </div>
+
+    <!-- ✅ NUEVO: Modal para Ver Estados de Departamentos -->
+    <div v-if="showModalDepartamentosEstados" class="modal-overlay" @click.self="cerrarModalDepartamentosEstados">
+      <div class="modal-content modal-departamentos">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-building"></i>
+            Estados de Departamentos - {{ peticionDeptEstados.folio }}
+          </h3>
+          <button class="close-btn" @click="cerrarModalDepartamentosEstados">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="info-message">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <strong>Petición:</strong> {{ peticionDeptEstados.nombre }}<br>
+              <strong>Localidad:</strong> {{ peticionDeptEstados.localidad }}<br>
+              <strong>Total de departamentos:</strong> {{ (peticionDeptEstados.departamentos || []).length }}
+            </div>
+          </div>
+
+          <div class="departamentos-estados-list">
+            <div
+              v-for="dept in peticionDeptEstados.departamentos"
+              :key="dept.id || dept.asignacion_id"
+              class="departamento-estado-card"
+            >
+              <div class="dept-header">
+                <div class="dept-info-principal">
+                  <i class="fas fa-building dept-icon-large"></i>
+                  <div class="dept-detalles">
+                    <h4 class="dept-nombre-completo">{{ dept.nombre_unidad }}</h4>
+                    <span class="dept-fecha">
+                      <i class="fas fa-calendar-alt"></i>
+                      Asignado: {{ formatearFecha(dept.fecha_asignacion) }}
+                    </span>
+                  </div>
+                </div>
+                <span :class="['estado-badge-large', `estado-${(dept.estado_asignacion || dept.estado).toLowerCase().replace(/ /g, '-')}`]">
+                  {{ dept.estado_asignacion || dept.estado }}
+                </span>
+              </div>
+
+              <div class="dept-acciones">
+                <button
+                  @click="abrirHistorialDepartamentoDesdeModal(peticionDeptEstados, dept)"
+                  class="btn-historial-dept"
+                  title="Ver historial de cambios"
+                >
+                  <i class="fas fa-history"></i>
+                  Ver Historial
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarModalDepartamentosEstados">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Modal Historial de Departamento Específico -->
+    <div v-if="showHistorialDepartamentoModal" class="modal-overlay" @click.self="cerrarHistorialDepartamento">
+      <div class="modal-content modal-departamentos">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-history"></i>
+            Historial de {{ historialDeptSeleccionado.nombre_unidad }}
+          </h3>
+          <button class="close-btn" @click="cerrarHistorialDepartamento">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="info-message">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <strong>Folio:</strong> {{ historialPeticionSeleccionada.folio }}<br>
+              <strong>Departamento:</strong> {{ historialDeptSeleccionado.nombre_unidad }}<br>
+              <strong>Estado Actual:</strong>
+              <span :class="['estado-badge', `estado-${(historialDeptSeleccionado.estado_asignacion || historialDeptSeleccionado.estado).toLowerCase().replace(/ /g, '-')}`]">
+                {{ historialDeptSeleccionado.estado_asignacion || historialDeptSeleccionado.estado }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="loadingHistorialDept" class="loading-message">
+            <i class="fas fa-spinner fa-spin"></i> Cargando historial...
+          </div>
+
+          <div v-else-if="!historialDeptCambios || historialDeptCambios.length === 0" class="no-departamentos">
+            <i class="fas fa-inbox"></i> No hay cambios registrados para este departamento
+          </div>
+
+          <div v-else class="historial-list">
+            <div v-for="cambio in historialDeptCambios" :key="cambio.id" class="historial-item">
+              <div class="historial-header">
+                <div class="historial-fecha">
+                  <i class="fas fa-clock"></i>
+                  {{ formatearFechaCompleta(cambio.fecha_cambio) }}
+                </div>
+                <div class="historial-usuario" v-if="cambio.usuario_nombre">
+                  <i class="fas fa-user"></i>
+                  {{ cambio.usuario_nombre }}
+                </div>
+              </div>
+              <div class="historial-cambio">
+                <div class="estado-cambio">
+                  <span class="estado-badge-small" v-if="cambio.estado_anterior">
+                    {{ cambio.estado_anterior }}
+                  </span>
+                  <i class="fas fa-arrow-right"></i>
+                  <span class="estado-badge-small estado-nuevo">
+                    {{ cambio.estado_nuevo }}
+                  </span>
+                </div>
+                <div class="historial-motivo">
+                  <strong>Motivo:</strong> {{ cambio.motivo }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarHistorialDepartamento">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios';
 import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue';
@@ -808,10 +949,32 @@ export default {
         loading.value = true;
 
         const response = await axios.get(`${backendUrl}/peticiones.php`);
+
+        console.log('🔍 DEBUG - Respuesta del backend:', response.data);
+
         const peticionesRaw = response.data.records || [];
 
+        console.log('📊 Total peticiones:', peticionesRaw.length);
+
+        // ✅ DEBUG: Ver estructura de la primera petición
+        if (peticionesRaw.length > 0) {
+          console.log('📋 Primera petición completa:', peticionesRaw[0]);
+          console.log('🏢 Departamentos de primera petición:', peticionesRaw[0].departamentos);
+        }
+
+        // ✅ ASEGURAR que todas las peticiones tengan array de departamentos
+        peticiones.value = peticionesRaw.map(pet => ({
+          ...pet,
+          departamentos: pet.departamentos || [] // Siempre un array
+        }));
+
+        console.log('✅ Peticiones procesadas:', peticiones.value.length);
+        console.log('🔍 Peticiones con departamentos:',
+          peticiones.value.filter(p => p.departamentos && p.departamentos.length > 0).length
+        );
+
         // Ordenamos las peticiones por prioridad
-        peticiones.value = ordenarPeticionesPorPrioridad(peticionesRaw);
+        peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
 
         // Aplicamos filtros después de cargar
         aplicarFiltros();
@@ -821,7 +984,7 @@ export default {
 
         loading.value = false;
       } catch (error) {
-        console.error('Error al cargar peticiones:', error);
+        console.error('❌ Error al cargar peticiones:', error);
         loading.value = false;
         if (window.$toast) {
           window.$toast.error('Error al cargar peticiones');
@@ -1112,6 +1275,9 @@ export default {
     // Modificar la función aplicarFiltros para actualizar paginación
     const aplicarFiltros = () => {
       try {
+        console.log('🔍 APLICANDO FILTROS:', filtros);
+        console.log('📊 Total peticiones antes de filtrar:', peticiones.value.length);
+
         let peticionesFiltradas_temp = [...peticiones.value];
 
         // Aplicar filtros con validaciones robustas
@@ -1120,40 +1286,51 @@ export default {
           if (!peticion) return false;
 
           // Filtrar por estado
-          if (filtros.estado && peticion.estado !== filtros.estado) {
-            return false;
+          if (filtros.estado && filtros.estado.trim() !== '') {
+            if (peticion.estado !== filtros.estado) {
+              console.log(`❌ Petición ${peticion.folio} excluida por estado`);
+              return false;
+            }
           }
 
-          // Filtrar por departamento
-          if (filtros.departamento) {
+          // ✅ CORREGIDO: Filtrar por departamento - Solo aplicar si hay valor
+          if (filtros.departamento && filtros.departamento.toString().trim() !== '') {
             const departamentoFiltro = parseInt(filtros.departamento);
+
+            // Si no tiene departamentos asignados, excluir
             if (!peticion.departamentos || peticion.departamentos.length === 0) {
+              console.log(`❌ Petición ${peticion.folio} excluida - sin departamentos`);
               return false;
             }
 
-            const tieneDepartamento = peticion.departamentos.some(dept =>
-              parseInt(dept.departamento_id) === departamentoFiltro
-            );
+            // Buscar si tiene el departamento específico
+            const tieneDepartamento = peticion.departamentos.some(dept => {
+              const deptId = parseInt(dept.departamento_id || dept.id_unidad);
+              return deptId === departamentoFiltro;
+            });
 
             if (!tieneDepartamento) {
+              console.log(`❌ Petición ${peticion.folio} excluida - no tiene dept ${departamentoFiltro}`);
               return false;
             }
           }
 
           // Filtrar por nivel de importancia
-          if (filtros.nivelImportancia) {
+          if (filtros.nivelImportancia && filtros.nivelImportancia.toString().trim() !== '') {
             const nivel = parseInt(filtros.nivelImportancia);
             const peticionNivel = parseInt(peticion.NivelImportancia);
             if (isNaN(peticionNivel) || peticionNivel !== nivel) {
+              console.log(`❌ Petición ${peticion.folio} excluida por nivel importancia`);
               return false;
             }
           }
 
           // ✅ ACTUALIZADO: Filtrar por usuario de seguimiento (incluyendo sin seguimiento)
-          if (filtros.usuario_seguimiento) {
+          if (filtros.usuario_seguimiento && filtros.usuario_seguimiento.toString().trim() !== '') {
             if (filtros.usuario_seguimiento === 'sin_asignar') {
               // Mostrar solo peticiones SIN usuario asignado
               if (tieneUsuarioAsignado(peticion)) {
+                console.log(`❌ Petición ${peticion.folio} excluida - tiene usuario asignado`);
                 return false;
               }
             } else {
@@ -1161,6 +1338,7 @@ export default {
               const usuarioFiltro = parseInt(filtros.usuario_seguimiento);
               const usuarioPeticion = parseInt(peticion.usuario_id);
               if (isNaN(usuarioPeticion) || usuarioPeticion !== usuarioFiltro) {
+                console.log(`❌ Petición ${peticion.folio} excluida por usuario seguimiento`);
                 return false;
               }
             }
@@ -1172,22 +1350,33 @@ export default {
             const folioFiltro = filtros.folio.trim();
 
             if (!folioPeticion.toLowerCase().includes(folioFiltro.toLowerCase())) {
+              console.log(`❌ Petición ${peticion.folio} excluida por folio`);
               return false;
             }
           }
 
-          // Filtrar por nombre con validación robusta
+          // Filtrar por nombre with robust validation
           if (filtros.nombre && filtros.nombre.trim() !== '') {
             const nombrePeticion = peticion.nombre || '';
             const nombreFiltro = filtros.nombre.trim();
 
             if (!nombrePeticion.toLowerCase().includes(nombreFiltro.toLowerCase())) {
+              console.log(`❌ Petición ${peticion.folio} excluida por nombre`);
               return false;
             }
           }
 
           return true;
         });
+
+        console.log('✅ Peticiones después de filtrar:', peticionesFiltradas_temp.length);
+        console.log('📋 Muestra de peticiones filtradas con departamentos:',
+          peticionesFiltradas_temp.slice(0, 3).map(p => ({
+            folio: p.folio,
+            tiene_depts: p.departamentos?.length || 0,
+            usuario_id: p.usuario_id
+          }))
+        );
 
         // Aplicamos el ordenamiento a los resultados filtrados
         peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
@@ -1275,7 +1464,7 @@ export default {
     const gestionarDepartamentos = async (peticion) => {
       peticionForm.id = peticion.id;
       departamentosSeleccionados.value = [];
-      busquedaDepartamento.value = ''; // ✅ Resetear búsqueda
+      busquedaDepartamento.value = '';// ✅ Resetear búsqueda
 
       await cargarDepartamentosAsignados(peticion.id);
       showDepartamentosModal.value = true;
@@ -1545,6 +1734,18 @@ export default {
       return etiquetas[nivel] || 'No definida';
     };
 
+    // ✅ NUEVA: Función para obtener texto corto del nivel de importancia
+    const obtenerTextoNivelImportancia = (nivel) => {
+      const textos = {
+        '1': 'MUY ALTA',
+        '2': 'ALTA',
+        '3': 'MEDIA',
+        '4': 'BAJA',
+        '5': 'MUY BAJA'
+      };
+      return textos[nivel] || 'N/D';
+    };
+
     const toggleAccionesMenu = (peticion) => {
       if (peticionActiva.value === peticion.id) {
         peticionActiva.value = null;
@@ -1669,8 +1870,93 @@ export default {
       return tieneUsuarioAsignado(peticion) && peticion.usuario_id === usuarioLogueado.value.Id;
     };
 
+    // ✅ NUEVO: Variables para modal de estados de departamentos
+    const showModalDepartamentosEstados = ref(false);
+    const peticionDeptEstados = ref({ departamentos: [] });
+
+    // ✅ NUEVA: Función para abrir modal de estados de departamentos
+    const abrirModalDepartamentosEstados = (peticion) => {
+      peticionDeptEstados.value = { ...peticion };
+      showModalDepartamentosEstados.value = true;
+    };
+
+    // ✅ NUEVA: Función para cerrar modal de estados
+    const cerrarModalDepartamentosEstados = () => {
+      showModalDepartamentosEstados.value = false;
+      peticionDeptEstados.value = { departamentos: [] };
+    };
+
+    // ✅ NUEVA: Función para abrir historial desde el modal de estados
+    const abrirHistorialDepartamentoDesdeModal = async (peticion, departamento) => {
+      // Cerrar el modal de estados
+      cerrarModalDepartamentosEstados();
+      // Abrir el modal de historial
+      await abrirHistorialDepartamento(peticion, departamento);
+    };
+
+    // ✅ NUEVO: Variables para modal de historial de departamento
+    const showHistorialDepartamentoModal = ref(false);
+    const historialDeptSeleccionado = ref({});
+    const historialPeticionSeleccionada = ref({});
+    const historialDeptCambios = ref([]);
+    const loadingHistorialDept = ref(false);
+
+    // ✅ NUEVA: Función para abrir historial de departamento
+    const abrirHistorialDepartamento = async (peticion, departamento) => {
+      historialPeticionSeleccionada.value = peticion;
+      historialDeptSeleccionado.value = departamento;
+      showHistorialDepartamentoModal.value = true;
+      loadingHistorialDept.value = true;
+
+      try {
+        const asignacionId = departamento.id || departamento.asignacion_id;
+        const response = await axios.get(`${backendUrl}/departamentos_peticiones.php`, {
+          params: { asignacion_id: asignacionId }
+        });
+
+        if (response.data.success) {
+          historialDeptCambios.value = response.data.historial || [];
+        }
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+        if (window.$toast) {
+          window.$toast.error('Error al cargar el historial');
+        }
+      } finally {
+        loadingHistorialDept.value = false;
+      }
+    };
+
+    // ✅ NUEVA: Función para cerrar historial de departamento
+    const cerrarHistorialDepartamento = () => {
+      showHistorialDepartamentoModal.value = false;
+      historialDeptSeleccionado.value = {};
+      historialPeticionSeleccionada.value = {};
+      historialDeptCambios.value = [];
+    };
+
+    // ✅ NUEVA: Función auxiliar para formatear fecha completa
+    const formatearFechaCompleta = (fechaStr) => {
+      if (!fechaStr) return '';
+      const fecha = new Date(fechaStr);
+      return fecha.toLocaleString('es-MX', {
+        year: 'numeric',
+               month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    // ✅ NUEVA: Función auxiliar para truncar texto
+    const truncarTexto = (texto, maxLength = 100) => {
+      if (!texto || texto.length <= maxLength) return texto;
+      return texto.substring(0, maxLength) + '...';
+    };
+
     return {
       loading,
+
       peticiones,
       peticionesFiltradas,
       departamentos,
@@ -1727,6 +2013,7 @@ export default {
       obtenerUsuarioLogueado,
       obtenerInfoUsuarioLogueado,
       obtenerEtiquetaNivelImportancia,
+      obtenerTextoNivelImportancia, // ✅ Agregar a exports
 
       sugerenciasIA,
       asignarDesdeSugerencia,
@@ -1746,15 +2033,56 @@ export default {
       buscarSugerencia,
       esDepartamentoSugerido,
 
-      contadorSinSeguimiento, // ✅ NUEVO
+      contadorSinSeguimiento,
       filtrarSinSeguimiento,
       limpiarFiltros,
 
-
-      // Function to check if user can edit petition
       puedeEditarPeticion,
+
+      // ✅ Modal de estados de departamentos
+      showModalDepartamentosEstados,
+      peticionDeptEstados,
+      abrirModalDepartamentosEstados,
+      cerrarModalDepartamentosEstados,
+      abrirHistorialDepartamentoDesdeModal,
+
+      // ✅ Historial de departamento
+      showHistorialDepartamentoModal,
+      historialDeptSeleccionado,
+      historialPeticionSeleccionada,
+      historialDeptCambios,
+      loadingHistorialDept,
+      abrirHistorialDepartamento,
+      cerrarHistorialDepartamento,
+      truncarTexto,
+      formatearFechaCompleta,
     };
   }
 };
 </script>
+
 <style src="@/assets/css/Petition.css"></style>
+<style scoped>
+/* Estilos con máxima especificidad para forzar el header */
+.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
+  display: grid !important;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  background: linear-gradient(135deg, #0074D9, #0056b3) !important;
+  color: white !important;
+  padding: 1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+  min-width: 1200px !important;
+  box-sizing: border-box !important;
+}
+
+.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
+  color: white !important;
+  background: transparent !important;
+}
+</style>

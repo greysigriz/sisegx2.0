@@ -6,13 +6,13 @@
       </div>
       <div class="card-body">
         <p class="welcome-message">Administra los usuarios del sistema</p>
-        
+
         <div class="actions-container">
           <button class="btn-primary" @click="crearNuevoUsuario">
             <i class="fas fa-plus"></i> Nuevo Usuario
           </button>
         </div>
-        
+
         <div class="usuarios-list">
           <div class="list-header">
             <div>Usuario</div>
@@ -20,15 +20,15 @@
             <div>Rol</div>
             <div>Acciones</div>
           </div>
-          
+
           <div v-if="loading" class="loading-message">
             Cargando usuarios...
           </div>
-          
+
           <div v-else-if="usuarios.length === 0" class="empty-message">
             No hay usuarios registrados
           </div>
-          
+
           <div v-else v-for="usuario in usuarios" :key="usuario.Id" class="usuario-item">
             <div class="usuario-info">
               <p>{{ usuario.Usuario }}</p>
@@ -51,7 +51,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para crear/editar usuario -->
     <div v-if="showModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -65,51 +65,51 @@
           <form @submit.prevent="guardarUsuario">
             <div class="form-group">
               <label for="usuario">Usuario:</label>
-              <input 
-                type="text" 
-                id="usuario" 
-                v-model="usuarioForm.Usuario" 
+              <input
+                type="text"
+                id="usuario"
+                v-model="usuarioForm.Usuario"
                 required
               />
             </div>
-            
+
             <div class="form-group">
               <label for="nombre">Nombre:</label>
-              <input 
-                type="text" 
-                id="nombre" 
-                v-model="usuarioForm.Nombre" 
+              <input
+                type="text"
+                id="nombre"
+                v-model="usuarioForm.Nombre"
                 required
               />
             </div>
-            
+
             <div class="form-group">
               <label for="apellidoP">Apellido Paterno:</label>
-              <input 
-                type="text" 
-                id="apellidoP" 
+              <input
+                type="text"
+                id="apellidoP"
                 v-model="usuarioForm.ApellidoP"
               />
             </div>
-            
+
             <div class="form-group">
               <label for="apellidoM">Apellido Materno:</label>
-              <input 
-                type="text" 
-                id="apellidoM" 
+              <input
+                type="text"
+                id="apellidoM"
                 v-model="usuarioForm.ApellidoM"
               />
             </div>
-            
+
             <div class="form-group">
               <label for="puesto">Puesto:</label>
-              <input 
-                type="text" 
-                id="puesto" 
+              <input
+                type="text"
+                id="puesto"
                 v-model="usuarioForm.Puesto"
               />
             </div>
-            
+
             <div class="form-group">
               <label for="estatus">Estatus:</label>
               <select id="estatus" v-model="usuarioForm.Estatus">
@@ -117,7 +117,7 @@
                 <option value="INACTIVO">Inactivo</option>
               </select>
             </div>
-            
+
             <div class="form-group">
               <label for="division">División Administrativa:</label>
               <select id="division" v-model="usuarioForm.IdDivisionAdm">
@@ -127,7 +127,7 @@
                 </option>
               </select>
             </div>
-            
+
             <div class="form-group">
               <label for="unidad">Unidad:</label>
               <select id="unidad" v-model="usuarioForm.IdUnidad">
@@ -137,7 +137,7 @@
                 </option>
               </select>
             </div>
-            
+
             <div class="form-group">
               <label for="rol">Rol del Sistema:</label>
               <select id="rol" v-model="usuarioForm.IdRolSistema" required>
@@ -146,18 +146,18 @@
                 </option>
               </select>
             </div>
-            
+
             <div class="form-group">
               <label for="password">Contraseña:</label>
-              <input 
-                type="password" 
-                id="password" 
+              <input
+                type="password"
+                id="password"
                 v-model="usuarioForm.Password"
                 :required="!modoEdicion"
                 :placeholder="modoEdicion ? 'Dejar en blanco para mantener la actual' : ''"
               />
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 Cancelar
@@ -170,7 +170,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal de confirmación para eliminar -->
     <div v-if="showConfirmModal" class="modal-overlay">
       <div class="modal-content confirm-modal">
@@ -197,7 +197,7 @@
 import axios from 'axios';
 
 export default {
-  name: 'Usuarios',
+  name: 'UsuariosView',
   data() {
     return {
       loading: true,
@@ -299,8 +299,8 @@ export default {
     editarUsuario(usuario) {
       this.modoEdicion = true;
       // Asegurarse de que los valores nulos se preserven como nulos
-      this.usuarioForm = { 
-        ...usuario, 
+      this.usuarioForm = {
+        ...usuario,
         Password: '',
         IdDivisionAdm: usuario.IdDivisionAdm || null,
         IdUnidad: usuario.IdUnidad || null
@@ -311,11 +311,11 @@ export default {
       try {
         // Crear una copia del formulario para enviar
         const formData = {...this.usuarioForm};
-        
+
         // Convertir valores "null" (string) a null (valor)
         if (formData.IdDivisionAdm === "null") formData.IdDivisionAdm = null;
         if (formData.IdUnidad === "null") formData.IdUnidad = null;
-        
+
         // Verificar si es una actualización o creación
         if (this.modoEdicion) {
           // Actualizar usuario existente
@@ -334,7 +334,7 @@ export default {
             alert('Usuario creado correctamente');
           }
         }
-        
+
         // Recargar usuarios y cerrar modal
         this.showModal = false;
         await this.cargarUsuarios();
@@ -356,7 +356,7 @@ export default {
         await axios.delete(`${this.backendUrl}/usuarios.php`, {
           data: { Id: this.usuarioEliminar.Id }
         });
-        
+
         if (this.$toast) {
           this.$toast.success('Usuario eliminado correctamente');
         } else {
@@ -427,10 +427,10 @@ export default {
 .list-header {
   display: grid;
   grid-template-columns: 1fr 1.5fr 1fr 0.5fr;
-  background-color: rgba(177, 22, 35, 0.1);
+  background-color: rgba(39, 135, 245, 0.926);
   padding: 15px;
   font-weight: 600;
-  color: var(--secondary-color);
+  color: white;
 }
 
 .usuario-item {
@@ -442,7 +442,7 @@ export default {
 }
 
 .usuario-item:hover {
-  background-color: rgba(177, 22, 35, 0.05);
+  background-color: rgba(22, 84, 177, 0.05);
 }
 
 .usuario-info p {

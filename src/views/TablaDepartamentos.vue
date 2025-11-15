@@ -8,7 +8,7 @@
 import TablaDepartamento from '@/components/TablaDepartamento.vue';
 
 export default {
-  name: 'Inicio',
+  name: 'TablaDepartamentos',
   components: {
     TablaDepartamento
   }

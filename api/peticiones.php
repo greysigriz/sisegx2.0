@@ -92,7 +92,7 @@ function getPetitionDepartments($db, $petitionId) {
 
 function getPetitionRelatedData($db, $petitionId) {
     // Obtener sugerencias de IA
-    $sugQuery = "SELECT id, departamento_nombre, estado_sugerencia, fecha_sugerencia
+    $sugQuery = "SELECT id, departamento_nombre, estado_sugerencia as estado, fecha_sugerencia as fecha
                 FROM peticion_sugerencias
                 WHERE peticion_id = ?
                 ORDER BY fecha_sugerencia ASC";
@@ -111,7 +111,6 @@ function getPetitionRelatedData($db, $petitionId) {
 }
 
 if ($method === 'GET') {
-    // ✅ CORREGIDO: Query base para incluir información del usuario con JOIN
     $baseQuery = "SELECT 
                     p.*,
                     u.Nombre as nombre_usuario_seguimiento,
@@ -149,7 +148,38 @@ if ($method === 'GET') {
         }
     } else {
         try {
-            list($query, $params) = buildQuery($baseQuery, $_GET);
+            $whereClause = [];
+            $params = [];
+            
+            // ✅ SOLO aplicar filtros básicos (SIN departamento)
+            if (isset($_GET['estado']) && !empty($_GET['estado'])) {
+                $whereClause[] = "p.estado = :estado";
+                $params[':estado'] = $_GET['estado'];
+            }
+            
+            if (isset($_GET['folio']) && !empty($_GET['folio'])) {
+                $whereClause[] = "p.folio LIKE :folio";
+                $params[':folio'] = '%' . $_GET['folio'] . '%';
+            }
+            
+            if (isset($_GET['nombre']) && !empty($_GET['nombre'])) {
+                $whereClause[] = "p.nombre LIKE :nombre";
+                $params[':nombre'] = '%' . $_GET['nombre'] . '%';
+            }
+            
+            if (isset($_GET['nivelImportancia']) && !empty($_GET['nivelImportancia'])) {
+                $whereClause[] = "p.NivelImportancia = :nivelImportancia";
+                $params[':nivelImportancia'] = intval($_GET['nivelImportancia']);
+            }
+            
+            $query = $baseQuery;
+            
+            if (!empty($whereClause)) {
+                $query .= " WHERE " . implode(" AND ", $whereClause);
+            }
+            
+            $query .= " ORDER BY p.fecha_registro DESC";
+            
             $stmt = $db->prepare($query);
             
             foreach ($params as $key => $value) {
@@ -159,12 +189,36 @@ if ($method === 'GET') {
             $stmt->execute();
             $peticiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
+            // ✅ CRÍTICO: Cargar departamentos para TODAS las peticiones SIEMPRE
             $peticiones_arr = array("records" => []);
             
             foreach ($peticiones as $row) {
+                // ✅ SIEMPRE cargar datos relacionados
                 $relatedData = getPetitionRelatedData($db, $row['id']);
                 $peticion_item = array_merge($row, $relatedData);
-                array_push($peticiones_arr["records"], $peticion_item);
+                
+                // ✅ SOLO filtrar por departamento si el filtro está activo
+                if (isset($_GET['departamento']) && !empty($_GET['departamento'])) {
+                    $deptId = intval($_GET['departamento']);
+                    $tieneDepartamento = false;
+                    
+                    if (!empty($peticion_item['departamentos'])) {
+                        foreach ($peticion_item['departamentos'] as $dept) {
+                            if (intval($dept['departamento_id']) === $deptId) {
+                                $tieneDepartamento = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Solo agregar si tiene el departamento filtrado
+                    if ($tieneDepartamento) {
+                        array_push($peticiones_arr["records"], $peticion_item);
+                    }
+                } else {
+                    // ✅ SIN FILTRO: Agregar TODAS las peticiones CON sus departamentos
+                    array_push($peticiones_arr["records"], $peticion_item);
+                }
             }
             
             http_response_code(200);

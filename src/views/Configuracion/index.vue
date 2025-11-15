@@ -66,7 +66,7 @@
 
 <script>
 export default {
-  name: 'Configuracion',
+  name: 'ConfiguracionPanel',
   methods: {
     redirectTo(page) {
       this.$router.push(`/configuracion/${page}`)
