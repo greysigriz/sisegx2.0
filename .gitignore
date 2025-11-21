@@ -29,10 +29,6 @@ coverage
 
 *.tsbuildinfo
 
-api/login.php
-
-api/login.php
-
 vite.config.local.js
 
 .env

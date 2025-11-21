@@ -8,7 +8,7 @@
       <div class="card-body">
         <p class="welcome-message">Bienvenido al módulo de Configuración</p>
         <p>Desde aquí podrás administrar las configuraciones del sistema.</p>
-        
+
         <div class="config-sections">
           <!-- Usuarios -->
           <div class="config-item" @click="redirectTo('usuarios')">
@@ -66,7 +66,7 @@
 
 <script>
 export default {
-  name: 'Configuracion',
+  name: 'ConfiguracionPanel',
   methods: {
     redirectTo(page) {
       this.$router.push(`/configuracion/${page}`)
@@ -95,7 +95,7 @@ export default {
 
 .card-header h3 {
   margin: 0;
-  color: var(--secondary-color);
+  color: white;
   font-size: 18px;
 }
 
@@ -119,14 +119,14 @@ export default {
   align-items: center;
   padding: 15px;
   border-radius: 8px;
-  background-color: rgba(177, 22, 35, 0.05);
+  background-color: rgba(22, 92, 177, 0.05);
   margin-bottom: 15px;
   transition: var(--transition);
   cursor: pointer;
 }
 
 .config-item:hover {
-  background-color: rgba(177, 22, 35, 0.1);
+  background-color: rgba(22, 97, 177, 0.15);
 }
 
 .config-icon {

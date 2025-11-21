@@ -1,49 +1,4 @@
 
-/* Fondo general del dashboard */
-body {
-  background-color: #5da6d1f2;
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-/* Contenedor principal del dashboard */
-.container {
-  margin: 0 auto;
-  padding: 2rem 1rem;
-  align-items: center;
-  background-color: #fbfbfbf2;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Espaciado entre filas del dashboard */
-.row {
-  margin-bottom: 2rem;
-}
-
-/* Opcional: para dar espacio interno y fondo a las columnas */
-/* .col-dashboard {
-  background-color: #fff;
-  padding: 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-} */
-
-.chart {
-  width: 100%;
-  min-height: 400px;
-}
-
-/* Estilos internos del gráfico */
-.chart1 {
-  width: 100%;
-  min-height: 400px;
-}
-
-
-
-
-
 .parent {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

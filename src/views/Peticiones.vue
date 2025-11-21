@@ -1,4 +1,3 @@
-
 <template>
   <div class="peticiones-container">
     <div class="card">
@@ -8,6 +7,12 @@
           <button @click="filtrarMisPeticiones" class="btn-filter">
             <i class="fas fa-user"></i> Mis Peticiones
           </button>
+          <!-- ✅ NUEVO: Botón para peticiones sin seguimiento -->
+          <button @click="filtrarSinSeguimiento" class="btn-filter btn-warning">
+            <i class="fas fa-user-slash"></i>
+            Sin Seguimiento
+            <span v-if="contadorSinSeguimiento > 0" class="badge-count">{{ contadorSinSeguimiento }}</span>
+          </button>
           <button @click="limpiarFiltros" class="btn-clear">
             <i class="fas fa-times"></i> Limpiar Filtros
           </button>
@@ -15,7 +20,7 @@
       </div>
       <div class="card-body">
         <p class="welcome-message">Administra las peticiones recibidas</p>
-        
+
         <!-- Filtros -->
         <div class="filtros-container">
           <div class="filtro">
@@ -58,6 +63,8 @@
             <select id="filtroUsuarioSeguimiento" v-model="filtros.usuario_seguimiento">
               <option value="">Todos</option>
               <option v-if="usuarioLogueado" :value="usuarioLogueado.Id">Mis peticiones</option>
+              <!-- ✅ NUEVA: Opción para peticiones sin seguimiento -->
+              <option value="sin_asignar">Sin seguimiento asignado</option>
             </select>
           </div>
           <div class="filtro">
@@ -69,12 +76,14 @@
             <input type="text" id="filtroNombre" v-model="filtros.nombre" placeholder="Buscar por nombre">
           </div>
         </div>
-        
+
         <!-- Tabla de peticiones -->
         <div class="peticiones-list">
           <div class="tabla-scroll-container">
             <div class="tabla-contenido">
-              <div class="list-header">
+              <div
+                class="list-header header-forzado"
+              >
                 <div>Acciones</div>
                 <div>Folio</div>
                 <div>Nombre</div>
@@ -85,88 +94,130 @@
                 <div>Prioridad/Semáforo</div>
                 <div>Fecha Registro</div>
               </div>
-              
+
               <div v-if="loading" class="loading-message">
                 <i class="fas fa-spinner fa-spin"></i> Cargando peticiones...
               </div>
-              
+
               <div v-else-if="peticionesFiltradas.length === 0" class="empty-message">
                 <i class="fas fa-inbox"></i> No se encontraron peticiones con los filtros aplicados
               </div>
-              
-              <div v-else v-for="peticion in peticionesFiltradas" :key="peticion.id" class="peticion-item">
+
+              <div v-else v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
                 <div class="peticion-acciones">
-                  <button 
-                    :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]" 
-                    @click.stop="toggleAccionesMenu(peticion)" 
+                  <button
+                    :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
+                    @click.stop="toggleAccionesMenu(peticion)"
                     :title="peticionActiva === peticion.id ? 'Cerrar menú' : 'Mostrar acciones'"
                   >
                     <i class="fas fa-ellipsis-v"></i>
                   </button>
-                  
+
                   <!-- Overlay para cerrar el dropdown -->
-                  <div 
-                    v-if="peticionActiva === peticion.id" 
+                  <div
+                    v-if="peticionActiva === peticion.id"
                     class="dropdown-overlay"
                     @click="cerrarMenuAcciones"
                   ></div>
-                  
-                  <div 
-                    v-if="peticionActiva === peticion.id" 
+
+                  <div
+                    v-if="peticionActiva === peticion.id"
                     class="acciones-dropdown show"
                   >
-                    <button class="dropdown-item" @click="editarPeticion(peticion); cerrarMenuAcciones()">
+                    <!-- ✅ ACTUALIZADO: Botones condicionalmente deshabilitados -->
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (editarPeticion(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede editar esta petición' : 'Editar petición'"
+                    >
                       <i class="fas fa-edit"></i> Editar
                     </button>
-                    <button class="dropdown-item" @click="cambiarEstado(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (cambiarEstado(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar el estado' : 'Cambiar estado'"
+                    >
                       <i class="fas fa-tasks"></i> Cambiar Estado
                     </button>
+
+                    <!-- ✅ El botón de seguimiento siempre está disponible -->
                     <button class="dropdown-item" @click="seguimiento(peticion); cerrarMenuAcciones()">
-                      <i class="fas fa-clipboard-list"></i> 
+                      <i class="fas fa-clipboard-list"></i>
                       {{ esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento' }}
                     </button>
-                    <button class="dropdown-item" @click="cambiarImportancia(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (cambiarImportancia(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar la importancia' : 'Cambiar importancia'"
+                    >
                       <i class="fas fa-star"></i> Cambiar Importancia
                     </button>
-                    <button class="dropdown-item" @click="gestionarDepartamentos(peticion); cerrarMenuAcciones()">
+
+                    <button
+                      class="dropdown-item"
+                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
+                      :disabled="!puedeEditarPeticion(peticion)"
+                      @click="puedeEditarPeticion(peticion) && (gestionarDepartamentos(peticion), cerrarMenuAcciones())"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede gestionar departamentos' : 'Gestionar departamentos'"
+                    >
                       <i class="fas fa-building"></i> Gestionar Departamentos
                     </button>
                   </div>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="folio-badge">{{ peticion.folio }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="nombre-peticion">{{ peticion.nombre }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="telefono">{{ peticion.telefono }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="localidad">{{ peticion.localidad }}</span>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
                     {{ peticion.estado }}
                   </span>
                 </div>
-                
+
                 <div class="peticion-info departamentos-info">
-                  <span class="departamentos-resumen">
-                    {{ formatearDepartamentosResumen(peticion.departamentos) }}
-                  </span>
+                  <!-- ✅ NUEVO: Botón simple para ver departamentos -->
+                  <div v-if="!peticion.departamentos || peticion.departamentos.length === 0" class="sin-departamentos">
+                    <span class="departamentos-resumen sin-asignar">Sin asignar</span>
+                  </div>
+                  <div v-else class="departamentos-con-boton">
+                    <button
+                      @click="abrirModalDepartamentosEstados(peticion)"
+                      class="btn-ver-departamentos"
+                      :title="`Ver estados de ${peticion.departamentos.length} departamento(s)`"
+                    >
+                      <i class="fas fa-building"></i>
+                      {{ peticion.departamentos.length }} Dept.
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </div>
                 </div>
-                
+
                 <div class="peticion-info prioridad-semaforo">
                   <div class="indicadores-container">
-                    <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`" 
+                    <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`"
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
-                      {{ peticion.NivelImportancia }}
+                      {{ obtenerTextoNivelImportancia(peticion.NivelImportancia) }}
                     </div>
                     <div class="semaforo" :class="obtenerColorSemaforo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
                     <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
@@ -174,7 +225,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="peticion-info">
                   <span class="fecha-registro">{{ formatearFecha(peticion.fecha_registro) }}</span>
                 </div>
@@ -182,9 +233,105 @@
             </div>
           </div>
         </div>
+
+        <!-- Paginación -->
+        <div class="paginacion-container">
+          <div class="paginacion-controles">
+            <div class="registros-por-pagina">
+              <label for="registrosPorPagina">Mostrar:</label>
+              <select
+                id="registrosPorPagina"
+                :value="paginacion.registrosPorPagina"
+                @change="cambiarRegistrosPorPagina(parseInt($event.target.value))"
+                class="select-registros"
+              >
+                <option v-for="opcion in opcionesPaginacion" :key="opcion" :value="opcion">
+                  {{ opcion }}
+                </option>
+              </select>
+              <span class="registros-info">
+                registros por página
+              </span>
+            </div>
+
+            <!-- Información de registros -->
+            <div class="info-registros">
+              <span v-if="paginacion.totalRegistros > 0">
+                Mostrando {{ ((paginacion.paginaActual - 1) * paginacion.registrosPorPagina) + 1 }}
+                a {{ Math.min(paginacion.paginaActual * paginacion.registrosPorPagina, paginacion.totalRegistros) }}
+                de {{ paginacion.totalRegistros }} registros
+              </span>
+              <span v-else>No hay registros</span>
+            </div>
+          </div>
+
+          <!-- Navegación de páginas -->
+          <div v-if="paginacion.totalPaginas > 1" class="paginacion-navegacion">
+            <!-- Botón Primera -->
+            <button
+              @click="irAPagina(1)"
+              :disabled="paginacion.paginaActual === 1"
+              class="btn-paginacion btn-extremo"
+              title="Primera página"
+            >
+              <i class="fas fa-angle-double-left"></i>
+            </button>
+
+            <!-- Botón Anterior -->
+            <button
+              @click="paginaAnterior"
+              :disabled="paginacion.paginaActual === 1"
+              class="btn-paginacion btn-nav"
+              title="Página anterior"
+            >
+              <i class="fas fa-angle-left"></i>
+            </button>
+
+            <!-- Números de página -->
+            <div class="numeros-pagina">
+              <button
+                v-for="pagina in paginasVisibles"
+                :key="pagina"
+                @click="pagina !== '...' && irAPagina(pagina)"
+                :class="[
+
+                  'btn-paginacion',
+                  'btn-numero',
+                  {
+                    'activa': pagina === paginacion.paginaActual,
+                    'puntos': pagina === '...'
+                  }
+                ]"
+                :disabled="pagina === '...'"
+              >
+                {{ pagina }}
+              </button>
+            </div>
+
+            <!-- Botón Siguiente -->
+            <button
+              @click="paginaSiguiente"
+              :disabled="paginacion.paginaActual === paginacion.totalPaginas"
+              class="btn-paginacion btn-nav"
+              title="Página siguiente"
+            >
+              <i class="fas fa-angle-right"></i>
+            </button>
+
+            <!-- Botón Última -->
+            <button
+              @click="irAPagina(paginacion.totalPaginas)"
+              :disabled="paginacion.paginaActual === paginacion.totalPaginas"
+              class="btn-paginacion btn-extremo"
+              title="Última página"
+            >
+              <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-    
+
     <!-- Modal para editar petición -->
     <div v-if="showEditModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -199,42 +346,49 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="folio">Folio:</label>
-                <input type="text" id="folio" v-model="peticionForm.folio" required />
+                <input
+                  type="text"
+                  id="folio"
+                  v-model="peticionForm.folio"
+                  disabled
+                  class="input-disabled"
+                  title="El folio no puede ser modificado"
+                />
               </div>
-              
+
               <div class="form-group">
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" v-model="peticionForm.nombre" required />
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
                 <label for="telefono">Teléfono:</label>
                 <input type="text" id="telefono" v-model="peticionForm.telefono" required />
               </div>
-              
+
               <div class="form-group">
                 <label for="localidad">Localidad:</label>
                 <input type="text" id="localidad" v-model="peticionForm.localidad" required />
               </div>
             </div>
-            
+
             <div class="form-group">
               <label for="direccion">Dirección:</label>
               <input type="text" id="direccion" v-model="peticionForm.direccion" required />
             </div>
-            
+
             <div class="form-group">
               <label for="descripcion">Descripción:</label>
               <textarea id="descripcion" v-model="peticionForm.descripcion" rows="4" required></textarea>
             </div>
-            
+
             <div class="form-group">
               <label for="red_social">Red Social:</label>
               <input type="text" id="red_social" v-model="peticionForm.red_social" />
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -247,7 +401,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para cambiar estado -->
     <div v-if="showEstadoModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -273,7 +427,7 @@
                 <option value="Esperando recepción">Esperando recepción</option>
               </select>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -286,7 +440,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para cambiar nivel de importancia -->
     <div v-if="showImportanciaModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content">
@@ -308,7 +462,7 @@
                 <option value="5">5 - Muy Baja</option>
               </select>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="btn-secondary" @click="cancelarAccion">
                 <i class="fas fa-times"></i> Cancelar
@@ -321,7 +475,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Modal para gestionar departamentos -->
     <div v-if="showDepartamentosModal" class="modal-overlay" @click.self="cancelarAccion">
       <div class="modal-content modal-departamentos">
@@ -333,21 +487,64 @@
         </div>
         <div class="modal-body">
           <div v-if="loadingDepartamentos" class="loading-message">
-            <i class="fas fa-spinner fa-spin"></i> Cargando departamentos...
+            <i class="fas fa-spinner fa-spin"></i> Cargando información...
           </div>
-          
+
           <div v-else>
+            <!-- Mensaje informativo -->
+            <div class="info-message">
+              <i class="fas fa-info-circle"></i>
+              <strong>Nota:</strong> Las sugerencias no fuerzan a ese departamento a trabajar la petición, únicamente ayudan a seleccionar departamentos en base al problema de la petición.
+            </div>
+
+            <!-- ✅ ACTUALIZADA: Sección de Sugerencias de IA -->
+            <div v-if="sugerenciasIA && sugerenciasIA.length > 0" class="departamentos-section">
+              <h4 class="departamentos-section-title">
+                <i class="fas fa-robot"></i> Sugerencias de IA
+              </h4>
+
+              <div class="sugerencias-list">
+                <div
+                  v-for="sugerencia in sugerenciasIA"
+                  :key="'sug-' + sugerencia.id"
+                  class="sugerencia-item"
+                  :class="`sugerencia-${sugerencia.estado.toLowerCase()}`"
+                >
+                  <div class="sugerencia-info">
+                    <div class="sugerencia-nombre">
+                      <i class="fas fa-brain"></i>
+                      {{ sugerencia.departamento_nombre }}
+                    </div>
+                    <div class="sugerencia-fecha">
+                      Sugerido: {{ formatearFecha(sugerencia.fecha) }}
+                    </div>
+                  </div>
+
+                  <!-- ✅ CAMBIO: Mostrar estado solo si es "Aceptada" -->
+                  <div class="sugerencia-estado" v-if="sugerencia.estado === 'Aceptada'">
+                    <span class="estado-badge estado-sugerida-creador">
+                      Sugerida por el creador del folio
+                    </span>
+                  </div>
+
+                  <!-- ✅ REMOVIDO: Botón de asignar desde sugerencia -->
+                </div>
+              </div>
+            </div>
+
             <!-- Departamentos Asignados -->
             <div class="departamentos-section">
-              <h4 class="departamentos-section-title">Departamentos Asignados</h4>
-              
+              <h4 class="departamentos-section-title">
+                <i class="fas fa-check-circle"></i> Departamentos Asignados
+              </h4>
+
               <div v-if="departamentosAsignados.length === 0" class="no-departamentos">
                 <i class="fas fa-info-circle"></i> No hay departamentos asignados
               </div>
-              
+
               <div v-else class="departamentos-asignados-list">
-                <div 
-                  v-for="depAsignado in departamentosAsignados" 
+                <div
+                  v-for="depAsignado in departamentosAsignados"
                   :key="depAsignado.id"
                   class="departamento-asignado-item"
                 >
@@ -355,23 +552,24 @@
                     <span class="departamento-nombre">{{ depAsignado.nombre_unidad }}</span>
                     <span class="departamento-siglas">{{ depAsignado.siglas || depAsignado.abreviatura }}</span>
                   </div>
-                  
+
                   <div class="departamento-estado">
-                    <select 
-                      :value="depAsignado.estado" 
+                    <select
+                      :value="depAsignado.estado"
                       @change="cambiarEstadoAsignacion(depAsignado.id, $event.target.value)"
                       class="estado-select"
                     >
                       <option value="Esperando recepción">Esperando recepción</option>
-                      <option value="En proceso">En proceso</option>
+                      <option value="Aceptado en proceso">Aceptado en proceso</option>
+                      <option value="Devuelto a seguimiento">Devuelto a seguimiento</option>
+                      <option value="Rechazado">Rechazado</option>
                       <option value="Completado">Completado</option>
-                      <option value="Rechazado por departamento">Rechazado</option>
                     </select>
                   </div>
-                  
+
                   <div class="departamento-acciones">
-                    <button 
-                      class="btn-danger btn-sm" 
+                    <button
+                      class="btn-danger btn-sm"
                       @click="eliminarDepartamentoAsignado(depAsignado.id)"
                       title="Eliminar asignación"
                     >
@@ -381,32 +579,69 @@
                 </div>
               </div>
             </div>
-            
-            <!-- Asignar Nuevos Departamentos -->
+
+            <!-- ✅ ACTUALIZADA: Asignar Nuevos Departamentos con buscador -->
             <div class="departamentos-section">
-              <h4 class="departamentos-section-title">Asignar Nuevos Departamentos</h4>
-              
-              <div v-if="departamentosDisponibles.length === 0" class="no-departamentos">
-                <i class="fas fa-check-circle"></i> Todos los departamentos están asignados
+              <h4 class="departamentos-section-title">
+                <i class="fas fa-plus-circle"></i> Asignar Nuevos Departamentos
+              </h4>
+
+              <!-- ✅ NUEVA: Barra de búsqueda con sugerencias rápidas -->
+              <div class="busqueda-departamentos">
+                <div class="busqueda-input-container">
+                  <input
+                    type="text"
+                    v-model="busquedaDepartamento"
+                    @input="filtrarDepartamentos"
+                    placeholder="Buscar departamentos..."
+                    class="busqueda-input"
+                  >
+                  <i class="fas fa-search busqueda-icon"></i>
+                </div>
+
+                <!-- ✅ NUEVO: Botones de sugerencias rápidas -->
+                <div v-if="sugerenciasRapidas.length > 0" class="sugerencias-rapidas">
+                  <span class="sugerencias-label">Sugerencias rápidas:</span>
+                  <button
+                    v-for="sugerencia in sugerenciasRapidas"
+                    :key="'rapid-' + sugerencia"
+                    @click="buscarSugerencia(sugerencia)"
+                    class="btn-sugerencia-rapida"
+                    :title="`Buscar: ${sugerencia}`"
+                  >
+                    <i class="fas fa-lightbulb"></i> {{ sugerencia }}
+                  </button>
+                </div>
               </div>
-              
+
+              <div v-if="departamentosFiltrados.length === 0" class="no-departamentos">
+                <i class="fas fa-search"></i>
+                <span v-if="busquedaDepartamento">No se encontraron departamentos con "<strong>{{ busquedaDepartamento }}</strong>"</span>
+                <span v-else>Todos los departamentos están asignados</span>
+              </div>
+
               <div v-else class="asignar-departamentos-form">
                 <div class="departamentos-checkboxes">
-                  <div 
-                    v-for="departamento in departamentosDisponibles" 
+                  <div
+                    v-for="departamento in departamentosFiltrados"
                     :key="departamento.id"
                     class="departamento-checkbox"
+                    :class="{ 'sugerido': esDepartamentoSugerido(departamento.nombre_unidad) }"
                   >
                     <label class="checkbox-label">
-                      <input 
-                        type="checkbox" 
-                        :value="departamento.id" 
+                      <input
+                        type="checkbox"
+                        :value="departamento.id"
                         v-model="departamentosSeleccionados"
                         class="checkbox-input"
                       />
                       <span class="checkmark"></span>
                       <span class="departamento-label">
                         {{ departamento.nombre_unidad }}
+                        <!-- ✅ NUEVO: Indicador de sugerencia -->
+                        <i v-if="esDepartamentoSugerido(departamento.nombre_unidad)"
+                           class="fas fa-star sugerencia-star"
+                           title="Sugerido por IA"></i>
                         <small v-if="departamento.siglas || departamento.abreviatura" class="departamento-small">
                           ({{ departamento.siglas || departamento.abreviatura }})
                         </small>
@@ -416,19 +651,19 @@
                 </div>
 
                 <div class="asignar-actions">
-                  <button 
+                  <button
                     @click="asignarDepartamentos"
                     :disabled="departamentosSeleccionados.length === 0"
                     class="btn-primary"
                   >
-                    <i class="fas fa-plus"></i> 
+                    <i class="fas fa-plus"></i>
                     Asignar Seleccionados ({{ departamentosSeleccionados.length }})
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <button type="button" class="btn-secondary" @click="cancelarAccion">
               <i class="fas fa-times"></i> Cerrar
@@ -437,14 +672,150 @@
         </div>
       </div>
     </div>
+
+    <!-- ✅ NUEVO: Modal para Ver Estados de Departamentos -->
+    <div v-if="showModalDepartamentosEstados" class="modal-overlay" @click.self="cerrarModalDepartamentosEstados">
+      <div class="modal-content modal-departamentos">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-building"></i>
+            Estados de Departamentos - {{ peticionDeptEstados.folio }}
+          </h3>
+          <button class="close-btn" @click="cerrarModalDepartamentosEstados">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="info-message">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <strong>Petición:</strong> {{ peticionDeptEstados.nombre }}<br>
+              <strong>Localidad:</strong> {{ peticionDeptEstados.localidad }}<br>
+              <strong>Total de departamentos:</strong> {{ (peticionDeptEstados.departamentos || []).length }}
+            </div>
+          </div>
+
+          <div class="departamentos-estados-list">
+            <div
+              v-for="dept in peticionDeptEstados.departamentos"
+              :key="dept.id || dept.asignacion_id"
+              class="departamento-estado-card"
+            >
+              <div class="dept-header">
+                <div class="dept-info-principal">
+                  <i class="fas fa-building dept-icon-large"></i>
+                  <div class="dept-detalles">
+                    <h4 class="dept-nombre-completo">{{ dept.nombre_unidad }}</h4>
+                    <span class="dept-fecha">
+                      <i class="fas fa-calendar-alt"></i>
+                      Asignado: {{ formatearFecha(dept.fecha_asignacion) }}
+                    </span>
+                  </div>
+                </div>
+                <span :class="['estado-badge-large', `estado-${(dept.estado_asignacion || dept.estado).toLowerCase().replace(/ /g, '-')}`]">
+                  {{ dept.estado_asignacion || dept.estado }}
+                </span>
+              </div>
+
+              <div class="dept-acciones">
+                <button
+                  @click="abrirHistorialDepartamentoDesdeModal(peticionDeptEstados, dept)"
+                  class="btn-historial-dept"
+                  title="Ver historial de cambios"
+                >
+                  <i class="fas fa-history"></i>
+                  Ver Historial
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarModalDepartamentosEstados">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Modal Historial de Departamento Específico -->
+    <div v-if="showHistorialDepartamentoModal" class="modal-overlay" @click.self="cerrarHistorialDepartamento">
+      <div class="modal-content modal-departamentos">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-history"></i>
+            Historial de {{ historialDeptSeleccionado.nombre_unidad }}
+          </h3>
+          <button class="close-btn" @click="cerrarHistorialDepartamento">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="info-message">
+            <i class="fas fa-info-circle"></i>
+            <div>
+              <strong>Folio:</strong> {{ historialPeticionSeleccionada.folio }}<br>
+              <strong>Departamento:</strong> {{ historialDeptSeleccionado.nombre_unidad }}<br>
+              <strong>Estado Actual:</strong>
+              <span :class="['estado-badge', `estado-${(historialDeptSeleccionado.estado_asignacion || historialDeptSeleccionado.estado).toLowerCase().replace(/ /g, '-')}`]">
+                {{ historialDeptSeleccionado.estado_asignacion || historialDeptSeleccionado.estado }}
+              </span>
+            </div>
+          </div>
+
+          <div v-if="loadingHistorialDept" class="loading-message">
+            <i class="fas fa-spinner fa-spin"></i> Cargando historial...
+          </div>
+
+          <div v-else-if="!historialDeptCambios || historialDeptCambios.length === 0" class="no-departamentos">
+            <i class="fas fa-inbox"></i> No hay cambios registrados para este departamento
+          </div>
+
+          <div v-else class="historial-list">
+            <div v-for="cambio in historialDeptCambios" :key="cambio.id" class="historial-item">
+              <div class="historial-header">
+                <div class="historial-fecha">
+                  <i class="fas fa-clock"></i>
+                  {{ formatearFechaCompleta(cambio.fecha_cambio) }}
+                </div>
+                <div class="historial-usuario" v-if="cambio.usuario_nombre">
+                  <i class="fas fa-user"></i>
+                  {{ cambio.usuario_nombre }}
+                </div>
+              </div>
+              <div class="historial-cambio">
+                <div class="estado-cambio">
+                  <span class="estado-badge-small" v-if="cambio.estado_anterior">
+                    {{ cambio.estado_anterior }}
+                  </span>
+                  <i class="fas fa-arrow-right"></i>
+                  <span class="estado-badge-small estado-nuevo">
+                    {{ cambio.estado_nuevo }}
+                  </span>
+                </div>
+                <div class="historial-motivo">
+                  <strong>Motivo:</strong> {{ cambio.motivo }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarHistorialDepartamento">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios';
-import { ref, reactive, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 
 export default {
-  name: 'Peticiones',
+  name: 'GestionPeticiones',
   setup() {
     const loading = ref(true);
     const peticiones = ref([]);
@@ -456,13 +827,13 @@ export default {
     const showImportanciaModal = ref(false);
     const peticionActiva = ref(null);
     const usuarioLogueado = ref(null);
-    
+
     // Estado para gestión de departamentos
     const departamentosAsignados = ref([]);
     const departamentosDisponibles = ref([]);
     const departamentosSeleccionados = ref([]);
     const loadingDepartamentos = ref(false);
-    
+
     const peticionForm = reactive({
       id: null,
       folio: '',
@@ -475,7 +846,7 @@ export default {
       estado: '',
       NivelImportancia: 3
     });
-    
+
     const filtros = reactive({
       estado: '',
       departamento: '',
@@ -484,23 +855,25 @@ export default {
       nivelImportancia: '',
       usuario_seguimiento: ''
     });
-    
+
+    const sugerenciasIA = ref([]);
+
     const backendUrl = import.meta.env.VITE_API_URL;
-    
+
     // Función mejorada para obtener el usuario logueado
     const obtenerUsuarioLogueado = async () => {
       try {
         if (usuarioLogueado.value && usuarioLogueado.value.Id) {
           return usuarioLogueado.value.Id;
         }
-        
+
         const response = await axios.get(`${backendUrl}/check-session.php`);
-        
+
         if (response.data.success && response.data.user) {
           usuarioLogueado.value = response.data.user;
           return response.data.user.Id;
         }
-        
+
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         if (userData) {
           try {
@@ -511,12 +884,12 @@ export default {
             console.error('Error al parsear datos del usuario del almacenamiento local:', e);
           }
         }
-        
+
         console.warn('No se pudo obtener la información del usuario logueado');
         return null;
       } catch (error) {
         console.error('Error al obtener usuario logueado:', error);
-        
+
         const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
         if (userData) {
           try {
@@ -527,99 +900,144 @@ export default {
             console.error('Error en fallback al almacenamiento local:', e);
           }
         }
-        
+
         return null;
       }
     };
-    
+
     const obtenerInfoUsuarioLogueado = () => {
       return usuarioLogueado.value;
     };
-    
+
     // Función mejorada para ordenar peticiones por prioridad
     const ordenarPeticionesPorPrioridad = (peticiones) => {
       return peticiones.sort((a, b) => {
         // Primero separamos por color de semáforo
         const colorA = obtenerColorSemaforo(a);
         const colorB = obtenerColorSemaforo(b);
-        
+
         // Si uno es verde y el otro no, el verde va al final
         if (colorA === 'verde' && colorB !== 'verde') return 1;
         if (colorB === 'verde' && colorA !== 'verde') return -1;
-        
+
         // Si ambos son verdes, ordenamos por fecha más reciente
         if (colorA === 'verde' && colorB === 'verde') {
           const fechaA = new Date(a.fecha_registro);
           const fechaB = new Date(b.fecha_registro);
           return fechaB - fechaA;
         }
-        
+
         // Para registros no verdes, aplicamos la lógica de prioridad
         // 1. Primero por nivel de importancia (1 es más importante que 4)
         const importanciaA = parseInt(a.NivelImportancia) || 3;
         const importanciaB = parseInt(b.NivelImportancia) || 3;
-        
+
         if (importanciaA !== importanciaB) {
           return importanciaA - importanciaB;
         }
-        
+
         // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
         const fechaA = new Date(a.fecha_registro);
         const fechaB = new Date(b.fecha_registro);
-        
+
         return fechaA - fechaB;
       });
     };
-    
+
     const cargarPeticiones = async () => {
       try {
         loading.value = true;
-        
+
         const response = await axios.get(`${backendUrl}/peticiones.php`);
+
+        console.log('🔍 DEBUG - Respuesta del backend:', response.data);
+
         const peticionesRaw = response.data.records || [];
-        
+
+        console.log('📊 Total peticiones:', peticionesRaw.length);
+
+        // ✅ DEBUG: Ver estructura de la primera petición
+        if (peticionesRaw.length > 0) {
+          console.log('📋 Primera petición completa:', peticionesRaw[0]);
+          console.log('🏢 Departamentos de primera petición:', peticionesRaw[0].departamentos);
+        }
+
+        // ✅ ASEGURAR que todas las peticiones tengan array de departamentos
+        peticiones.value = peticionesRaw.map(pet => ({
+          ...pet,
+          departamentos: pet.departamentos || [] // Siempre un array
+        }));
+
+        console.log('✅ Peticiones procesadas:', peticiones.value.length);
+        console.log('🔍 Peticiones con departamentos:',
+          peticiones.value.filter(p => p.departamentos && p.departamentos.length > 0).length
+        );
+
         // Ordenamos las peticiones por prioridad
-        peticiones.value = ordenarPeticionesPorPrioridad(peticionesRaw);
-        
+        peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
+
         // Aplicamos filtros después de cargar
         aplicarFiltros();
-        
+
+        // Inicializar paginación
+        actualizarPaginacion();
+
         loading.value = false;
       } catch (error) {
-        console.error('Error al cargar peticiones:', error);
+        console.error('❌ Error al cargar peticiones:', error);
         loading.value = false;
         if (window.$toast) {
           window.$toast.error('Error al cargar peticiones');
         }
       }
     };
-    
+
     const cargarDepartamentos = async () => {
       try {
-        const response = await axios.get(`${backendUrl}/unidades.php?activos=true`);
-        departamentos.value = response.data.records || [];
+        loadingDepartamentos.value = true;
+        console.log('🔄 Cargando unidades desde API...');
+
+        const response = await axios.get(`${backendUrl}/unidades.php`);
+        console.log('📦 Respuesta unidades:', response.data);
+
+        if (response.data && response.data.records) {
+          departamentos.value = response.data.records;
+          console.log('✅ Unidades cargadas:', departamentos.value.length);
+        } else {
+          console.warn('⚠️ No se encontraron unidades');
+          departamentos.value = [];
+        }
+
       } catch (error) {
-        console.error('Error al cargar departamentos:', error);
+        console.error('❌ Error al cargar unidades:', error);
+        departamentos.value = [];
         if (window.$toast) {
           window.$toast.error('Error al cargar departamentos');
         }
+      } finally {
+        loadingDepartamentos.value = false;
       }
     };
-    
+
     // Función para cargar departamentos asignados a una petición específica
     const cargarDepartamentosAsignados = async (peticionId) => {
       try {
         loadingDepartamentos.value = true;
         const response = await axios.get(`${backendUrl}/peticion_departamento.php?peticion_id=${peticionId}`);
-        
+
         if (response.data.success) {
           departamentosAsignados.value = response.data.departamentos || [];
-          
+          // ✅ NUEVO: Cargar también las sugerencias
+          sugerenciasIA.value = response.data.sugerencias || [];
+
           // Filtrar departamentos disponibles (excluir los ya asignados)
-          const idsAsignados = departamentosAsignados.value.map(d => d.departamento_id);
+          const idsAsignados = departamentosAsignados.value.map(d => d.id_unidad || d.departamento_id);
           departamentosDisponibles.value = departamentos.value.filter(d => !idsAsignados.includes(d.id));
+
+          // ✅ NUEVO: Inicializar filtros
+          departamentosFiltrados.value = [...departamentosDisponibles.value];
         }
-        
+
         loadingDepartamentos.value = false;
       } catch (error) {
         console.error('Error al cargar departamentos asignados:', error);
@@ -629,7 +1047,7 @@ export default {
         }
       }
     };
-    
+
     // Función para obtener departamentos de una petición (para mostrar en la tabla)
     const obtenerDepartamentosPeticion = async (peticionId) => {
       try {
@@ -643,48 +1061,52 @@ export default {
         return [];
       }
     };
-    
+
     // Función para mostrar departamentos en formato resumido
     const formatearDepartamentosResumen = (departamentos) => {
       if (!departamentos || departamentos.length === 0) {
         return 'Sin asignar';
       }
-      
+
       if (departamentos.length === 1) {
-        return departamentos[0].siglas || departamentos[0].abreviatura || departamentos[0].nombre_unidad;
+        return departamentos[0].nombre_unidad || 'Sin nombre';
       }
-      
-      return `${departamentos.length} depts.`;
+
+      if (departamentos.length <= 3) {
+        return departamentos.map(d => d.nombre_unidad || 'Sin nombre').join(', ');
+      }
+
+      return `${departamentos.length} departamentos`;
     };
-    
+
     const formatearFecha = (fechaStr) => {
       if (!fechaStr) return '';
-      
+
       const fecha = new Date(fechaStr);
       const dia = fecha.getDate().toString().padStart(2, '0');
       const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
       const anio = fecha.getFullYear();
       const hora = fecha.getHours().toString().padStart(2, '0');
       const minutos = fecha.getMinutes().toString().padStart(2, '0');
-      
+
       return `${dia}/${mes}/${anio} ${hora}:${minutos}`;
     };
-    
+
     const obtenerNombreDepartamento = (departamentoId) => {
       if (!departamentoId) return 'Sin asignar';
-      
+
       const departamento = departamentos.value.find(d => d.id === departamentoId);
       return departamento ? departamento.nombre_unidad : 'Sin asignar';
     };
-    
+
     const tieneUsuarioAsignado = (peticion) => {
       return peticion.usuario_id !== null && peticion.usuario_id !== undefined && peticion.usuario_id !== '' && peticion.usuario_id !== 0;
     };
-    
+
     const obtenerIconoSeguimiento = (peticion) => {
       return tieneUsuarioAsignado(peticion) ? 'fas fa-user-check' : 'fas fa-user-times';
     };
-    
+
     const obtenerTituloSeguimiento = (peticion) => {
       if (tieneUsuarioAsignado(peticion)) {
         const nombreUsuario = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario asignado';
@@ -692,30 +1114,30 @@ export default {
       }
       return 'Sin usuario asignado para seguimiento';
     };
-    
+
     const obtenerClaseSeguimiento = (peticion) => {
       return tieneUsuarioAsignado(peticion) ? 'seguimiento-asignado text-success' : 'seguimiento-sin-asignar text-muted';
     };
-    
+
     const esUsuarioAsignado = (peticion) => {
       if (!usuarioLogueado.value || !tieneUsuarioAsignado(peticion)) {
         return false;
       }
       return peticion.usuario_id === usuarioLogueado.value.Id;
     };
-    
+
     const obtenerColorSemaforo = (peticion) => {
-      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento', 
+      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento',
                                   'Por asignar departamento', 'Esperando recepción'];
-      
+
       if (!estadosParaSemaforo.includes(peticion.estado)) {
         return 'verde';
       }
-      
+
       const fechaRegistro = new Date(peticion.fecha_registro);
       const ahora = new Date();
       const horasTranscurridas = (ahora - fechaRegistro) / (1000 * 60 * 60);
-      
+
       if (horasTranscurridas <= 24) return 'verde';
       if (horasTranscurridas <= 48) return 'amarillo';
       if (horasTranscurridas <= 72) return 'naranja';
@@ -723,118 +1145,331 @@ export default {
     };
 
     const obtenerTituloSemaforo = (peticion) => {
-      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento', 
+      const estadosParaSemaforo = ['Sin revisar', 'Rechazado por departamento',
                                   'Por asignar departamento', 'Esperando recepción'];
-      
+
       if (!estadosParaSemaforo.includes(peticion.estado)) {
         return 'Petición procesada';
       }
-      
+
       const fechaRegistro = new Date(peticion.fecha_registro);
       const ahora = new Date();
       const horasTranscurridas = Math.floor((ahora - fechaRegistro) / (1000 * 60 * 60));
       const dias = Math.floor(horasTranscurridas / 24);
       const horasRestantes = horasTranscurridas % 24;
-      
+
       let mensaje = `Tiempo de espera: ${horasTranscurridas} horas`;
       if (dias > 0) {
         mensaje = `Tiempo de espera: ${dias} día${dias !== 1 ? 's' : ''} y ${horasRestantes} hora${horasRestantes !== 1 ? 's' : ''}`;
       }
-      
+
       if (horasTranscurridas <= 24) return `${mensaje} (Normal)`;
       if (horasTranscurridas <= 48) return `${mensaje} (Atención recomendable)`;
       if (horasTranscurridas <= 72) return `${mensaje} (Atención prioritaria)`;
       return `${mensaje} (¡ATENCIÓN URGENTE!)`;
     };
-    
-    // Función mejorada de aplicarFiltros
-    const aplicarFiltros = () => {
-      let peticionesFiltradas_temp = [...peticiones.value];
-      
-      // Aplicar filtros
-      peticionesFiltradas_temp = peticionesFiltradas_temp.filter(peticion => {
-        // Filtrar por estado
-        if (filtros.estado && peticion.estado !== filtros.estado) {
-          return false;
-        }
-        
-        // Filtrar por nivel de importancia
-        if (filtros.nivelImportancia && 
-            peticion.NivelImportancia !== parseInt(filtros.nivelImportancia)) {
-          return false;
-        }
-        
-        // Filtrar por usuario de seguimiento
-        if (filtros.usuario_seguimiento && 
-            peticion.usuario_id !== parseInt(filtros.usuario_seguimiento)) {
-          return false;
-        }
-        
-        // Filtrar por folio
-        if (filtros.folio && 
-            !peticion.folio.toLowerCase().includes(filtros.folio.toLowerCase())) {
-          return false;
-        }
-        
-        // Filtrar por nombre
-        if (filtros.nombre && 
-            !peticion.nombre.toLowerCase().includes(filtros.nombre.toLowerCase())) {
-          return false;
-        }
-        
-        return true;
-      });
-      
-      // Aplicamos el ordenamiento a los resultados filtrados
-      peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
+
+    // En el setup(), agregar variables para paginación:
+    const paginacion = reactive({
+      paginaActual: 1,
+      registrosPorPagina: 20, // Cambiable por el usuario
+      totalRegistros: 0,
+      totalPaginas: 0
+    });
+
+    const opcionesPaginacion = [10, 20, 50, 100];
+
+    // Computed para peticiones paginadas
+    const peticionesPaginadas = computed(() => {
+      const inicio = (paginacion.paginaActual - 1) * paginacion.registrosPorPagina;
+      const fin = inicio + paginacion.registrosPorPagina;
+      return peticionesFiltradas.value.slice(inicio, fin);
+    });
+
+    // Computed para contar peticiones sin seguimiento
+    const contadorSinSeguimiento = computed(() => {
+      return peticiones.value.filter(p => !tieneUsuarioAsignado(p)).length;
+    });
+
+    // Función para actualizar paginación cuando cambian los filtros
+    const actualizarPaginacion = () => {
+      paginacion.totalRegistros = peticionesFiltradas.value.length;
+      paginacion.totalPaginas = Math.ceil(paginacion.totalRegistros / paginacion.registrosPorPagina);
+
+      // Si la página actual es mayor que el total de páginas, ir a la primera
+      if (paginacion.paginaActual > paginacion.totalPaginas && paginacion.totalPaginas > 0) {
+        paginacion.paginaActual = 1;
+      }
     };
-    
+
+    // Funciones de navegación
+    const irAPagina = (pagina) => {
+      if (pagina >= 1 && pagina <= paginacion.totalPaginas) {
+        paginacion.paginaActual = pagina;
+      }
+    };
+
+    const paginaAnterior = () => {
+      if (paginacion.paginaActual > 1) {
+        paginacion.paginaActual--;
+      }
+    };
+
+    const paginaSiguiente = () => {
+      if (paginacion.paginaActual < paginacion.totalPaginas) {
+        paginacion.paginaActual++;
+      }
+    };
+
+    const cambiarRegistrosPorPagina = (nuevaCantidad) => {
+      paginacion.registrosPorPagina = nuevaCantidad;
+      paginacion.paginaActual = 1; // Volver a la primera página
+      actualizarPaginacion();
+    };
+
+    // Computed para generar números de páginas visibles
+    const paginasVisibles = computed(() => {
+      const total = paginacion.totalPaginas;
+      const actual = paginacion.paginaActual;
+      const ventana = 5; // Mostrar 5 páginas alrededor de la actual
+
+      if (total <= ventana + 2) {
+        // Si hay pocas páginas, mostrar todas
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+
+      let inicio = Math.max(1, actual - Math.floor(ventana / 2));
+      let fin = Math.min(total, inicio + ventana - 1);
+
+      // Ajustar si estamos cerca del final
+      if (fin - inicio < ventana - 1) {
+        inicio = Math.max(1, fin - ventana + 1);
+      }
+
+      const pages = [];
+
+      // Siempre mostrar la primera página
+      if (inicio > 1) {
+        pages.push(1);
+        if (inicio > 2) {
+          pages.push('...');
+        }
+      }
+
+      // Páginas del rango
+      for (let i = inicio; i <= fin; i++) {
+        pages.push(i);
+      }
+
+      // Siempre mostrar la última página
+      if (fin < total) {
+        if (fin < total - 1) {
+          pages.push('...');
+        }
+        pages.push(total);
+      }
+
+      return pages;
+    });
+
+    // Modificar la función aplicarFiltros para actualizar paginación
+    const aplicarFiltros = () => {
+      try {
+        console.log('🔍 APLICANDO FILTROS:', filtros);
+        console.log('📊 Total peticiones antes de filtrar:', peticiones.value.length);
+
+        let peticionesFiltradas_temp = [...peticiones.value];
+
+        // Aplicar filtros con validaciones robustas
+        peticionesFiltradas_temp = peticionesFiltradas_temp.filter(peticion => {
+          // Validar que peticion existe
+          if (!peticion) return false;
+
+          // Filtrar por estado
+          if (filtros.estado && filtros.estado.trim() !== '') {
+            if (peticion.estado !== filtros.estado) {
+              console.log(`❌ Petición ${peticion.folio} excluida por estado`);
+              return false;
+            }
+          }
+
+          // ✅ CORREGIDO: Filtrar por departamento - Solo aplicar si hay valor
+          if (filtros.departamento && filtros.departamento.toString().trim() !== '') {
+            const departamentoFiltro = parseInt(filtros.departamento);
+
+            // Si no tiene departamentos asignados, excluir
+            if (!peticion.departamentos || peticion.departamentos.length === 0) {
+              console.log(`❌ Petición ${peticion.folio} excluida - sin departamentos`);
+              return false;
+            }
+
+            // Buscar si tiene el departamento específico
+            const tieneDepartamento = peticion.departamentos.some(dept => {
+              const deptId = parseInt(dept.departamento_id || dept.id_unidad);
+              return deptId === departamentoFiltro;
+            });
+
+            if (!tieneDepartamento) {
+              console.log(`❌ Petición ${peticion.folio} excluida - no tiene dept ${departamentoFiltro}`);
+              return false;
+            }
+          }
+
+          // Filtrar por nivel de importancia
+          if (filtros.nivelImportancia && filtros.nivelImportancia.toString().trim() !== '') {
+            const nivel = parseInt(filtros.nivelImportancia);
+            const peticionNivel = parseInt(peticion.NivelImportancia);
+            if (isNaN(peticionNivel) || peticionNivel !== nivel) {
+              console.log(`❌ Petición ${peticion.folio} excluida por nivel importancia`);
+              return false;
+            }
+          }
+
+          // ✅ ACTUALIZADO: Filtrar por usuario de seguimiento (incluyendo sin seguimiento)
+          if (filtros.usuario_seguimiento && filtros.usuario_seguimiento.toString().trim() !== '') {
+            if (filtros.usuario_seguimiento === 'sin_asignar') {
+              // Mostrar solo peticiones SIN usuario asignado
+              if (tieneUsuarioAsignado(peticion)) {
+                console.log(`❌ Petición ${peticion.folio} excluida - tiene usuario asignado`);
+                return false;
+              }
+            } else {
+              // Filtrar por usuario específico
+              const usuarioFiltro = parseInt(filtros.usuario_seguimiento);
+              const usuarioPeticion = parseInt(peticion.usuario_id);
+              if (isNaN(usuarioPeticion) || usuarioPeticion !== usuarioFiltro) {
+                console.log(`❌ Petición ${peticion.folio} excluida por usuario seguimiento`);
+                return false;
+              }
+            }
+          }
+
+          // Filtrar por folio con validación robusta
+          if (filtros.folio && filtros.folio.trim() !== '') {
+            const folioPeticion = peticion.folio || '';
+            const folioFiltro = filtros.folio.trim();
+
+            if (!folioPeticion.toLowerCase().includes(folioFiltro.toLowerCase())) {
+              console.log(`❌ Petición ${peticion.folio} excluida por folio`);
+              return false;
+            }
+          }
+
+          // Filtrar por nombre with robust validation
+          if (filtros.nombre && filtros.nombre.trim() !== '') {
+            const nombrePeticion = peticion.nombre || '';
+            const nombreFiltro = filtros.nombre.trim();
+
+            if (!nombrePeticion.toLowerCase().includes(nombreFiltro.toLowerCase())) {
+              console.log(`❌ Petición ${peticion.folio} excluida por nombre`);
+              return false;
+            }
+          }
+
+          return true;
+        });
+
+        console.log('✅ Peticiones después de filtrar:', peticionesFiltradas_temp.length);
+        console.log('📋 Muestra de peticiones filtradas con departamentos:',
+          peticionesFiltradas_temp.slice(0, 3).map(p => ({
+            folio: p.folio,
+            tiene_depts: p.departamentos?.length || 0,
+            usuario_id: p.usuario_id
+          }))
+        );
+
+        // Aplicamos el ordenamiento a los resultados filtrados
+        peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
+
+        // Actualizar paginación después de filtrar
+        actualizarPaginacion();
+
+      } catch (error) {
+        console.error('Error en aplicarFiltros:', error);
+        // En caso de error, mostrar todas las peticiones
+        peticionesFiltradas.value = [...peticiones.value];
+        actualizarPaginacion();
+      }
+    };
+
     // Watchers para los filtros
-    watch(() => filtros.estado, () => {
+    watch(
+      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.folio, filtros.nombre],
+      () => {
+        aplicarFiltros();
+      },
+      { deep: true }
+    );
+
+    // ✅ AGREGAR: Watcher para filtro de departamento
+    watch(() => filtros.departamento, () => {
       aplicarFiltros();
     });
-    
-    watch(() => filtros.nivelImportancia, () => {
-      aplicarFiltros();
+
+    // En el setup(), agregar nuevas variables reactivas:
+    const busquedaDepartamento = ref('');
+    const departamentosFiltrados = ref([]);
+    const sugerenciasRapidas = computed(() => {
+      return sugerenciasIA.value
+        .filter(s => s.departamento_nombre && s.departamento_nombre.trim() !== '')
+        .map(s => s.departamento_nombre)
+        .filter((nombre, index, arr) => arr.indexOf(nombre) === index); // Eliminar duplicados
     });
-    
-    watch(() => filtros.usuario_seguimiento, () => {
-      aplicarFiltros();
-    });
-    
-    watch(() => filtros.folio, () => {
-      aplicarFiltros();
-    });
-    
-    watch(() => filtros.nombre, () => {
-      aplicarFiltros();
-    });
-    
+
+    // ✅ NUEVA: Función para filtrar departamentos
+    const filtrarDepartamentos = () => {
+      if (!busquedaDepartamento.value || busquedaDepartamento.value.trim() === '') {
+        departamentosFiltrados.value = [...departamentosDisponibles.value];
+        return;
+      }
+
+      const busqueda = busquedaDepartamento.value.toLowerCase().trim();
+      departamentosFiltrados.value = departamentosDisponibles.value.filter(dept =>
+        dept.nombre_unidad.toLowerCase().includes(busqueda)
+      );
+    };
+
+    // ✅ NUEVA: Función para buscar sugerencia rápida
+    const buscarSugerencia = (nombreSugerencia) => {
+      busquedaDepartamento.value = nombreSugerencia;
+      filtrarDepartamentos();
+    };
+
+    // ✅ NUEVA: Función para verificar si un departamento está sugerido
+    const esDepartamentoSugerido = (nombreDepartamento) => {
+      return sugerenciasIA.value.some(s =>
+        s.departamento_nombre &&
+        s.departamento_nombre.toLowerCase().includes(nombreDepartamento.toLowerCase())
+      );
+    };
+
     const editarPeticion = (peticion) => {
       Object.assign(peticionForm, peticion);
       showEditModal.value = true;
     };
-    
+
     const cambiarEstado = (peticion) => {
       peticionForm.id = peticion.id;
       peticionForm.estado = peticion.estado;
       showEstadoModal.value = true;
     };
-    
+
     const cambiarImportancia = (peticion) => {
       peticionForm.id = peticion.id;
       peticionForm.NivelImportancia = peticion.NivelImportancia || 3;
       showImportanciaModal.value = true;
     };
-    
+
     // Nueva función para gestionar departamentos
     const gestionarDepartamentos = async (peticion) => {
       peticionForm.id = peticion.id;
       departamentosSeleccionados.value = [];
+      busquedaDepartamento.value = '';// ✅ Resetear búsqueda
+
       await cargarDepartamentosAsignados(peticion.id);
       showDepartamentosModal.value = true;
     };
-    
+
     // Función para asignar departamentos seleccionados
     const asignarDepartamentos = async () => {
       if (departamentosSeleccionados.value.length === 0) {
@@ -843,31 +1478,31 @@ export default {
         }
         return;
       }
-      
+
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.post(`${backendUrl}/peticion_departamento.php`, {
           accion: 'asignar_departamentos',
           peticion_id: peticionForm.id,
           departamentos: departamentosSeleccionados.value
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success(response.data.message);
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
           departamentosSeleccionados.value = [];
-          
+
           // Recargar peticiones para actualizar estados
           await cargarPeticiones();
         }
-        
+
       } catch (error) {
         console.error('Error al asignar departamentos:', error);
         if (window.$toast) {
@@ -883,34 +1518,34 @@ export default {
         }
       }
     };
-    
+
     // Función para eliminar departamento asignado
     const eliminarDepartamentoAsignado = async (asignacionId) => {
       if (!confirm('¿Está seguro de que desea eliminar esta asignación de departamento?')) {
         return;
       }
-      
+
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.delete(`${backendUrl}/peticion_departamento.php`, {
           data: { id: asignacionId }
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success('Asignación eliminada correctamente');
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
-          
+
           // Recargar peticiones para actualizar estados
           await cargarPeticiones();
         }
-        
+
       } catch (error) {
         console.error('Error al eliminar asignación:', error);
         if (window.$toast) {
@@ -922,28 +1557,28 @@ export default {
         }
       }
     };
-    
+
     // Función para cambiar estado de asignación
     const cambiarEstadoAsignacion = async (asignacionId, nuevoEstado) => {
       try {
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const response = await axios.put(`${backendUrl}/peticion_departamento.php`, {
           id: asignacionId,
           estado: nuevoEstado
         });
-        
+
         if (response.data.success) {
           if (window.$toast) {
             window.$toast.success('Estado actualizado correctamente');
           }
-          
+
           // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
         }
-        
+
       } catch (error) {
         console.error('Error al cambiar estado:', error);
         if (window.$toast) {
@@ -955,11 +1590,11 @@ export default {
         }
       }
     };
-    
+
     const seguimiento = async (peticion) => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
-        
+
         if (!usuarioId) {
           if (window.$toast) {
             window.$toast.error('No se pudo obtener la información del usuario logueado. Por favor, inicie sesión nuevamente.');
@@ -967,7 +1602,7 @@ export default {
           console.error('No se pudo obtener el ID del usuario logueado');
           return;
         }
-        
+
         if (tieneUsuarioAsignado(peticion)) {
           if (peticion.usuario_id === usuarioId) {
             if (window.$toast) {
@@ -975,40 +1610,40 @@ export default {
             }
             return;
           }
-          
+
           const nombreUsuarioAsignado = peticion.nombre_completo_usuario || peticion.nombre_usuario_seguimiento || 'Usuario desconocido';
           const confirmar = confirm(`Esta petición ya está asignada a: ${nombreUsuarioAsignado}.\n¿Desea reasignarla a su usuario?`);
           if (!confirmar) {
             return;
           }
         }
-        
+
         if (window.$loading) {
           window.$loading.show();
         }
-        
+
         const datosFollowup = {
           accion: 'seguimiento',
           peticion_id: peticion.id,
           usuario_id: usuarioId
         };
-        
+
         const response = await axios.post(`${backendUrl}/peticiones.php`, datosFollowup);
-        
+
         if (response.status === 200) {
           const nombreCompleto = response.data.nombre_completo || response.data.usuario_asignado || usuarioLogueado.value?.Nombre || 'Usuario';
-          
+
           if (window.$toast) {
             window.$toast.success(`Seguimiento asignado correctamente a ${nombreCompleto}`);
           }
-          
+
           await cargarPeticiones();
           peticionActiva.value = null;
         }
-        
+
       } catch (error) {
         console.error('Error al asignar seguimiento:', error);
-        
+
         let mensajeError = 'Error al asignar seguimiento';
         if (error.response) {
           if (error.response.status === 404) {
@@ -1017,7 +1652,7 @@ export default {
             mensajeError = error.response.data.message;
           }
         }
-        
+
         if (window.$toast) {
           window.$toast.error(mensajeError);
         }
@@ -1027,15 +1662,15 @@ export default {
         }
       }
     };
-    
+
     const guardarPeticion = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, peticionForm);
-        
+
         if (window.$toast) {
           window.$toast.success('Petición actualizada correctamente');
         }
-        
+
         showEditModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1045,18 +1680,18 @@ export default {
         }
       }
     };
-    
+
     const guardarEstado = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, {
           id: peticionForm.id,
           estado: peticionForm.estado
         });
-        
+
         if (window.$toast) {
           window.$toast.success('Estado actualizado correctamente');
         }
-        
+
         showEstadoModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1066,18 +1701,18 @@ export default {
         }
       }
     };
-    
+
     const guardarImportancia = async () => {
       try {
         await axios.put(`${backendUrl}/peticiones.php`, {
           id: peticionForm.id,
           NivelImportancia: parseInt(peticionForm.NivelImportancia)
         });
-        
+
         if (window.$toast) {
           window.$toast.success('Nivel de importancia actualizado correctamente');
         }
-        
+
         showImportanciaModal.value = false;
         await cargarPeticiones();
       } catch (error) {
@@ -1098,7 +1733,19 @@ export default {
       };
       return etiquetas[nivel] || 'No definida';
     };
-    
+
+    // ✅ NUEVA: Función para obtener texto corto del nivel de importancia
+    const obtenerTextoNivelImportancia = (nivel) => {
+      const textos = {
+        '1': 'MUY ALTA',
+        '2': 'ALTA',
+        '3': 'MEDIA',
+        '4': 'BAJA',
+        '5': 'MUY BAJA'
+      };
+      return textos[nivel] || 'N/D';
+    };
+
     const toggleAccionesMenu = (peticion) => {
       if (peticionActiva.value === peticion.id) {
         peticionActiva.value = null;
@@ -1106,27 +1753,27 @@ export default {
         peticionActiva.value = peticion.id;
       }
     };
-    
+
     const cerrarMenuAcciones = () => {
       peticionActiva.value = null;
     };
-    
+
     const cerrarMenusAcciones = (event) => {
-      if (event.target.closest('.acciones-dropdown') || 
+      if (event.target.closest('.acciones-dropdown') ||
           event.target.closest('.action-btn.menu')) {
         return;
       }
-      
+
       peticionActiva.value = null;
     };
-    
+
     const cancelarAccion = () => {
       showEditModal.value = false;
       showEstadoModal.value = false;
       showDepartamentosModal.value = false;
       showImportanciaModal.value = false;
     };
-    
+
     const filtrarMisPeticiones = async () => {
       try {
         const usuarioId = await obtenerUsuarioLogueado();
@@ -1137,29 +1784,179 @@ export default {
         console.error('Error al filtrar mis peticiones:', error);
       }
     };
-    
-    const limpiarFiltros = () => {
-      Object.keys(filtros).forEach(key => {
-        filtros[key] = '';
-      });
+
+    // ✅ NUEVA: Función para filtrar peticiones sin seguimiento
+    const filtrarSinSeguimiento = () => {
+      // Filtrar peticiones que no tienen usuario asignado (usuario_id es null, undefined, 0 o vacío)
+      filtros.usuario_seguimiento = 'sin_asignar'; // Usamos un valor especial
     };
-    
+
+    // ✅ CORREGIDA: Función limpiarFiltros mejorada
+    const limpiarFiltros = () => {
+      // Limpiar todos los filtros
+      filtros.estado = '';
+      filtros.departamento = '';
+      filtros.folio = '';
+      filtros.nombre = '';
+      filtros.nivelImportancia = '';
+      filtros.usuario_seguimiento = '';
+
+      // Forzar aplicación de filtros
+      aplicarFiltros();
+
+      // Resetear paginación a la primera página
+      paginacion.paginaActual = 1;
+
+      if (window.$toast) {
+        window.$toast.info('Filtros limpiados');
+      }
+    };
+
     onMounted(async () => {
       await obtenerUsuarioLogueado();
       await Promise.all([
         cargarPeticiones(),
         cargarDepartamentos()
       ]);
-      
+
       document.addEventListener('click', cerrarMenusAcciones);
     });
-    
+
     onBeforeUnmount(() => {
       document.removeEventListener('click', cerrarMenusAcciones);
     });
-    
+
+    // Función para asignar desde sugerencia
+    const asignarDesdeSugerencia = async (sugerencia) => {
+      // Buscar el departamento por nombre
+      const departamento = departamentos.value.find(d =>
+        d.nombre_unidad.toLowerCase().includes(sugerencia.departamento_nombre.toLowerCase()) ||
+        sugerencia.departamento_nombre.toLowerCase().includes(d.nombre_unidad.toLowerCase())
+      );
+
+      if (!departamento) {
+        if (window.$toast) {
+          window.$toast.warning(`No se encontró el departamento "${sugerencia.departamento_nombre}" en el sistema`);
+        }
+        return;
+      }
+
+      // Asignar el departamento encontrado
+      departamentosSeleccionados.value = [departamento.id];
+      await asignarDepartamentos();
+    };
+
+    const obtenerTituloDepartamentos = (departamentos) => {
+      if (!departamentos || departamentos.length === 0) {
+        return 'Esta petición no tiene departamentos asignados';
+      }
+
+      if (departamentos.length === 1) {
+        const dept = departamentos[0];
+        return `Departamento: ${dept.nombre_unidad}\nEstado: ${dept.estado_asignacion}\nFecha: ${formatearFecha(dept.fecha_asignacion)}`;
+      }
+
+      return `Departamentos asignados:\n${departamentos.map(d =>
+        `• ${d.nombre_unidad} (${d.estado_asignacion})`
+      ).join('\n')}`;
+    };
+
+    // En el setup(), agregar esta función después de esUsuarioAsignado:
+
+    const puedeEditarPeticion = (peticion) => {
+      if (!usuarioLogueado.value) return false;
+
+      // El usuario solo puede editar si es el asignado para seguimiento
+      return tieneUsuarioAsignado(peticion) && peticion.usuario_id === usuarioLogueado.value.Id;
+    };
+
+    // ✅ NUEVO: Variables para modal de estados de departamentos
+    const showModalDepartamentosEstados = ref(false);
+    const peticionDeptEstados = ref({ departamentos: [] });
+
+    // ✅ NUEVA: Función para abrir modal de estados de departamentos
+    const abrirModalDepartamentosEstados = (peticion) => {
+      peticionDeptEstados.value = { ...peticion };
+      showModalDepartamentosEstados.value = true;
+    };
+
+    // ✅ NUEVA: Función para cerrar modal de estados
+    const cerrarModalDepartamentosEstados = () => {
+      showModalDepartamentosEstados.value = false;
+      peticionDeptEstados.value = { departamentos: [] };
+    };
+
+    // ✅ NUEVA: Función para abrir historial desde el modal de estados
+    const abrirHistorialDepartamentoDesdeModal = async (peticion, departamento) => {
+      // Cerrar el modal de estados
+      cerrarModalDepartamentosEstados();
+      // Abrir el modal de historial
+      await abrirHistorialDepartamento(peticion, departamento);
+    };
+
+    // ✅ NUEVO: Variables para modal de historial de departamento
+    const showHistorialDepartamentoModal = ref(false);
+    const historialDeptSeleccionado = ref({});
+    const historialPeticionSeleccionada = ref({});
+    const historialDeptCambios = ref([]);
+    const loadingHistorialDept = ref(false);
+
+    // ✅ NUEVA: Función para abrir historial de departamento
+    const abrirHistorialDepartamento = async (peticion, departamento) => {
+      historialPeticionSeleccionada.value = peticion;
+      historialDeptSeleccionado.value = departamento;
+      showHistorialDepartamentoModal.value = true;
+      loadingHistorialDept.value = true;
+
+      try {
+        const asignacionId = departamento.id || departamento.asignacion_id;
+        const response = await axios.get(`${backendUrl}/departamentos_peticiones.php`, {
+          params: { asignacion_id: asignacionId }
+        });
+
+        if (response.data.success) {
+          historialDeptCambios.value = response.data.historial || [];
+        }
+      } catch (error) {
+        console.error('Error al cargar historial:', error);
+        if (window.$toast) {
+          window.$toast.error('Error al cargar el historial');
+        }
+      } finally {
+        loadingHistorialDept.value = false;
+      }
+    };
+
+    // ✅ NUEVA: Función para cerrar historial de departamento
+    const cerrarHistorialDepartamento = () => {
+      showHistorialDepartamentoModal.value = false;
+      historialDeptSeleccionado.value = {};
+      historialPeticionSeleccionada.value = {};
+      historialDeptCambios.value = [];
+    };
+
+    // ✅ NUEVA: Función auxiliar para formatear fecha completa
+    const formatearFechaCompleta = (fechaStr) => {
+      if (!fechaStr) return '';
+      const fecha = new Date(fechaStr);
+      return fecha.toLocaleString('es-MX', {
+        year: 'numeric',
+               month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    // ✅ NUEVA: Función auxiliar para truncar texto
+    const truncarTexto = (texto, maxLength = 100) => {
+      if (!texto || texto.length <= maxLength) return texto;
+      return texto.substring(0, maxLength) + '...';
+    };
+
     return {
       loading,
+
       peticiones,
       peticionesFiltradas,
       departamentos,
@@ -1175,7 +1972,13 @@ export default {
       departamentosDisponibles,
       departamentosSeleccionados,
       loadingDepartamentos,
-      
+
+      // Paginación
+      paginacion,
+      opcionesPaginacion,
+      peticionesPaginadas,
+      paginasVisibles,
+
       cargarPeticiones,
       cargarDepartamentos,
       formatearFecha,
@@ -1193,7 +1996,8 @@ export default {
       cambiarEstadoAsignacion,
       obtenerDepartamentosPeticion,
       formatearDepartamentosResumen,
-      
+      obtenerTituloDepartamentos,
+
       guardarPeticion,
       guardarEstado,
       guardarImportancia,
@@ -1201,7 +2005,6 @@ export default {
       cerrarMenuAcciones,
       cancelarAccion,
       filtrarMisPeticiones,
-      limpiarFiltros,
       tieneUsuarioAsignado,
       obtenerIconoSeguimiento,
       obtenerTituloSeguimiento,
@@ -1209,1119 +2012,77 @@ export default {
       esUsuarioAsignado,
       obtenerUsuarioLogueado,
       obtenerInfoUsuarioLogueado,
-      obtenerEtiquetaNivelImportancia
+      obtenerEtiquetaNivelImportancia,
+      obtenerTextoNivelImportancia, // ✅ Agregar a exports
+
+      sugerenciasIA,
+      asignarDesdeSugerencia,
+
+      // Funciones de paginación
+      irAPagina,
+      paginaAnterior,
+      paginaSiguiente,
+      cambiarRegistrosPorPagina,
+      actualizarPaginacion,
+
+      // Nuevas variables y funciones para gestión de departamentos
+      busquedaDepartamento,
+      departamentosFiltrados,
+      sugerenciasRapidas,
+      filtrarDepartamentos,
+      buscarSugerencia,
+      esDepartamentoSugerido,
+
+      contadorSinSeguimiento,
+      filtrarSinSeguimiento,
+      limpiarFiltros,
+
+      puedeEditarPeticion,
+
+      // ✅ Modal de estados de departamentos
+      showModalDepartamentosEstados,
+      peticionDeptEstados,
+      abrirModalDepartamentosEstados,
+      cerrarModalDepartamentosEstados,
+      abrirHistorialDepartamentoDesdeModal,
+
+      // ✅ Historial de departamento
+      showHistorialDepartamentoModal,
+      historialDeptSeleccionado,
+      historialPeticionSeleccionada,
+      historialDeptCambios,
+      loadingHistorialDept,
+      abrirHistorialDepartamento,
+      cerrarHistorialDepartamento,
+      truncarTexto,
+      formatearFechaCompleta,
     };
   }
 };
 </script>
 
+<style src="@/assets/css/Petition.css"></style>
 <style scoped>
-/* ESTILOS FIJOS PARA BOTÓN DE ACCIONES - ALTA ESPECIFICIDAD */
-.peticion-acciones .action-btn.menu {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 8px !important;
-  border: none !important;
-  background-color: #518dce !important;
-  color: #ffffff !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: relative !important;
-  z-index: 1 !important;
-  /* Sin transiciones para evitar animaciones */
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.peticion-acciones .action-btn.menu:hover {
-  background-color: #043c74 !important;
-  color: #ffffff !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-.peticion-acciones .action-btn.menu.active {
-  background-color: #013c7c !important;
+/* Estilos con máxima especificidad para forzar el header */
+.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
+  display: grid !important;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  background: linear-gradient(135deg, #0074D9, #0056b3) !important;
   color: white !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-.peticion-acciones .action-btn.menu i {
-  font-size: 14px !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-/* Contenedor de acciones con posición relativa */
-.peticion-acciones {
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 50px !important;
-}
-
-/* Dropdown de acciones - alta especificidad */
-.peticion-acciones .acciones-dropdown {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
-  background: white !important;
-  border: 1px solid #dee2e6 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  z-index: 1000 !important;
-  min-width: 200px !important;
-  padding: 8px 0 !important;
-  margin-top: 4px !important;
-  display: none !important;
-  /* Sin animaciones */
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.peticion-acciones .acciones-dropdown.show {
-  display: block !important;
-}
-
-.peticion-acciones .dropdown-item {
-  width: 100% !important;
-  padding: 10px 16px !important;
-  background: none !important;
-  border: none !important;
-  text-align: left !important;
-  cursor: pointer !important;
-  color: #495057 !important;
-  font-size: 14px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-.peticion-acciones .dropdown-item:hover {
-  background-color: #f8f9fa !important;
-  color: #007bff !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-.peticion-acciones .dropdown-item i {
-  width: 16px !important;
-  text-align: center !important;
-  /* Sin transiciones */
-  transition: none !important;
-  transform: none !important;
-}
-
-/* Overlay para cerrar dropdown */
-.peticion-acciones .dropdown-overlay {
-  position: fixed !important;
+  padding: 1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  position: sticky !important;
   top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 999 !important;
+  z-index: 100 !important;
+  min-width: 1200px !important;
+  box-sizing: border-box !important;
+}
+
+.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
+  color: white !important;
   background: transparent !important;
-  cursor: default !important;
 }
-
-/* Asegurar que el contenedor de la petición no interfiera */
-.peticion-item {
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* Cuando hay dropdown activo, aumentar z-index del contenedor */
-.peticion-item:has(.acciones-dropdown.show) {
-  z-index: 1001 !important;
-}
-
-/* Fallback para navegadores sin soporte :has() */
-.peticion-acciones:has(.acciones-dropdown.show) {
-  z-index: 1001 !important;
-}
-
-.peticion-acciones .acciones-dropdown.show ~ * {
-  z-index: auto !important;
-}
-/* --------------------------------------------------------------------------------------- */
- * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f7fa;
-            color: #333;
-        }
-
-        /* Contenedor principal */
-        .peticiones-container {
-            margin: 2rem auto;
-            padding: 1.5rem;
-            width: 95%;
-            max-width: 1600px;
-        }
-
-        .card {
-            background: #ffffff;
-            color: black;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0, 74, 217, 0.1);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .card-header {
-            padding: 1.5rem;
-            background: linear-gradient(135deg, #0074D9, #0056b3);
-            color: white;
-            border-bottom: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-header h3 {
-            margin: 0;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn-filter, .btn-clear {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .btn-filter:hover, .btn-clear:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .welcome-message {
-            font-size: 16px;
-            font-weight: 500;
-            color: #0074D9;
-            margin-bottom: 1rem;
-        }
-
-        /* Filtros */
-        .filtros-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding: 1.5rem;
-            background: linear-gradient(135deg, rgba(0, 116, 217, 0.05), rgba(0, 86, 179, 0.08));
-            border-radius: 12px;
-            border: 1px solid rgba(0, 116, 217, 0.1);
-        }
-
-        .filtro label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .filtro input, .filtro select {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: 1px solid #0074D9;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            background: white;
-        }
-
-        .filtro input:focus, .filtro select:focus {
-            outline: none;
-            border-color: #0056b3;
-            box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
-        }
-
-        /* TABLA CON SCROLL HORIZONTAL MEJORADO */
-        .peticiones-list {
-            margin-top: 1.5rem;
-            border-radius: 12px;
-            background: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(0, 116, 217, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tabla-scroll-container {
-            overflow-x: auto;
-            overflow-y: visible;
-            position: relative;
-            /* Scrollbar personalizado */
-            scrollbar-width: thin;
-            scrollbar-color: #0074D9 #f1f3f4;
-        }
-
-        .tabla-scroll-container::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .tabla-scroll-container::-webkit-scrollbar-track {
-            background: #f1f3f4;
-            border-radius: 4px;
-        }
-
-        .tabla-scroll-container::-webkit-scrollbar-thumb {
-            background: #0074D9;
-            border-radius: 4px;
-        }
-
-        .tabla-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #0056b3;
-        }
-
-        .tabla-contenido {
-            min-width: 1200px; /* Ancho mínimo para evitar compresión */
-            width: 100%;
-        }
-
-        /* HEADER FIJO QUE CUBRE TODO EL ANCHO */
-        .list-header {
-            display: grid;
-            grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
-            background: linear-gradient(135deg, #0074D9, #0056b3);
-            color: white;
-            padding: 1rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            /* ASEGURAR QUE CUBRA TODO EL ANCHO */
-            width: 100%;
-            min-width: 1200px;
-        }
-
-        .peticion-item {
-            display: grid;
-            grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0, 116, 217, 0.1);
-            transition: background-color 0.3s ease;
-            background: white;
-            position: relative;
-            min-height: 70px;
-            align-items: center;
-        }
-
-        .peticion-item:hover {
-            background: linear-gradient(135deg, rgba(0, 116, 217, 0.03), rgba(0, 86, 179, 0.05));
-        }
-
-        .peticion-item:last-child {
-            border-bottom: none;
-        }
-
-        .peticion-info {
-            display: flex;
-            align-items: center;
-            min-height: 40px;
-            padding: 0.25rem;
-            word-break: break-word;
-            font-weight: 500;
-            color: #333;
-        }
-
-        /* INDICADORES HORIZONTALES MEJORADOS */
-        .indicadores-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            justify-content: flex-start;
-            flex-wrap: nowrap;
-            min-width: 160px;
-        }
-
-        .nivel-importancia {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            cursor: help;
-            flex-shrink: 0;
-        }
-
-        .nivel-importancia:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .nivel-importancia.nivel-1 {
-            background: linear-gradient(135deg, #FF4136, #e74c3c);
-        }
-
-        .nivel-importancia.nivel-2 {
-            background: linear-gradient(135deg, #FF851B, #e67600);
-        }
-
-        .nivel-importancia.nivel-3 {
-            background: linear-gradient(135deg, #FFDC00, #f1c40f);
-            color: #333;
-        }
-
-        .nivel-importancia.nivel-4 {
-            background: linear-gradient(135deg, #2ECC40, #27ae60);
-        }
-
-        .nivel-importancia.nivel-5 {
-            background: linear-gradient(135deg, #2ECC40, #1e8e3e);
-        }
-
-        .semaforo {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: help;
-            flex-shrink: 0;
-        }
-
-        .semaforo:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .semaforo.verde {
-            background: linear-gradient(135deg, #2ECC40, #27ae60);
-        }
-
-        .semaforo.amarillo {
-            background: linear-gradient(135deg, #FFDC00, #f1c40f);
-        }
-
-        .semaforo.naranja {
-            background: linear-gradient(135deg, #FF851B, #e67600);
-        }
-
-        .semaforo.rojo {
-            background: linear-gradient(135deg, #FF4136, #e74c3c);
-        }
-
-        .seguimiento-indicator {
-            font-size: 20px;
-            cursor: help;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 28px;
-            height: 28px;
-        }
-
-        .seguimiento-indicator:hover {
-            transform: scale(1.1);
-        }
-
-        .seguimiento-asignado {
-            color: #28a745;
-        }
-
-        .seguimiento-sin-asignar {
-            color: #6c757d;
-        }
-
-        /* ACCIONES Y DROPDOWN MEJORADO */
-        .peticion-acciones {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            z-index: 5; /* Z-index base para el contenedor */
-        }
-
-        .action-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: white;
-            font-weight: bold;
-            position: relative;
-        }
-
-        /* .action-btn.menu {
-            background: linear-gradient(135deg, #0074D9, #0056b3);
-        } */
-
-        /* .action-btn.menu:hover {
-            background: linear-gradient(135deg, #0056b3, #004085);
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .action-btn.menu.active {
-            background: linear-gradient(135deg, #0056b3, #004085);
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        } */
-
-        /* DROPDOWN DE ACCIONES CON Z-INDEX ALTO */
-        .acciones-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            width: 220px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(0, 116, 217, 0.1);
-            z-index: 9999; /* Z-index muy alto para estar encima de todo */
-            overflow: hidden;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .acciones-dropdown.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-
-        /* Ajuste automático del dropdown */
-        .acciones-dropdown.show-up {
-            top: auto;
-            bottom: calc(100% + 8px);
-        }
-
-        .acciones-dropdown.show-left {
-            left: auto;
-            right: 0;
-        }
-
-        .dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.85rem 1rem;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #333;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .dropdown-item:hover {
-            background: linear-gradient(135deg, rgba(0, 116, 217, 0.08), rgba(0, 86, 179, 0.1));
-            color: #0074D9;
-        }
-
-        .dropdown-item i {
-            width: 16px;
-            text-align: center;
-        }
-
-        /* OVERLAY PARA CERRAR DROPDOWN - REMOVIDO PARA PERMITIR SCROLL */
-        /* Ya no necesitamos el overlay que bloquea el scroll */
-        .dropdown-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 9998;
-            background: transparent;
-            /* PERMITIR EVENTOS DE SCROLL */
-            pointer-events: none;
-        }
-
-        /* Asegurar que el dropdown mantenga su funcionalidad */
-        .acciones-dropdown {
-            /* PERMITIR QUE EL DROPDOWN CAPTURE EVENTOS MIENTRAS PERMITE SCROLL EN EL FONDO */
-            pointer-events: auto;
-        }
-
-        /* Estados y badges */
-        .estado-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .folio-badge {
-            background: linear-gradient(135deg, #0074D9, #0056b3);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .nombre-peticion {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .telefono, .localidad {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .departamentos-resumen {
-            font-size: 0.85rem;
-            color: #666;
-            line-height: 1.3;
-        }
-
-        .fecha-registro {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        /* Estados específicos */
-        .estado-sin-revisar {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .estado-completado {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .estado-en-proceso {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .estado-pendiente {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .estado-rechazado-por-departamento {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .estado-por-asignar-departamento {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .estado-aceptada-en-proceso {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .estado-devuelto {
-            background: #ffeaa7;
-            color: #856404;
-        }
-
-        .estado-improcedente {
-            background: #e2e3e5;
-            color: #383d41;
-        }
-
-        .estado-cancelada {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .estado-esperando-recepcion {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        /* Mensajes de estado */
-        .loading-message, .empty-message {
-            padding: 3rem;
-            text-align: center;
-            color: #666;
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .loading-message i {
-            margin-right: 0.5rem;
-            color: #0074D9;
-        }
-
-        .empty-message i {
-            margin-right: 0.5rem;
-            color: #6c757d;
-        }
-
-        /* Tooltips */
-        [title] {
-            position: relative;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .peticiones-container {
-                width: 100%;
-                padding: 1rem;
-            }
-
-            .card-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .header-actions {
-                justify-content: center;
-            }
-
-            .filtros-container {
-                grid-template-columns: 1fr;
-            }
-
-            .tabla-contenido {
-                min-width: 900px;
-            }
-
-            .list-header,
-            .peticion-item {
-                grid-template-columns: 80px 100px 150px 100px 120px 140px 160px 140px 120px;
-            }
-
-            .list-header {
-                min-width: 900px;
-            }
-
-            .indicadores-container {
-                gap: 4px;
-                min-width: 120px;
-            }
-
-            .nivel-importancia {
-                width: 24px;
-                height: 24px;
-                font-size: 0.8rem;
-            }
-
-            .semaforo {
-                width: 20px;
-                height: 20px;
-            }
-
-            .seguimiento-indicator {
-                width: 24px;
-                height: 24px;
-                font-size: 16px;
-            }
-
-            .acciones-dropdown {
-                width: 180px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .tabla-contenido {
-                min-width: 800px;
-            }
-
-            .list-header,
-            .peticion-item {
-                grid-template-columns: 70px 90px 140px 90px 100px 120px 140px 120px 100px;
-                padding: 0.75rem;
-                font-size: 0.85rem;
-            }
-
-            .list-header {
-                min-width: 800px;
-            }
-        }
-
-
-
-
-        /*-------------------------------------------------------------------*/
-              /* Estilos para modales */
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        backdrop-filter: blur(3px);
-      }
-
-      .modal-content {
-        background: white;
-        border-radius: 12px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(0, 116, 217, 0.1);
-      }
-
-      .modal-departamentos {
-        max-width: 800px;
-      }
-
-      .modal-header {
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #0074D9, #0056b3);
-        color: white;
-        border-radius: 12px 12px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .modal-header h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-      }
-
-      .close-btn {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 4px;
-        transition: background 0.3s ease;
-      }
-
-      .close-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-
-      .modal-body {
-        padding: 1.5rem;
-      }
-
-      .modal-footer {
-        padding: 1rem 1.5rem;
-        border-top: 1px solid rgba(0, 116, 217, 0.1);
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-      }
-
-      /* Estilos para formularios */
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .form-group {
-        margin-bottom: 1rem;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        color: #333;
-      }
-
-      .form-group input,
-      .form-group textarea,
-      .form-group select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #0074D9;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      }
-
-      .form-group input:focus,
-      .form-group textarea:focus,
-      .form-group select:focus {
-        outline: none;
-        border-color: #0056b3;
-        box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
-      }
-
-      .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(0, 116, 217, 0.1);
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #0074D9, #0056b3);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .btn-primary:hover:not(:disabled) {
-        background: linear-gradient(135deg, #0056b3, #004085);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
-
-      .btn-primary:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
-
-      .btn-secondary {
-        background: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .btn-secondary:hover {
-        background: #5a6268;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
-
-      /* Estilos para gestión de departamentos */
-      .departamentos-section {
-        margin-bottom: 2rem;
-      }
-
-      .departamentos-section-title {
-        color: #0074D9;
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid rgba(0, 116, 217, 0.2);
-      }
-
-      .no-departamentos {
-        padding: 1rem;
-        text-align: center;
-        color: #666;
-        background: rgba(0, 116, 217, 0.05);
-        border-radius: 8px;
-        border: 1px solid rgba(0, 116, 217, 0.1);
-      }
-
-      .no-departamentos i {
-        margin-right: 0.5rem;
-        color: #0074D9;
-      }
-
-      .departamentos-asignados-list {
-        border: 1px solid rgba(0, 116, 217, 0.1);
-        border-radius: 8px;
-        background: white;
-      }
-
-      .departamento-asignado-item {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 1rem;
-        padding: 1rem;
-        border-bottom: 1px solid rgba(0, 116, 217, 0.1);
-        align-items: center;
-      }
-
-      .departamento-asignado-item:last-child {
-        border-bottom: none;
-      }
-
-      .departamento-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-      }
-
-      .departamento-nombre {
-        font-weight: 600;
-        color: #333;
-      }
-
-      .departamento-siglas {
-        font-size: 0.85rem;
-        color: #666;
-        font-style: italic;
-      }
-
-      .estado-select {
-        padding: 0.5rem;
-        border: 1px solid #0074D9;
-        border-radius: 6px;
-        background: white;
-        min-width: 150px;
-      }
-
-      .btn-danger {
-        background: linear-gradient(135deg, #dc3545, #c82333);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 0.5rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-
-      .btn-danger:hover {
-        background: linear-gradient(135deg, #c82333, #a71e2a);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-      }
-
-      .btn-sm {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.85rem;
-      }
-
-      .departamentos-checkboxes {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .departamento-checkbox {
-        background: rgba(0, 116, 217, 0.03);
-        border: 1px solid rgba(0, 116, 217, 0.1);
-        border-radius: 8px;
-        padding: 0.75rem;
-        transition: all 0.3s ease;
-      }
-
-      .departamento-checkbox:hover {
-        background: rgba(0, 116, 217, 0.05);
-        border-color: rgba(0, 116, 217, 0.2);
-      }
-
-      .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-        margin: 0;
-      }
-
-      .checkbox-input {
-        width: auto;
-        margin: 0;
-      }
-
-      .checkmark {
-        width: 18px;
-        height: 18px;
-        border: 2px solid #0074D9;
-        border-radius: 3px;
-        position: relative;
-        flex-shrink: 0;
-      }
-
-      .checkbox-input:checked + .checkmark {
-        background: #0074D9;
-      }
-
-      .checkbox-input:checked + .checkmark::after {
-        content: '✓';
-        position: absolute;
-        top: -2px;
-        left: 2px;
-        color: white;
-        font-weight: bold;
-        font-size: 0.8rem;
-      }
-
-      .departamento-label {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: #333;
-      }
-
-      .departamento-small {
-        color: #666;
-        font-weight: 400;
-      }
-
-      .asignar-actions {
-        text-align: center;
-      }
 </style>

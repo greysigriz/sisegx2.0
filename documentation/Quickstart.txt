@@ -1,0 +1,278 @@
+# SISEE - Guía de Inicio Rápido (Quickstart)
+
+## REQUISITOS DEL SISTEMA
+
+### Software Necesario:
+- **XAMPP 8.0+** (incluye Apache, MySQL, PHP)
+- **Node.js 16+** y npm (para desarrollo frontend)
+- **Git** (opcional, para clonar repositorio)
+- **Navegador web moderno** (Chrome, Firefox, Safari, Edge)
+
+### Especificaciones Mínimas:
+- **RAM:** 4GB mínimo, 8GB recomendado
+- **Espacio en disco:** 2GB disponibles
+- **Sistema Operativo:** Windows 10+, macOS 10.15+, Ubuntu 18.04+
+
+## INSTALACIÓN PASO A PASO
+
+### 1. DESCARGAR E INSTALAR XAMPP
+
+1. Descargar XAMPP desde: https://www.apachefriends.org/
+2. Instalar en la ruta por defecto: `C:\xampp\` (Windows) o `/Applications/XAMPP/` (macOS)
+3. Ejecutar XAMPP Control Panel como **Administrador**
+
+### 2. OBTENER EL CÓDIGO FUENTE
+
+**Opción A: Clonar repositorio (recomendado)**
+```bash
+cd C:\xampp\htdocs\
+git clone [https://github.com/greysigriz/sisegx2.0.git] SISEE
+```
+
+**Opción B: Descargar ZIP**
+1. Descargar el archivo ZIP del proyecto
+2. Extraer en `C:\xampp\htdocs\SISEE\`
+3. Asegurar que la estructura sea: `C:\xampp\htdocs\SISEE\src\`, `C:\xampp\htdocs\SISEE\api\`, etc.
+
+### 3. CONFIGURAR BASE DE DATOS
+
+1. **Iniciar servicios en XAMPP:**
+   - Abrir XAMPP Control Panel
+   - Hacer clic en "Start" para **Apache**
+   - Hacer clic en "Start" para **MySQL**
+
+2. **Crear base de datos:**
+   - Abrir navegador y ir a: http://localhost/phpmyadmin
+   - Crear nueva base de datos llamada: `sisegestion`
+   - Seleccionar collation: `utf8mb4_general_ci`
+
+3. **Importar esquema:**
+   - En phpMyAdmin, seleccionar la base de datos `sisegestion`
+   - Ir a la pestaña "Importar"
+   - Seleccionar archivo: `SISEE/database/schema.sql`
+   - Hacer clic en "Continuar"
+
+4. **Importar datos de prueba (opcional):**
+   - Importar archivo: `SISEE/database/sample_data.sql`
+
+### 4. CONFIGURAR CONEXIÓN A BASE DE DATOS
+
+1. Abrir archivo: `SISEE/config/database.php`
+2. Verificar/modificar configuración:
+
+CODE:
+```php
+<?php
+class Database {
+    // Configuración de producción actual
+    private $host = 'nice-dubinsky.192-99-212-154.plesk.page';
+    private $db_name = 'sisegestion';
+    private $username = 'siseg';
+    private $password = 'NK!Igudh306ameu?';
+    private $port = 3306;
+
+    public function getConnection() {
+        $this->conn = null;
+        try {
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
+                $this->username,
+                $this->password
+            );
+            $this->conn->exec("set names utf8");
+        } catch(PDOException $exception) {
+            echo "Error de conexión: " . $exception->getMessage();
+        }
+        return $this->conn;
+    }
+}
+?>
+```
+
+### 5. CONFIGURAR FRONTEND (Vue.js)
+
+1. **Instalar Node.js:** https://nodejs.org/ (versión LTS)
+
+2. **Instalar dependencias:**
+```bash
+cd C:\xampp\htdocs\SISEE\
+npm install vue@next
+npm install axios
+npm install @fortawesome/fontawesome-free
+npm ci
+```
+
+3. **Verificar configuración de Axios:**
+   - Abrir: `SISEE/src/services/axios-config.js`
+   - Verificar que la baseURL sea: `http://localhost/SISEE/api/`
+
+### 6. CONFIGURAR PERMISOS (solo Linux/macOS)
+
+```bash
+sudo chmod -R 755 /Applications/XAMPP/htdocs/SISEE/
+sudo chmod -R 777 /Applications/XAMPP/htdocs/SISEE/uploads/
+```
+
+## VERIFICAR INSTALACIÓN
+
+### 1. Probar Conexión a Base de Datos:
+- Ir a: http://localhost/SISEE/api/test-connection.php
+- Debe mostrar: "Conexión exitosa a la base de datos"
+
+### 2. Probar API:
+- Ir a: http://localhost/SISEE/api/peticiones.php
+- Debe retornar JSON con estructura: `{"records": []}`
+
+### 3. Probar Frontend:
+- Ir a: http://localhost/SISEE/
+- Debe cargar la página de login del sistema
+
+## USUARIOS DE PRUEBA
+
+### Usuario Administrador:
+- **Usuario:** admin
+- **Contraseña:** admin
+- **Rol:** Administrador del sistema
+
+### Usuario Hub:
+- **Usuario:** Director
+- **Contraseña:** Director
+- **Rol:** Operador de Hub
+
+### Usuario Departamento:
+- **Usuario:** Departamento
+- **Contraseña:** Departamento
+- **Rol:** Usuario de departamento
+
+## PRIMEROS PASOS DESPUÉS DE LA INSTALACIÓN
+
+### 1. Acceder al Sistema:
+1. Ir a: http://localhost/SISEE/
+2. Iniciar sesión con usuario administrador
+3. Verificar que cargue el dashboard principal
+
+### 2. Crear Primera Petición:
+1. Hacer clic en "Nueva Petición"
+2. Llenar formulario con datos de prueba
+3. Verificar que se genere folio automáticamente
+4. Comprobar sugerencias de IA
+
+### 3. Probar Funcionalidades Básicas:
+- [ ] Crear petición
+- [ ] Asignar seguimiento
+- [ ] Gestionar departamentos
+- [ ] Cambiar estados
+- [ ] Aplicar filtros
+- [ ] Usar paginación
+
+## SOLUCIÓN DE PROBLEMAS COMUNES
+
+### Error: "No se puede conectar a la base de datos"
+**Solución:**
+1. Verificar que MySQL esté ejecutándose en XAMPP
+2. Comprobar credenciales en `config/database.php`
+3. Verificar que la base de datos `sisegestion` exista
+
+### Error: "CORS Policy"
+**Solución:**
+1. Verificar que Apache esté ejecutándose
+2. Comprobar que los archivos estén en `htdocs/SISEE/`
+3. Usar http://localhost/ en lugar de file://
+
+### Error: "404 Not Found" en API
+**Solución:**
+1. Verificar que mod_rewrite esté habilitado en Apache
+2. Comprobar archivo `.htaccess` en carpeta `api/`
+3. Verificar permisos de archivos
+
+### Error: "Session expired" constantemente
+**Solución:**
+1. Verificar configuración de sesiones PHP
+2. Comprobar que las cookies estén habilitadas
+3. Verificar configuración de dominio en axios-config.js
+
+### Problemas de Rendimiento
+**Solución:**
+1. Aumentar límites de memoria PHP en `php.ini`:
+   ```
+   memory_limit = 256M
+   max_execution_time = 300
+   ```
+2. Optimizar consultas de base de datos
+3. Verificar índices en tablas
+
+## ESTRUCTURA DE ARCHIVOS IMPORTANTE
+
+```
+SISEE/
+├── api/                    # Backend PHP
+│   ├── peticiones.php     # CRUD de peticiones
+│   ├── usuarios.php       # Gestión de usuarios
+│   ├── unidades.php       # Gestión de departamentos
+│   └── cors.php           # Configuración CORS
+├── config/
+│   └── database.php       # Configuración DB
+├── src/                   # Frontend Vue.js
+│   ├── views/             # Componentes principales
+│   ├── services/          # Servicios (axios, auth)
+│   └── assets/            # CSS, imágenes
+├── database/              # Scripts SQL
+│   ├── schema.sql         # Estructura de DB
+│   └── sample_data.sql    # Datos de prueba
+└── Documentation/         # Documentación
+```
+
+## PUERTOS UTILIZADOS
+
+| Servicio | Puerto | URL |
+|----------|--------|-----|
+| Apache   | 80     | http://localhost/ |
+| MySQL    | 3306   | localhost:3306 |
+| phpMyAdmin | 80   | http://localhost/phpmyadmin |
+
+## COMANDOS ÚTILES
+
+### Reiniciar Servicios XAMPP:
+```bash
+# Windows (como Administrador)
+net stop apache2.4
+net start apache2.4
+net stop mysql
+net start mysql
+
+# Linux/macOS
+sudo /Applications/XAMPP/xamppfiles/xampp restart
+```
+
+### Limpiar Caché del Navegador:
+- **Chrome/Edge:** Ctrl+Shift+R
+- **Firefox:** Ctrl+F5
+- **Safari:** Cmd+Shift+R
+
+### Ver Logs de Error:
+- **Apache:** `C:\xampp\apache\logs\error.log`
+- **MySQL:** `C:\xampp\mysql\data\mysql_error.log`
+- **PHP:** Verificar `display_errors = On` en `php.ini`
+
+## SOPORTE Y RECURSOS
+
+### Documentación Adicional:
+- Manual de Usuario: `/Documentation/Manual_Usuario.pdf`
+- Documentación API: `/Documentation/API_Reference.md`
+- Esquema de Base de Datos: `/Documentation/Database_Schema.md`
+
+---
+
+**¡Felicidades!** 🎉 
+Si llegaste hasta aquí sin errores, SISEE está correctamente instalado y listo para usar.
+
+**Próximos pasos recomendados:**
+1. Leer el Manual de Usuario
+2. Configurar usuarios y departamentos reales
+3. Personalizar el sistema según necesidades específicas
+4. Configurar backups automáticos de base de datos
+
+**Tiempo estimado de instalación:** 15-30 minutos
+**Nivel de dificultad:** Intermedio
+
+**Última actualización:** [Sept-27-25]

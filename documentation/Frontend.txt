@@ -1,0 +1,512 @@
+# SISEE - Documentación del Frontend
+
+## ARQUITECTURA FRONTEND
+
+El frontend de SISEE está construido con **Vue.js 3** utilizando la **Composition API** y proporciona una interfaz de usuario moderna, responsiva e intuitiva para la gestión de peticiones ciudadanas.
+
+### Tecnologías Principales:
+- **Vue.js 3**: Framework principal con Composition API
+- **Vue Router**: Manejo de rutas SPA
+- **Pinia**: Gestión de estado global
+- **Axios**: Cliente HTTP para comunicación con API
+- **FontAwesome**: Biblioteca de iconos
+- **CSS3**: Estilos personalizados con variables CSS
+- **Vite**: Build tool y servidor de desarrollo
+
+### Estructura de Directorios:
+```
+src/
+├── assets/              # Recursos estáticos (CSS, imágenes, JSON)
+├── components/          # Componentes reutilizables
+├── layouts/            # Layouts de aplicación
+├── plugins/            # Plugins personalizados
+├── router/             # Configuración de rutas
+├── services/           # Servicios (API, auth, configuración)
+├── utils/              # Utilidades y helpers
+└── views/              # Vistas/páginas principales
+```
+
+---
+
+## ARCHIVOS DE CONFIGURACIÓN PRINCIPAL
+
+### 1. `src/main.js`
+**Propósito:** Punto de entrada de la aplicación Vue.js
+**Funciones principales:**
+- Configuración inicial de Vue.js
+- Registro de plugins globales (Pinia, Router, Motion)
+- Configuración de FontAwesome con iconos específicos
+- Configuración de Axios baseURL
+- Importación de estilos de Swiper para carruseles
+
+**Iconos FontAwesome configurados:**
+```javascript
+faUserShield, faDatabase, faPalette, faQuestionCircle,
+faClock, faPhone, faStream, faLightbulb, faPaperPlane,
+faCheckCircle, faCopy, faPlus, faPrint, faExclamationCircle,
+faWandMagicSparkles, faRobot, faSyncAlt, faTimes
+```
+
+**Características:**
+- Importación temprana de configuración Axios
+- Registro global de FontAwesome component
+- Configuración de motion plugin para animaciones
+- Configuración de Pinia para estado global
+
+### 2. `src/App.vue`
+**Propósito:** Componente raíz de la aplicación
+**Funciones principales:**
+- Contenedor principal para todas las vistas
+- Punto de montaje para el router-view
+- Configuración base de la aplicación
+
+**Características:**
+- Diseño minimalista con solo router-view
+- Sin lógica de negocio, actúa como wrapper
+- Permite que cada vista maneje su propio layout
+
+---
+
+## SERVICIOS PRINCIPALES
+
+### 3. `src/services/axios-config.js`
+**Propósito:** Configuración global de Axios y manejo de interceptores
+**Funciones principales:**
+- Configuración de baseURL automática desde variables de entorno
+- Interceptores para requests (autenticación, headers)
+- Interceptores para responses (manejo de errores, refresh de tokens)
+- Sistema de cola para requests fallidos durante refresh
+- Manejo de errores de red y timeout
+
+**Configuración de Axios:**
+```javascript
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = 'http://localhost/SISEE/api/';
+axios.defaults.timeout = 30000; // 30 segundos
+```
+
+**Características de interceptores:**
+- **Request:** Agrega timestamps, tokens de autenticación, headers Content-Type
+- **Response:** Manejo de errores 401 (autenticación), timeouts, errores de red
+- **Queue system:** Evita múltiples requests durante refresh de sesión
+- **Error notifications:** Mensajes automáticos para errores de conexión
+
+### 4. `src/services/auth.js`
+**Propósito:** Servicio centralizado de autenticación y gestión de sesiones
+**Funciones principales:**
+- Login/logout con validación de credenciales
+- Gestión de sesiones con timeouts configurables
+- Seguimiento de actividad del usuario
+- Verificación periódica de sesión con el servidor
+- Manejo de permisos y roles
+
+**Características de sesión:**
+```javascript
+SESSION_TIMEOUT = 8 * 60 * 60 * 1000;      // 8 horas máximo
+INACTIVITY_TIMEOUT = 30 * 60 * 1000;       // 30 min inactividad
+CHECK_INTERVAL = 2 * 60 * 1000;            // Verificar cada 2 min
+```
+
+**Métodos principales:**
+- `login(usuario, password)`: Autenticación con el servidor
+- `logout()`: Cierre de sesión limpio
+- `isAuthenticated()`: Verificación local de autenticación
+- `checkSessionValidity()`: Validación de timeouts
+- `getCurrentUser()`: Obtener datos del usuario logueado
+- `hasPermission(permission)`: Verificar permisos específicos
+- `syncUserData()`: Sincronización con servidor
+
+**Sistema de permisos:**
+- `ver_dashboard`: Acceso al dashboard principal
+- `admin_peticiones`: Gestión completa de peticiones
+- `configuracion_sistema`: Acceso a configuración
+- `ver_departamentos`: Visualización de departamentos
+- `ver_tablero`: Acceso al tablero de control
+
+---
+
+## ROUTER Y NAVEGACIÓN
+
+### 5. `src/router/index.js`
+**Propósito:** Configuración de rutas y guards de navegación
+**Funciones principales:**
+- Definición de rutas protegidas y públicas
+- Guards de autenticación antes de cada navegación
+- Manejo de redirecciones automáticas
+- Importación dinámica de módulos de rutas
+
+**Páginas públicas (no requieren autenticación):**
+```javascript
+const publicPages = ['/login', '/register', '/recuperar-password', '/petition']
+```
+
+**Guards de navegación:**
+1. **Verificación de página pública:** Permite acceso sin autenticación
+2. **Verificación de autenticación:** Redirige a login si no está autenticado
+3. **Validación de sesión:** Verifica que la sesión no haya expirado
+4. **Redirección inteligente:** Evita acceso a login si ya está autenticado
+
+---
+
+## LAYOUTS Y COMPONENTES PRINCIPALES
+
+### 6. `src/layouts/MainLayout.vue`
+**Propósito:** Layout principal para páginas autenticadas
+**Funciones principales:**
+- Sidebar de navegación lateral
+- Header con información de usuario y fecha
+- Área de contenido principal para router-view
+- Verificación de autenticación al montar
+
+**Características del header:**
+- Breadcrumb dinámico basado en la ruta actual
+- Fecha actual formateada en español
+- Botones de acción (notificaciones, configuración)
+- Diseño responsive para móviles
+
+**Variables CSS utilizadas:**
+```css
+--primary-color: #1630b1;      /* Color principal azul */
+--secondary-color: #292c37;    /* Color secundario gris */
+--background-color: #f5f7fa;   /* Fondo de la app */
+--white-color: #ffffff;        /* Blanco puro */
+--shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra estándar */
+```
+
+### 7. `src/components/Sidebar.vue`
+**Propósito:** Componente de navegación lateral con menú dinámico
+**Funciones principales:**
+- Menú de navegación basado en permisos del usuario
+- Información del usuario logueado (avatar, nombre, rol)
+- Función de logout integrada
+- Navegación adaptable y colapsable
+
+**Elementos del menú:**
+```javascript
+allMenuItems: [
+  { name: 'Inicio', path: '/bienvenido', requiredPermission: 'ver_dashboard' },
+  { name: 'peticiones', path: '/peticiones', requiredPermission: 'admin_peticiones' },
+  { name: 'petitions', path: '/petitions', requiredPermission: 'admin_peticiones' },
+  { name: 'configuracion', path: '/configuracion', requiredPermission: 'configuracion_sistema' },
+  { name: 'departamentos', path: '/departamentos', requiredPermission: 'ver_departamentos' },
+  { name: 'tablero', path: '/tablero', requiredPermission: 'ver_tablero' }
+]
+```
+
+**Características avanzadas:**
+- **Filtrado dinámico:** Solo muestra elementos según permisos del usuario
+- **Avatar generado:** Inicial del nombre del usuario
+- **Estado persistente:** Recuerda si está colapsado
+- **Verificación periódica:** Revisa autenticación cada 2 minutos
+- **Navegación inteligente:** Evita navegación a la misma ruta
+
+---
+
+## VISTAS PRINCIPALES
+
+### 8. `src/views/Login.vue`
+**Propósito:** Página de autenticación del sistema
+**Funciones principales:**
+- Formulario de login con validación
+- Integración con AuthService
+- Manejo de errores de autenticación
+- Redirección automática después del login
+
+**Características:**
+- Validación en tiempo real de campos
+- Indicador de carga durante autenticación
+- Mensajes de error contextuales
+- Redirección automática a `/bienvenido` tras login exitoso
+- Diseño responsive con imagen corporativa
+
+### 9. `src/views/Peticiones.vue`
+**Propósito:** Vista principal para gestión de peticiones ciudadanas
+**Funciones principales:**
+- CRUD completo de peticiones con paginación
+- Sistema de filtros avanzado (estado, departamento, usuario, etc.)
+- Gestión de departamentos asignados por petición
+- Sistema de seguimiento de usuarios
+- Indicadores visuales de prioridad (semáforo)
+
+**Características principales:**
+- **Paginación:** 10, 20, 50, 100 registros por página
+- **Filtros múltiples:** Estado, departamento, nivel de importancia, usuario, folio, nombre
+- **Semáforo de prioridad:** Verde (normal), Amarillo (atención), Naranja (prioritaria), Rojo (urgente)
+- **Gestión de permisos:** Solo el usuario asignado puede editar
+- **Modales especializados:** Edición, cambio de estado, gestión de departamentos
+
+**Funcionalidades de seguimiento:**
+```javascript
+tieneUsuarioAsignado(peticion)     // Verifica si tiene usuario asignado
+esUsuarioAsignado(peticion)        // Verifica si es el usuario actual
+puedeEditarPeticion(peticion)      // Verifica permisos de edición
+```
+
+**Sistema de departamentos:**
+- Asignación múltiple de departamentos por petición
+- Estados por departamento: Esperando, En proceso, Completado, Rechazado
+- Buscador de departamentos con sugerencias rápidas
+- Integración con sugerencias de IA
+
+### 10. `src/views/PetitionPage.vue`
+**Propósito:** Página pública para crear nuevas peticiones ciudadanas
+**Funciones principales:**
+- Formulario público de peticiones
+- Integración con sistema de clasificación IA
+- Validación completa de campos
+- Generación automática de folio
+
+**Características del formulario:**
+- **Campos obligatorios:** Nombre, teléfono, dirección, localidad, descripción, nivel de importancia
+- **Campo opcional:** Red social
+- **Validaciones:** Longitud mínima/máxima, formato de teléfono, caracteres especiales
+- **Contador de caracteres:** Para descripción (máx. 1000)
+
+**Sistema de clasificación IA:**
+```javascript
+classifyDescription(texto)         // Envía texto a API de clasificación
+selectClassification(sugerencia)   // Permite seleccionar clasificación
+reclassifyDescription()            // Re-ejecuta clasificación
+```
+
+**Funciones de utilidad:**
+- `printFolio()`: Impresión del folio generado
+- `copyToClipboard()`: Copia folio al portapapeles
+- `resetForm()`: Limpia formulario para nueva petición
+- `scrollToSuccessMessage()`: Navegación automática a mensaje de éxito
+
+### 11. `src/views/Configuracion/index.vue`
+**Propósito:** Página principal del módulo de configuración
+**Funciones principales:**
+- Dashboard de configuración con tarjetas de acceso
+- Navegación a submódulos de configuración
+- Diseño modular para fácil extensión
+
+**Módulos de configuración:**
+- **Usuarios:** Administración de usuarios del sistema
+- **Roles:** Gestión de roles y permisos
+- **Unidades:** Administración de departamentos/unidades
+
+### 12. `src/views/Inicio.vue`
+**Propósito:** Dashboard inicial con métricas básicas
+**Funciones principales:**
+- Sidebar de navegación administrativa
+- Área de contenido dinámico según selección
+- Integração con componente de gráficos
+
+**Secciones del dashboard:**
+- **Dashboard:** Estadísticas y métricas
+- **Trámites:** Visualización de trámites
+- **Reportes:** Generación de reportes
+- **Logout:** Cierre de sesión
+
+---
+
+## UTILIDADES Y HELPERS
+
+### 13. `src/utils/clasificadorDependencias.js`
+**Propósito:** Utilitarios para clasificación automática de peticiones
+**Funciones principales:**
+- Importación de sistema de clasificación desde JSON
+- Mapeo de dependencias de Cancún
+- Estructura de datos para clasificación IA
+
+---
+
+## SISTEMA DE ESTILOS
+
+### Variables CSS Globales:
+```css
+:root {
+  --primary-color: #1630b1;        /* Azul principal */
+  --secondary-color: #292c37;      /* Gris oscuro */
+  --dark-color: #000000;           /* Negro */
+  --accent-color: #9f111b;         /* Rojo de acento */
+  --light-color: #cccccc;          /* Gris claro */
+  --background-color: #f5f7fa;     /* Fondo principal */
+  --white-color: #ffffff;          /* Blanco */
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+```
+
+### Características de diseño:
+- **Responsive:** Adaptable a dispositivos móviles y desktop
+- **Consistencia:** Variables CSS para mantener coherencia visual
+- **Animaciones:** Transiciones suaves con CSS y motion plugin
+- **Accesibilidad:** Contrastes apropiados y navegación por teclado
+- **Modern UI:** Diseño limpio con sombras y bordes redondeados
+
+---
+
+## GESTIÓN DE ESTADO
+
+### Estado Global (Pinia):
+Aunque no se muestra implementación específica, la aplicación está preparada para:
+- **Gestión centralizada:** Estado compartido entre componentes
+- **Persistencia:** Estado persistente en localStorage
+- **Reactividad:** Cambios automáticos en toda la aplicación
+
+### Estado Local:
+Cada componente maneja su estado local usando:
+- **Composition API:** `ref()`, `reactive()`, `computed()`
+- **Watchers:** Para reactividad a cambios
+- **Lifecycle hooks:** `onMounted()`, `onBeforeUnmount()`
+
+---
+
+## COMUNICACIÓN CON API
+
+### Estructura de requests:
+```javascript
+// GET con filtros
+const response = await axios.get('/peticiones.php', {
+  params: { estado: 'Sin revisar', departamento: 1 }
+});
+
+// POST con datos
+const response = await axios.post('/peticiones.php', {
+  nombre: 'Juan Pérez',
+  descripcion: 'Problema con...',
+  NivelImportancia: 2
+});
+
+// PUT para actualización
+const response = await axios.put('/peticiones.php', {
+  id: 123,
+  estado: 'En proceso'
+});
+```
+
+### Manejo de errores:
+- **Interceptores automáticos:** Manejo global de errores
+- **Notificaciones:** Mensajes de error contextuales
+- **Retry logic:** Reintento automático para requests fallidos
+- **Offline handling:** Detección de problemas de conectividad
+
+---
+
+## CARACTERÍSTICAS DE RENDIMIENTO
+
+### Optimizaciones implementadas:
+1. **Lazy loading:** Carga bajo demanda de componentes
+2. **Paginación:** Limitación de registros por página
+3. **Debouncing:** En búsquedas y filtros
+4. **Memoización:** Computed properties para cálculos pesados
+5. **Virtual scrolling:** Para listas muy largas (preparado)
+
+### Técnicas de caching:
+- **LocalStorage:** Datos de usuario y preferencias
+- **Axios caching:** Headers de cache apropiados
+- **Component caching:** Keep-alive para componentes costosos
+
+---
+
+## SISTEMA DE NOTIFICACIONES
+
+### Tipos de notificaciones:
+```javascript
+// Success
+showSuccessMessage('Operación completada exitosamente');
+
+// Error
+showErrorMessage('Error al procesar la solicitud');
+
+// Warning
+showWarningMessage('Esta acción requiere confirmación');
+
+// Info
+showInfoMessage('Información adicional disponible');
+```
+
+### Características:
+- **Posicionamiento:** Fixed en esquina superior derecha
+- **Auto-dismiss:** Desaparecen automáticamente después de 3-5 segundos
+- **Animaciones:** Slide-in/slide-out con CSS
+- **No duplicadas:** Previene múltiples notificaciones del mismo tipo
+- **Responsive:** Se adaptan a diferentes tamaños de pantalla
+
+---
+
+## ACCESIBILIDAD Y UX
+
+### Características de accesibilidad:
+- **Navegación por teclado:** Tab navigation completa
+- **ARIA labels:** Etiquetas descriptivas para lectores de pantalla
+- **Contrastes:** Ratios de contraste apropiados (WCAG 2.1)
+- **Focus indicators:** Indicadores visuales de foco
+- **Texto alternativo:** Para todas las imágenes e iconos
+
+### Experiencia de usuario:
+- **Loading states:** Indicadores de carga para operaciones largas
+- **Progress feedback:** Barras de progreso y spinners
+- **Confirmation dialogs:** Para acciones destructivas
+- **Breadcrumbs:** Navegación contextual
+- **Tooltips:** Información adicional en hover
+
+---
+
+## TESTING Y DEBUGGING
+
+### Herramientas de desarrollo:
+- **Vue DevTools:** Extensión para debugging de Vue
+- **Network tab:** Monitoreo de requests HTTP
+- **Console logging:** Logs estructurados por módulo
+- **Error boundaries:** Manejo de errores en componentes
+
+### Testing preparado para:
+- **Unit tests:** Vitest para pruebas unitarias
+- **Integration tests:** Cypress para pruebas E2E
+- **Component testing:** Vue Test Utils
+- **API mocking:** Mock de responses para testing
+
+---
+
+## DESPLIEGUE Y BUILD
+
+### Configuración de build:
+```javascript
+// vite.config.js configuración
+build: {
+  outDir: 'dist',
+  assetsDir: 'assets',
+  sourcemap: false,    // Para producción
+  minify: 'terser',
+  rollupOptions: {
+    output: {
+      manualChunks: {
+        vendor: ['vue', 'vue-router', 'axios'],
+        ui: ['@fortawesome/vue-fontawesome']
+      }
+    }
+  }
+}
+```
+
+### Variables de entorno:
+- **VITE_API_URL**: URL base de la API
+- **VITE_DEBUG_MODE**: Modo debug (true/false)
+- **VITE_APP_NAME**: Nombre de la aplicación
+
+---
+
+## EXTENSIBILIDAD Y FUTURO
+
+### Preparado para:
+- **PWA:** Service workers y manifest
+- **Internacionalización:** Vue I18n
+- **Temas:** Sistema de temas dinámicos
+- **Módulos adicionales:** Arquitectura modular
+- **Real-time:** WebSockets para actualizaciones en vivo
+
+### Arquitectura escalable:
+- **Componentes reutilizables:** Biblioteca de componentes
+- **Servicios modulares:** Fácil extensión de funcionalidades
+- **Plugin system:** Sistema de plugins personalizable
+- **Micro-frontends:** Preparado para arquitectura distribuida
+
+---
+
+**Última actualización:** [Sept-27-25]
+**Versión del Frontend:** 1.0
+**Compatibilidad:** Vue.js 3.0+, Modern browsers (ES6+)

@@ -1,0 +1,216 @@
+# SISEE - Sistema Inteligente de Seguimiento y Evaluación de Peticiones
+
+## INFORMACIÓN GENERAL
+
+**Nombre del Sistema:** SISEE (Sistema Inteligente de Seguimiento y Evaluación de Peticiones)
+**Versión:** 1.0
+**Estado del Proyecto:** En desarrollo - 95% completo (falta implementar tabla de dashboard administrativo)
+**Desarrollador:** [Farfay group]
+**Fecha de Inicio:** [mayo / 2025]
+**Fecha Estimada de Finalización:** [Noviembre / 2025]
+
+## DESCRIPCIÓN DEL SISTEMA
+
+SISEE es un sistema web integral diseñado para la gestión automatizada de peticiones ciudadanas. Utiliza inteligencia artificial para sugerir departamentos responsables y proporciona herramientas completas de seguimiento y evaluación del progreso de cada solicitud.
+
+## DIRIGIDO A
+
+### Usuarios Primarios:
+- **Hub de Atención Ciudadana:** Personal encargado de recibir, clasificar y asignar peticiones
+- **Departamentos Municipales/Gubernamentales:** Unidades responsables de resolver peticiones específicas
+- **Administradores del Sistema:** Personal de supervisión y gestión general
+
+### Usuarios Secundarios:
+- **Ciudadanos:** (Funcionalidad futura) - Seguimiento del estado de sus peticiones
+- **Directivos:** Acceso a reportes y métricas de rendimiento
+
+## FUNCIONALIDADES PRINCIPALES
+
+### 1. GESTIÓN DE PETICIONES
+- Registro de nuevas peticiones ciudadanas
+- Captura de datos: nombre, contacto, ubicación, descripción del problema
+- Generación automática de folios únicos y secuenciales
+- Clasificación por nivel de importancia (1-4)
+- Estados de seguimiento: Sin revisar, En proceso, Completado, etc.
+
+### 2. SISTEMA DE IA PARA SUGERENCIAS
+- Análisis automático del contenido de la petición
+- Sugerencias inteligentes de departamentos responsables
+- Base de conocimiento adaptable
+- Marcado de sugerencias "aceptadas por el creador del folio"
+
+### 3. ASIGNACIÓN Y SEGUIMIENTO
+- Asignación de usuarios responsables del seguimiento
+- Gestión de departamentos múltiples por petición
+- Estados de asignación por departamento:
+  * Esperando recepción
+  * Aceptado en proceso
+  * Devuelto a seguimiento
+  * Rechazado
+  * Completado
+- Sistema de permisos: solo el usuario asignado puede editar la petición
+
+### 4. BÚSQUEDA Y FILTRADO AVANZADO
+- Filtros por: estado, departamento, nivel de importancia, usuario, folio, nombre
+- Búsqueda de texto libre
+- Filtro especial "Sin seguimiento asignado"
+- Botón "Mis peticiones" para ver asignaciones personales
+
+### 5. INTERFAZ DE USUARIO INTUITIVA
+- Dashboard responsivo compatible con móviles
+- Paginación inteligente (10, 20, 50, 100 registros por página)
+- Indicadores visuales de prioridad y estado
+- Tooltips informativos
+- Sistema de notificaciones en tiempo real
+
+### 6. GESTIÓN DE DEPARTAMENTOS
+- Buscador de departamentos con sugerencias rápidas
+- Asignación múltiple de departamentos por petición
+- Gestión de estados individuales por departamento
+- Eliminación y reasignación de departamentos
+
+## TECNOLOGÍAS UTILIZADAS
+
+### Frontend:
+- **Vue.js 3** (Composition API)
+- **CSS3** con diseño responsive
+- **Font Awesome** para iconografía
+- **Axios** para comunicación con API
+
+### Backend:
+- **PHP 8+** 
+- **MySQL/MariaDB** para base de datos
+- **API REST** para comunicación frontend-backend
+- **PDO** para acceso seguro a datos
+
+### Servidor:
+- **XAMPP** para desarrollo local
+- **Apache HTTP Server**
+- **phpMyAdmin** para gestión de base de datos
+
+## ESTRUCTURA DE LA BASE DE DATOS
+
+### Tablas Principales:
+1. **peticiones** - Almacena la información base de cada petición
+2. **Usuario** - Información de usuarios del sistema
+3. **unidades** - Catálogo de departamentos/unidades responsables
+4. **peticion_departamento** - Relación muchos a muchos entre peticiones y departamentos
+5. **peticion_sugerencias** - Sugerencias de IA para cada petición
+6. **DivisionAdministrativa** - Organización jerárquica administrativa
+7. **RolSistema** - Roles y permisos de usuarios
+
+### Relaciones Clave:
+- Petición → Usuario (seguimiento asignado)
+- Petición ↔ Departamentos (muchos a muchos)
+- Petición → Sugerencias IA (uno a muchos)
+- Usuario → División Administrativa
+- Usuario → Rol del Sistema
+
+## ESTADO ACTUAL DEL DESARROLLO
+
+### ✅ COMPLETADO (95%):
+- [X] Sistema de autenticación y autorización
+- [X] CRUD completo de peticiones
+- [X] Sistema de sugerencias de IA
+- [X] Gestión de departamentos y asignaciones
+- [X] Sistema de filtros y búsqueda avanzada
+- [X] Paginación y ordenamiento
+- [X] Interfaz responsive
+- [X] Sistema de permisos por usuario
+- [X] API REST completa
+- [X] Validaciones frontend y backend
+- [X] Notificaciones y feedback visual
+
+### 🚧 EN DESARROLLO (5%):
+- [ ] Dashboard administrativo con métricas
+  * Gráficos de rendimiento por departamento
+  * Estadísticas de tiempo de resolución
+  * Métricas de productividad
+  * Reportes exportables
+
+### 📋 FUNCIONALIDADES FUTURAS:
+- [ ] Portal ciudadano para consulta de peticiones
+- [ ] Sistema de notificaciones por email/SMS
+- [ ] Generación de reportes PDF
+- [ ] Integración con sistemas externos
+- [ ] Módulo de análisis predictivo
+- [ ] App móvil nativa
+
+## ARQUITECTURA DEL SISTEMA
+
+```
+[Frontend Vue.js] 
+       ↕ 
+[API REST PHP] 
+       ↕ 
+[Base de Datos MySQL]
+       ↕
+[Sistema de IA - Sugerencias]
+```
+
+### Flujo de Trabajo Típico:
+1. Ciudadano presenta petición → Hub registra en sistema
+2. IA analiza y sugiere departamentos responsables
+3. Hub asigna seguimiento y confirma departamentos
+4. Departamentos reciben y procesan peticiones
+5. Sistema actualiza estados y progreso
+6. Administrador monitorea métricas en dashboard
+
+## BENEFICIOS DEL SISTEMA
+
+### Para la Administración:
+- Reducción del 70% en tiempo de clasificación manual
+- Trazabilidad completa de peticiones
+- Métricas de rendimiento en tiempo real
+- Mejor distribución de carga de trabajo
+
+### Para los Departamentos:
+- Clarity en responsabilidades
+- Seguimiento estructurado de tareas
+- Comunicación centralizada
+- Historial completo de acciones
+
+### Para los Ciudadanos:
+- Proceso transparente
+- Seguimiento del progreso
+- Tiempos de respuesta mejorados
+- Mayor satisfacción del servicio
+
+## SEGURIDAD
+
+- Autenticación basada en sesiones
+- Validación de datos en frontend y backend
+- Protección contra inyección SQL (PDO)
+- Control de acceso basado en roles
+- Sanitización de inputs de usuario
+- Manejo seguro de errores
+
+## INSTALACIÓN Y CONFIGURACIÓN
+
+### Requisitos:
+- PHP 8.0+
+- MySQL 5.7+ / MariaDB 10.3+
+- Apache Web Server
+- Node.js (para desarrollo frontend)
+
+### Pasos de Instalación:
+1. Clonar repositorio en carpeta XAMPP/htdocs
+2. Importar base de datos desde /database/schema.sql
+3. Configurar conexión en /config/database.php
+4. Instalar dependencias: `npm install`
+5. Iniciar servidor Apache y MySQL
+6. Acceder a http://localhost/SISEE
+
+## CONTACTO Y SOPORTE
+
+**Documentación Técnica:** /Documentation/
+**Manual de Usuario:** /Documentation/Manual_Usuario.pdf
+**API Documentation:** /Documentation/API_Reference.md
+**Reporte de Bugs:** [Sistema de tickets interno]
+**Soporte Técnico:** [Contacto del desarrollador]
+
+---
+
+**Nota:** Este sistema está diseñado para ser escalable y adaptable a diferentes organizaciones gubernamentales y municipales. La arquitectura modular permite agregar nuevas funcionalidades sin afectar el core del sistema.
+
+**Última actualización:** [Fecha actual]

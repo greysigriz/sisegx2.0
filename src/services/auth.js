@@ -1,8 +1,6 @@
 // src/services/auth.js
 import axios from './axios-config';
 
-const API_URL = 'http://localhost/SISE/api/';
-
 class AuthService {
   constructor() {
     this.sessionCheckInterval = null;
@@ -139,16 +137,35 @@ class AuthService {
     }
   }
 
-  // ✅ Método para iniciar sesión
+  // ✅ Método para iniciar sesión MEJORADO
   async login(usuario, password) {
     try {
-      const response = await axios.post('login.php', { usuario, password });
+      // Asegurarse de que no hay requests pendientes
+      this.cleanup();
+      
+      console.log('Iniciando login para usuario:', usuario);
+      
+      const response = await axios.post('login.php', { 
+        usuario: usuario.trim(), 
+        password: password 
+      });
+      
+      console.log('Respuesta del servidor:', response.data);
       
       if (response.data.success) {
+        console.log('Login exitoso, guardando datos...');
+        
         // Guardar datos del usuario en localStorage
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        const userData = response.data.user;
+        localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('authToken', Date.now().toString());
         localStorage.setItem('loginTime', Date.now().toString());
+        
+        // Guardar session_id si se proporciona
+        if (response.data.session_id) {
+          localStorage.setItem('sessionId', response.data.session_id);
+        }
+        
         this.updateLastActivity();
         
         // Reset flags
@@ -156,14 +173,29 @@ class AuthService {
         this.isDestroyed = false;
         
         // ✅ Inicializar servicios DESPUÉS del login exitoso
-        this.cleanup(); // Limpiar cualquier interval anterior
-        this.initActivityTracking();
-        this.initSessionCheck();
+        setTimeout(() => {
+          this.initActivityTracking();
+          this.initSessionCheck();
+        }, 100);
+        
+        console.log('Login completado exitosamente');
+      } else {
+        console.log('Login fallido:', response.data.message);
       }
       
       return response.data;
     } catch (error) {
-      throw error;
+      console.error('Error en login:', error);
+      
+      // Manejar errores específicos
+      if (error.response) {
+        const errorData = error.response.data;
+        throw new Error(errorData.message || 'Error de autenticación');
+      } else if (error.request) {
+        throw new Error('No se pudo conectar con el servidor');
+      } else {
+        throw new Error('Error desconocido: ' + error.message);
+      }
     }
   }
 
@@ -339,6 +371,7 @@ class AuthService {
       'authToken', 
       'loginTime',
       'lastActivity',
+      'sessionId',
       'sidebarCollapsed'
     ];
     

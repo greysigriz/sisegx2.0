@@ -1,8 +1,10 @@
 <?php
-// C:\xampp\htdocs\SISE\api\unidades.php
+// C:\xampp\htdocs\SISEE\api\unidades.php
 // Encabezados requeridos
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
+
+header("Content-Type: application/json; charset=UTF-8");
 
 // Instanciar base de datos
 $database = new Database();
@@ -12,58 +14,29 @@ $db = $database->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if($method === 'GET') {
-    // Construir la consulta base
-    $query = "SELECT id, clave, nombre_unidad, estatus, nivel, tipo_cuenta, periodo, abreviatura, siglas 
-              FROM unidades";
-    
-    $whereClause = [];
-    $params = [];
-    
-    // Filtrar por estatus si se especifica
-    if (isset($_GET['estatus']) && !empty($_GET['estatus'])) {
-        $whereClause[] = "estatus = :estatus";
-        $params[':estatus'] = $_GET['estatus'];
-    }
-    
-    // Filtrar solo departamentos activos si se especifica
-    if (isset($_GET['activos']) && $_GET['activos'] === 'true') {
-        $whereClause[] = "estatus = 'ACTIVA'";
-    }
-    
-    // Agregar cláusula WHERE si hay filtros
-    if (!empty($whereClause)) {
-        $query .= " WHERE " . implode(" AND ", $whereClause);
-    }
-    
-    $query .= " ORDER BY nombre_unidad";
-    
-    $stmt = $db->prepare($query);
-    
-    // Vincular parámetros
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-    
-    $stmt->execute();
-    $num = $stmt->rowCount();
-    
-    if($num > 0) {
-        $unidades_arr = array();
-        $unidades_arr["records"] = array();
+    try {
+        // ✅ CORREGIDO: Query simple para tu estructura de tabla
+        $query = "SELECT id, nombre_unidad FROM unidades ORDER BY nombre_unidad";
         
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            extract($row);
-            
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $unidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // ✅ Formatear respuesta para compatibilidad
+        $unidades_arr = array("records" => []);
+        
+        foreach ($unidades as $row) {
             $unidad_item = array(
-                "id" => $id,
-                "clave" => $clave,
-                "nombre_unidad" => $nombre_unidad,
-                "estatus" => $estatus,
-                "nivel" => $nivel,
-                "tipo_cuenta" => $tipo_cuenta,
-                "periodo" => $periodo,
-                "abreviatura" => $abreviatura,
-                "siglas" => $siglas
+                "id" => intval($row['id']),
+                "nombre_unidad" => $row['nombre_unidad'],
+                // Valores por defecto para compatibilidad
+                "clave" => null,
+                "estatus" => "ACTIVA",
+                "nivel" => null,
+                "tipo_cuenta" => null,
+                "periodo" => null,
+                "abreviatura" => null,
+                "siglas" => null
             );
             
             array_push($unidades_arr["records"], $unidad_item);
@@ -71,9 +44,14 @@ if($method === 'GET') {
         
         http_response_code(200);
         echo json_encode($unidades_arr);
-    } else {
-        http_response_code(200);
-        echo json_encode(array("records" => array()));
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => "Error: " . $e->getMessage(),
+            "records" => []
+        ]);
     }
 } else {
     http_response_code(405);
