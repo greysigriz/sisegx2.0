@@ -9,8 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-   "backend-mac": "cd backend && ./venv/bin/python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8080",
-   "backend-win": "set PYTHONPATH=./backend && cd backend && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
+    "backend-mac": "cd backend && ./venv/bin/python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8080",
+    "backend-mac-grey": "cd backend && ./venv/bin/python3 -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
+    "backend-win": "set PYTHONPATH=./backend && cd backend && python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000",
     "full-dev-mac": "concurrently \"npm run dev\" \"npm run backend-mac\"",
     "full-dev-win": "concurrently \"npm run dev\" \"npm run backend-win\""
   },
