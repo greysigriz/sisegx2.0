@@ -1,43 +1,72 @@
 <template>
-  <div class="sidebar-container" :class="{ 'collapsed': isCollapsed }">
-    <aside class="sidebar">
-      <div class="branding">
-        <h1 class="logo" :class="{ 'fade-scale': !isCollapsed }">{{ isCollapsed ? '' : 'SISEGX' }}</h1>
-        <p class="tagline" v-if="!isCollapsed" :class="{ 'fade-in': !isCollapsed }">Sistema de Trámites</p>
-      </div>
+  <div>
+    <!-- Botón flotante para mostrar sidebar -->
+    <transition name="fade-scale">
+      <button
+        v-if="isSidebarHidden"
+        class="sidebar-toggle-fab"
+        @click="toggleSidebar"
+        title="Mostrar menú"
+      >
+        <i class="fas fa-compass"></i>
+      </button>
+    </transition>
 
-      <div class="user-info" :class="{ 'collapsed': isCollapsed }">
-        <div class="avatar" :class="{ 'pulse': !isCollapsed }">{{ userInitial }}</div>
-        <div class="user-details slide-fade" v-if="!isCollapsed">
-          <p class="user-name">{{ userName }}</p>
-          <p class="user-role">{{ userRole }}</p>
+    <!-- Sidebar con animación -->
+    <transition name="slide-up">
+      <div v-if="!isSidebarHidden" class="sidebar-container">
+        <div class="sidebar-backdrop" @click="toggleSidebar"></div>
+
+        <div class="sidebar-content">
+          <!-- Barra superior con info del usuario y botón cerrar -->
+          <div class="sidebar-top">
+            <div class="user-badge">
+              <div class="user-avatar">
+                {{ userInitial }}
+              </div>
+              <div class="user-info-compact">
+                <span class="user-name-short">{{ userName }}</span>
+                <span class="user-role-short">{{ userRole }}</span>
+              </div>
+            </div>
+
+            <button class="hide-sidebar-btn" @click="toggleSidebar" title="Ocultar menú">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
+
+          <!-- Navegación -->
+          <nav class="navigation">
+            <ul v-if="userReady">
+              <li
+                v-for="(item, index) in filteredMenuItems"
+                :key="`menu-${item.name}-${index}`"
+                :class="{ active: isActive(item.path) }"
+                @click="navigateTo(item.path)"
+              >
+                <div class="nav-icon">
+                  <i :class="item.icon"></i>
+                </div>
+                <span class="nav-label">{{ item.label }}</span>
+                <div class="nav-indicator"></div>
+              </li>
+            </ul>
+          </nav>
+
+          <!-- Botón de logout mejorado -->
+          <div class="sidebar-footer">
+            <button
+              class="logout-button-modern"
+              @click="handleLogout"
+              :disabled="isLoggingOut"
+            >
+              <i class="fas fa-sign-out-alt"></i>
+              <span>{{ isLoggingOut ? 'Saliendo...' : 'Cerrar sesión' }}</span>
+            </button>
+          </div>
         </div>
       </div>
-
-      <nav class="navigation">
-        <ul v-if="userReady">
-          <li v-for="(item, index) in filteredMenuItems"
-              :key="`menu-${item.name}-${index}`"
-              :class="{ active: isActive(item.path) }"
-              @click="navigateTo(item.path)"
-              :style="{ transitionDelay: !isCollapsed ? `${index * 50}ms` : '0ms' }">
-            <i :class="[item.icon, isCollapsed ? 'icon-centered' : '']"></i>
-            <span v-if="!isCollapsed" class="menu-text">{{ item.label }}</span>
-          </li>
-        </ul>
-      </nav>
-
-      <div class="logout-container slide-up" v-if="!isCollapsed">
-        <button class="logout-button" @click="handleLogout" :disabled="isLoggingOut">
-          <i class="fas fa-sign-out-alt"></i>
-          {{ isLoggingOut ? 'Cerrando...' : 'Cerrar sesión' }}
-        </button>
-      </div>
-    </aside>
-
-    <button class="toggle-button" @click="toggleSidebar" :class="{ 'rotate': isCollapsed }">
-      <i :class="isCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
-    </button>
+    </transition>
   </div>
 </template>
 
@@ -55,6 +84,7 @@ export default {
     return {
       isCollapsed: false,
       isLoggingOut: false,
+      isSidebarHidden: false, // Nueva propiedad
       allMenuItems: [
         { name: 'Inicio', label: 'Bienvenido', icon: 'fas fa-chart-line', path: '/bienvenido', requiredPermission: 'ver_dashboard' },
         { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'admin_peticiones' },
@@ -76,37 +106,28 @@ export default {
   computed: {
     userInitial() {
       if (!this.currentUser || !this.currentUser.usuario) return 'U';
-
       const usuario = this.currentUser.usuario;
       if (usuario.Nombre && typeof usuario.Nombre === 'string') {
         return usuario.Nombre.charAt(0).toUpperCase();
       }
-
       if (usuario.Usuario && typeof usuario.Usuario === 'string') {
         return usuario.Usuario.charAt(0).toUpperCase();
       }
-
       return 'U';
     },
     userName() {
       if (!this.currentUser || !this.currentUser.usuario) return 'Cargando...';
-
       const usuario = this.currentUser.usuario;
-
       if (usuario.Nombre && typeof usuario.Nombre === 'string') {
-        const apellido = usuario.ApellidoP || '';
-        return `${usuario.Nombre} ${apellido}`.trim();
+        return usuario.Nombre.split(' ')[0];
       }
-
       if (usuario.Usuario && typeof usuario.Usuario === 'string') {
         return usuario.Usuario;
       }
-
       return 'Usuario';
     },
     userRole() {
       if (!this.currentUser || !this.currentUser.rol) return 'Usuario';
-
       return this.currentUser.rol.nombre || 'Usuario';
     },
     filteredMenuItems() {
@@ -123,6 +144,12 @@ export default {
   async created() {
     // Inicializar componente de forma segura
     await this.initializeComponent();
+
+    // Restaurar preferencia de visibilidad
+    const savedVisibility = localStorage.getItem('sidebarHidden');
+    if (savedVisibility !== null) {
+      this.isSidebarHidden = savedVisibility === 'true';
+    }
   },
   async mounted() {
     // Asegurar que el componente esté completamente montado
@@ -175,6 +202,15 @@ export default {
       return this.$route.path === path;
     },
 
+    toggleSidebar() {
+      this.isSidebarHidden = !this.isSidebarHidden;
+
+      // Guardar preferencia
+      if (this.currentUser) {
+        localStorage.setItem('sidebarHidden', this.isSidebarHidden);
+      }
+    },
+
     async navigateTo(path) {
       try {
         // Verificar autenticación antes de navegar
@@ -205,53 +241,56 @@ export default {
           window.location.href = path;
         }
       }
+
+      // Ocultar sidebar en móvil después de navegar
+      if (window.innerWidth < 768) {
+        this.isSidebarHidden = true;
+      }
     },
 
-async loadUserData() {
-  if (this.isLoadingUser) return;
+    async loadUserData() {
+      if (this.isLoadingUser) return;
 
-  this.isLoadingUser = true;
+      this.isLoadingUser = true;
 
-  try {
-    // Esperar activamente hasta que se pueda acceder a los datos
-    let retries = 0;
-    let userData = null;
+      try {
+        // Esperar activamente hasta que se pueda acceder a los datos
+        let retries = 0;
+        let userData = null;
 
-    while ((!userData || !userData.usuario) && retries < 10) {
-      if (!authService.isAuthenticated()) {
-        throw new Error('Usuario no autenticado');
+        while ((!userData || !userData.usuario) && retries < 10) {
+          if (!authService.isAuthenticated()) {
+            throw new Error('Usuario no autenticado');
+          }
+
+          userData = authService.getCurrentUser();
+          if (!userData || !userData.usuario) {
+            console.warn('Esperando datos de usuario...');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Espera 100ms
+            retries++;
+          }
+        }
+
+        // Si sigue sin datos válidos, intenta sincronizar
+        if (!userData || !userData.usuario) {
+          console.warn('Datos aún no disponibles, forzando sincronización...');
+          userData = await authService.syncUserData();
+        }
+
+        if (!userData || !userData.usuario) {
+          throw new Error('No se pudieron obtener los datos del usuario');
+        }
+
+        this.currentUser = userData;
+        this.userReady = true;
+
+      } catch (error) {
+        console.error('Error al cargar datos del usuario:', error);
+        await this.handleUserDataError(error);
+      } finally {
+        this.isLoadingUser = false;
       }
-
-      userData = authService.getCurrentUser();
-      if (!userData || !userData.usuario) {
-        console.warn('Esperando datos de usuario...');
-        await new Promise(resolve => setTimeout(resolve, 100)); // Espera 100ms
-        retries++;
-      }
-    }
-
-    // Si sigue sin datos válidos, intenta sincronizar
-    if (!userData || !userData.usuario) {
-      console.warn('Datos aún no disponibles, forzando sincronización...');
-      userData = await authService.syncUserData();
-    }
-
-    if (!userData || !userData.usuario) {
-      throw new Error('No se pudieron obtener los datos del usuario');
-    }
-
-    this.currentUser = userData;
-    this.userReady = true;
-
-  } catch (error) {
-    console.error('Error al cargar datos del usuario:', error);
-    await this.handleUserDataError(error);
-  } finally {
-    this.isLoadingUser = false;
-  }
-},
-
-
+    },
 
     async backgroundSync() {
       try {
@@ -340,14 +379,6 @@ async loadUserData() {
       }
     },
 
-    toggleSidebar() {
-      this.isCollapsed = !this.isCollapsed;
-      // Guardar la preferencia del usuario solo si hay una sesión válida
-      if (this.currentUser) {
-        localStorage.setItem('sidebarCollapsed', this.isCollapsed);
-      }
-    },
-
     startPeriodicAuthCheck() {
       // Limpiar interval anterior si existe
       if (this.authCheckInterval) {
@@ -427,138 +458,411 @@ async loadUserData() {
   }
 }
 </script>
+
 <style scoped>
-/* Sidebar en la parte inferior para todas las resoluciones */
+/* Botón flotante mejorado - A la derecha */
+.sidebar-toggle-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 116, 217, 0.3);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle-fab:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 116, 217, 0.4);
+}
+
+.sidebar-toggle-fab i {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Contenedor del sidebar - Más delgado */
 .sidebar-container {
-  width: 100%;
-  height: auto;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  top: auto;
-  z-index: 1000;
-  margin-bottom: 20px;
-}
-
-.sidebar {
+  z-index: 999;
   display: flex;
-  flex-direction: row;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 60px;
-  width: 70%;
-  padding: 0 1rem;
-  background: rgb(4, 106, 189);
-  /* backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px); */
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  margin: 0 auto;
 }
 
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(3px);
+  z-index: 1;
+}
+
+.sidebar-content {
+  position: relative;
+  z-index: 2;
+  width: 92%;
+  max-width: 850px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 255, 255, 0.99) 100%);
+  backdrop-filter: blur(15px);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  border: 1px solid rgba(0, 116, 217, 0.15);
+  border-bottom: none;
+}
+
+/* Barra superior - Más delgada */
+.sidebar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.user-info-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name-short {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  line-height: 1;
+}
+
+.user-role-short {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1;
+}
+
+.hide-sidebar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.hide-sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.08);
+}
+
+/* Navegación mejorada - Más delgada y azul */
 .navigation {
-  flex: 1;
-  padding: 0;
-  height: 100%;
+  padding: 12px 10px;
 }
 
 .navigation ul {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .navigation li {
+  position: relative;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
-  margin: 0;
-  font-size: 11px;
-  height: 100%;
-  display: flex;
+  padding: 12px 10px;
+  background: white;
+  border-radius: 12px;
   cursor: pointer;
-  color: white; /* ✅ Cambiado a blanco */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1.5px solid transparent;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .navigation li:hover {
-  background-color: rgba(255, 255, 255, 0.2); /* ✅ Hover con blanco transparente */
-  color: white; /* ✅ Mantener blanco en hover */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 116, 217, 0.12);
+  border-color: rgba(0, 116, 217, 0.25);
 }
 
 .navigation li.active {
-  background-color: rgba(255, 255, 255, 0.3); /* ✅ Active con blanco transparente */
-  color: white; /* ✅ Mantener blanco cuando está activo */
-  font-weight: 500;
+  background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
+  border-color: transparent;
+  box-shadow: 0 6px 16px rgba(0, 116, 217, 0.25);
 }
 
-.navigation li i {
-  margin: 0;
-  font-size: 18px;
-  color: white; /* ✅ Iconos específicamente en blanco */
+.navigation li.active .nav-icon i {
+  color: white;
 }
 
-.menu-text {
-  display: none;
+.navigation li.active .nav-label {
+  color: white;
+  font-weight: 600;
 }
 
-/* Mostrar el botón de logout como ícono */
-.logout-container {
+.nav-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0, 116, 217, 0.08) 0%, rgba(0, 86, 166, 0.08) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  margin-bottom: 6px;
+  transition: all 0.3s ease;
 }
 
-.logout-button {
-  background: none;
+.navigation li.active .nav-icon {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.navigation li:hover .nav-icon {
+  transform: scale(1.08);
+}
+
+.nav-icon i {
+  font-size: 20px;
+  color: #0074D9;
+  transition: all 0.3s ease;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #1e293b;
+  text-align: center;
+  line-height: 1.2;
+  transition: all 0.3s ease;
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, #0074D9 0%, #0056a6 100%);
+  border-radius: 2.5px 2.5px 0 0;
+  transition: width 0.3s ease;
+}
+
+.navigation li.active .nav-indicator {
+  width: 55%;
+}
+
+/* Footer con logout - Más delgado */
+.sidebar-footer {
+  padding: 12px 18px;
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0) 0%, rgba(249, 250, 251, 1) 100%);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.logout-button-modern {
+  width: 100%;
+  padding: 11px 18px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   border: none;
-  color: white; /* ✅ Botón logout en blanco */
-  font-size: 18px;
+  border-radius: 10px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 0 10px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  transition: all 0.3s ease; /* ✅ Transición suave */
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.25);
 }
 
-.logout-button i {
-  font-size: 18px;
-  color: white; /* ✅ Icono logout específicamente en blanco */
+.logout-button-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 14px rgba(239, 68, 68, 0.35);
 }
 
-.logout-button:hover {
-  color: rgba(255, 255, 255, 0.8); /* ✅ Hover con blanco ligeramente transparente */
-  background-color: rgba(255, 255, 255, 0.1); /* ✅ Fondo sutil en hover */
-  border-radius: 4px;
+.logout-button-modern:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.logout-button:hover i {
-  color: rgba(255, 255, 255, 0.8); /* ✅ Icono en hover */
+.logout-button-modern i {
+  font-size: 14px;
 }
 
-/* Ocultar otros elementos no necesarios */
+/* Animaciones */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar-content {
+    width: 96%;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .navigation ul {
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+    gap: 8px;
+  }
+
+  .navigation li {
+    padding: 10px 8px;
+  }
+
+  .nav-icon {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 5px;
+  }
+
+  .nav-icon i {
+    font-size: 18px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+  }
+
+  .sidebar-top {
+    padding: 10px 14px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .user-name-short {
+    font-size: 12px;
+  }
+
+  .user-role-short {
+    font-size: 9px;
+  }
+
+  .sidebar-footer {
+    padding: 10px 14px;
+  }
+
+  .logout-button-modern {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navigation ul {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .navigation li {
+    padding: 8px 6px;
+  }
+
+  .nav-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .nav-icon i {
+    font-size: 16px;
+  }
+
+  .nav-label {
+    font-size: 9px;
+  }
+
+  .sidebar-toggle-fab {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+    bottom: 18px;
+    right: 18px;
+  }
+}
+
+/* Ocultar elementos antiguos */
 .branding,
 .user-info,
 .toggle-button {
   display: none;
-}
-
-/* ✅ Asegurar que todos los iconos sean blancos */
-.sidebar i {
-  color: white !important;
-}
-
-/* ✅ Estados de hover y active más consistentes */
-.navigation li:hover i,
-.navigation li.active i {
-  color: white !important;
 }
 </style>

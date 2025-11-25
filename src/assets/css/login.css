@@ -8,20 +8,20 @@
   --primary-dark: #0e7490;       /* Versión más oscura del primario */
   --secondary-color: #06b6d4;    /* Azul claro secundario */
   --accent-color: #22d3ee;       /* Color de acento brillante */
-  
+
   /* Colores de fondo */
-  --bg-light: #f0f9ff;           /* Fondo claro azulado */
-  --bg-blue: #e0f2fe;            /* Fondo azul suave */
-  
+  --bg-light: #f7f7f7;           /* Fondo claro azulado */
+  --bg-blue: #eaf7ff;            /* Fondo azul suave */
+
   /* Colores de texto */
   --text-dark: #0f172a;          /* Texto principal oscuro */
   --text-gray: #475569;          /* Texto secundario gris */
-  
+
   /* Colores neutros */
   --white: #ffffff;                        /* Blanco puro */
   --white-transparent: rgba(255, 255, 255, 0.9);  /* Blanco semi-transparente */
   --border-color: #cbd5e1;                /* Color de bordes */
-  
+
   /* Sombras predefinidas */
   --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1);    /* Sombra ligera */
   --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra media */
@@ -70,10 +70,11 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  /* Imagen de fondo centrada y escalada para cubrir todo el contenedor */
-  background: url('src/assets/cancun.jpg') center/cover no-repeat;
+  /* Mover la imagen más hacia la izquierda: usar background-position y una pequeña traslación */
+  background: url('src/assets/yucatan.jpg') left center/cover no-repeat;
+  /* Opcional: ajustar con transform para desplazar aún más a la izquierda */
+  transform: scale(1.05) translateX(-20%);
   z-index: -2;                   /* Detrás del overlay */
-  transform: scale(1.05);        /* Escala ligeramente para evitar bordes */
 }
 
 /* ========================================
@@ -88,7 +89,7 @@ body {
   width: 100%;
   height: 100%;
   /* Gradiente diagonal con colores turquesa semi-transparentes */
-  background: linear-gradient(135deg, 
+  background: linear-gradient(135deg,
     rgba(8, 145, 178, 0.3) 0%,   /* Turquesa al 30% de opacidad */
     rgba(6, 182, 212, 0.2) 50%,  /* Azul claro al 20% de opacidad */
     rgba(34, 211, 238, 0.3) 100% /* Accent color al 30% de opacidad */
@@ -121,13 +122,13 @@ body {
   align-items: center;           /* Centra horizontalmente */
   padding: 3rem 2rem;            /* Espaciado interno generoso */
   min-height: 100vh;             /* NUEVO: Altura completa de la ventana */
-  
+
   /* Efecto glassmorphism - Fondo blanco semi-transparente RESTAURADO */
   background: rgba(255, 255, 255, 0.95); /* Blanco con alta opacidad para contraste */
   backdrop-filter: blur(10px);   /* Desenfoque del fondo detrás del elemento */
   -webkit-backdrop-filter: blur(10px); /* Soporte para Safari */
   border: 1px solid rgba(255, 255, 255, 0.8); /* Borde semi-transparente */
-  
+
   /* Efectos visuales */
   box-shadow: var(--shadow-strong); /* Sombra pronunciada */
   position: relative;
@@ -141,24 +142,24 @@ body {
   width: 350px;                  /* Tamaño grande del logo */
   height: auto;                  /* Altura proporcional automática */
   margin-bottom: 2rem;           /* Espacio generoso debajo del logo */
-  
+
   /* Efectos visuales elegantes */
   border-radius: 16px;           /* Bordes redondeados más pronunciados */
-  box-shadow: 
+  box-shadow:
     0 10px 30px rgba(8, 145, 178, 0.2),     /* Sombra principal con color primario */
     0 4px 15px rgba(0, 0, 0, 0.1),          /* Sombra secundaria para profundidad */
     0 0 0 2px rgba(255, 255, 255, 0.8);     /* Borde blanco sutil */
-  
+
   /* Transiciones suaves para interactividad */
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Transición con bounce */
-  
+
   /* Filtros para mejorar la calidad visual */
   filter: brightness(1.05) contrast(1.1) saturate(1.1);
-  
+
   /* Posicionamiento relativo para elementos decorativos */
   position: relative;
   z-index: 3;                    /* Sobre otros elementos */
-  
+
   /* Respaldo por si la imagen no carga */
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   display: block;                /* Asegura que se comporte como bloque */
@@ -167,11 +168,11 @@ body {
 /* Efecto hover elegante */
 .login-container img:hover {
   transform: scale(1.08) translateY(-5px); /* Aumento y elevación */
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(8, 145, 178, 0.3),     /* Sombra más intensa */
     0 8px 25px rgba(0, 0, 0, 0.15),         /* Sombra de profundidad */
     0 0 0 3px rgba(34, 211, 238, 0.4);      /* Borde brillante */
-  
+
   filter: brightness(1.1) contrast(1.15) saturate(1.2); /* Mejora visual en hover */
 }
 
@@ -189,9 +190,9 @@ body {
   left: -10px;
   right: -10px;
   bottom: -10px;
-  background: linear-gradient(45deg, 
-    rgba(34, 211, 238, 0.1) 0%, 
-    rgba(6, 182, 212, 0.1) 50%, 
+  background: linear-gradient(45deg,
+    rgba(34, 211, 238, 0.1) 0%,
+    rgba(6, 182, 212, 0.1) 50%,
     rgba(8, 145, 178, 0.1) 100%
   );
   border-radius: 20px;
@@ -224,17 +225,17 @@ body {
     width: 220px;                /* Más grande en móviles */
     margin-bottom: 1.2rem;       /* Espacio reducido */
     border-radius: 12px;         /* Bordes aún menores */
-    
+
     /* Efectos reducidos en móviles para mejor performance */
-    box-shadow: 
+    box-shadow:
       0 8px 20px rgba(8, 145, 178, 0.15),
       0 3px 10px rgba(0, 0, 0, 0.1);
   }
-  
+
   /* Hover más sutil en móviles */
   .login-container img:hover {
     transform: scale(1.05) translateY(-3px);
-    box-shadow: 
+    box-shadow:
       0 12px 25px rgba(8, 145, 178, 0.2),
       0 5px 15px rgba(0, 0, 0, 0.12);
   }
@@ -245,24 +246,24 @@ body {
    ======================================== */
 
 /* Si tu logo tiene fondo transparente, esto mejorará su apariencia */
-.login-container img[src*="png"], 
+.login-container img[src*="png"],
 .login-container img[src*="svg"] {
   /* Fondo sutil para logos con transparencia */
-  background: radial-gradient(circle at center, 
-    rgba(255, 255, 255, 0.9) 0%, 
+  background: radial-gradient(circle at center,
+    rgba(255, 255, 255, 0.9) 0%,
     rgba(255, 255, 255, 0.7) 100%
   );
-  
+
   /* Padding interno para separar el logo del fondo */
   padding: 15px;
-  
+
   /* Ajustar el tamaño considerando el padding */
   width: 380px;                  /* Compensar por el padding adicional */
 }
 
 /* Ajustes responsive para logos con fondo */
 @media (max-width: 768px) {
-  .login-container img[src*="png"], 
+  .login-container img[src*="png"],
   .login-container img[src*="svg"] {
     width: 300px;
     padding: 12px;
@@ -270,7 +271,7 @@ body {
 }
 
 @media (max-width: 480px) {
-  .login-container img[src*="png"], 
+  .login-container img[src*="png"],
   .login-container img[src*="svg"] {
     width: 240px;
     padding: 10px;
@@ -287,13 +288,13 @@ body {
   color: var(--primary-color);   /* Color primario para contraste en fondo blanco */
   margin-bottom: 0.5rem;         /* Espacio inferior pequeño */
   text-align: center;            /* Texto centrado */
-  
+
   /* Efecto de texto con gradiente */
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text; /* Recorta el gradiente al texto */
   -webkit-text-fill-color: transparent; /* Hace el texto transparente para mostrar el gradiente */
   background-clip: text;         /* Versión estándar */
-  
+
   /* Sombras sutiles para profundidad */
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
