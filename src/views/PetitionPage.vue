@@ -8,8 +8,8 @@
         :initial="{ opacity: 0, y: 100 }"
         :enter="{ opacity: 1, y: 0, transition: { duration: 1200, ease: 'easeOut' } }"
       >
-        <h1>Solicitud de Peticiones Ciudadanas</h1>
-        <p>Envía tu petición al gobierno y recibirás seguimiento de tu caso</p>
+        <h1>Solicitud de Peticiones Ciudadanas - Yucatán</h1>
+        <p>Sistema de Peticiones del Gobierno del Estado de Yucatán</p>
       </div>
     </div>
 
@@ -159,6 +159,31 @@
             <span v-if="errors.direccion" class="error-text">{{ errors.direccion }}</span>
           </div>
 
+          <!-- Municipio de Yucatán -->
+          <div
+            class="form-group"
+            v-motion-fade-visible-once
+            :initial="{ opacity: 0, x: -30 }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 650 } }"
+          >
+            <label for="municipio"
+              ><font-awesome-icon icon="fa-solid fa-map-marker-alt" /> Municipio de Yucatán <span class="required">*</span></label
+            >
+            <select
+              id="municipio"
+              v-model="formData.municipio"
+              required
+              :class="{ 'error-input': errors.municipio }"
+              @change="validateField('municipio', formData.municipio)"
+            >
+              <option value="">Seleccione un municipio</option>
+              <option v-for="municipio in municipiosYucatan" :key="municipio" :value="municipio">
+                {{ municipio }}
+              </option>
+            </select>
+            <span v-if="errors.municipio" class="error-text">{{ errors.municipio }}</span>
+          </div>
+
           <!-- Localidad -->
           <div
             class="form-group"
@@ -166,16 +191,20 @@
             :initial="{ opacity: 0, x: -30 }"
             :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 700 } }"
           >
-            <label for="localidad">Localidad <span class="required">*</span></label>
+            <label for="localidad">Localidad/Colonia <span class="required">*</span></label>
             <input
               type="text"
               id="localidad"
               v-model="formData.localidad"
               required
+              placeholder="Ej. Centro, Col. García Ginerés, etc."
               :class="{ 'error-input': errors.localidad }"
               @blur="validateField('localidad', formData.localidad)"
             />
             <span v-if="errors.localidad" class="error-text">{{ errors.localidad }}</span>
+            <div class="help-text">
+              Especifique la colonia o localidad dentro del municipio seleccionado
+            </div>
           </div>
 
           <!-- Nivel de importancia -->
@@ -245,7 +274,7 @@
                 :disabled="isClassifying"
                 class="classify-button"
               >
-                <font-awesome-icon icon="fa-solid fa-magic" />
+                <font-awesome-icon icon="fa-solid fa-wand-magic-sparkles" />
                 {{ isClassifying ? "Clasificando..." : "Clasificar Automáticamente" }}
               </button>
             </div>
@@ -327,7 +356,7 @@
                 :disabled="isClassifying"
                 class="reclassify-btn"
               >
-                <font-awesome-icon icon="fa-solid fa-refresh" />
+                <font-awesome-icon icon="fa-solid fa-sync-alt" />
                 {{ isClassifying ? "Reclasificando..." : "Reclasificar" }}
               </button>
 
@@ -400,11 +429,11 @@
           }"
         >
           <div class="info-icon">
-            <font-awesome-icon icon="fa-solid fa-info-circle" class="icon-animation" />
+            <font-awesome-icon icon="fa-solid fa-question-circle" class="icon-animation" />
           </div>
           <h3>¿Qué pasará con mi petición?</h3>
           <p>
-            Su petición será revisada por nuestro equipo y se le asignará un folio único
+            Su petición será revisada por el Gobierno del Estado de Yucatán y se le asignará un folio único
             para seguimiento.
           </p>
         </div>
@@ -446,8 +475,8 @@
           </div>
           <h3>Contacto directo</h3>
           <p>
-            Para casos urgentes, puede comunicarse al número de atención ciudadana:
-            800-123-4567
+            Para casos urgentes en Yucatán, puede comunicarse al número de atención ciudadana:
+            800-YUCATAN
           </p>
         </div>
 
@@ -513,11 +542,32 @@ export default {
       nombre: "",
       telefono: "",
       direccion: "",
+      municipio: "",
       localidad: "",
       nivel_importancia: "",
       descripcion: "",
       red_social: "",
     });
+
+    // Lista de municipios de Yucatán (106 municipios)
+    const municipiosYucatan = ref([
+      "Abalá", "Acanceh", "Akil", "Baca", "Bokobá", "Buctzotz", "Cacalchén",
+      "Calotmul", "Cansahcab", "Cantamayec", "Celestún", "Cenotillo", "Conkal",
+      "Cuncunul", "Cuzamá", "Chacsinkín", "Chankom", "Chapab", "Chemax", "Chicxulub Pueblo",
+      "Chichimilá", "Chikindzonot", "Chocholá", "Chumayel", "Dzán", "Dzemul", "Dzidzantún",
+      "Dzilam de Bravo", "Dzilam González", "Dzitás", "Dzoncauich", "Espita", "Halachó",
+      "Hocabá", "Hoctún", "Homún", "Huhí", "Hunucmá", "Ixil", "Izamal",
+      "Kanasín", "Kantunil", "Kaua", "Kinchil", "Kopomá", "Mama", "Maní",
+      "Maxcanú", "Mayapán", "Mérida", "Mocochá", "Motul", "Muna", "Muxupip",
+      "Opichén", "Oxkutzcab", "Panabá", "Peto", "Progreso", "Quintana Roo", "Río Lagartos",
+      "Sacalum", "Samahil", "Sanahcat", "San Felipe", "Santa Elena", "Seyé", "Sinanché",
+      "Sotuta", "Sucilá", "Sudzal", "Suma", "Tahdziú", "Tahmek", "Teabo",
+      "Tecoh", "Tekal de Venegas", "Tekantó", "Tekax", "Tekit", "Tekom", "Telchac Pueblo",
+      "Telchac Puerto", "Temax", "Temozón", "Tepakán", "Tetiz", "Teya", "Ticul",
+      "Timucuy", "Tinum", "Tixcacalcupul", "Tixkokob", "Tixmehuac", "Tixpéhual", "Tizimín",
+      "Tunkás", "Tzucacab", "Uayma", "Ucú", "Umán", "Valladolid", "Xocchel",
+      "Yaxcabá", "Yaxkukul", "Yobaín"
+    ]);
 
     const errors = ref({});
     const successMessage = ref("");
@@ -543,6 +593,7 @@ export default {
         formData.value.nombre.length >= 2 &&
         formData.value.telefono.length >= 10 &&
         formData.value.direccion.length >= 5 &&
+        formData.value.municipio !== "" &&
         formData.value.localidad.length >= 2 &&
         formData.value.nivel_importancia !== "" &&
         formData.value.descripcion.length >= 10 &&
@@ -577,6 +628,11 @@ export default {
             errors.value.direccion =
               "La dirección debe tener al menos 5 caracteres";
           else delete errors.value.direccion;
+          break;
+        case "municipio":
+          if (!value)
+            errors.value.municipio = "Debe seleccionar un municipio";
+          else delete errors.value.municipio;
           break;
         case "localidad":
           if (!value || value.length < 2)
@@ -760,6 +816,7 @@ export default {
           email: formData.value.email,
           telefono: formData.value.telefono,
           direccion: formData.value.direccion,
+          municipio: formData.value.municipio,
           localidad: formData.value.localidad,
           descripcion: formData.value.descripcion,
           red_social: formData.value.red_social || null,
@@ -825,6 +882,7 @@ export default {
         nombre: "",
         telefono: "",
         direccion: "",
+        municipio: "",
         localidad: "",
         nivel_importancia: "",
         descripcion: "",
@@ -912,6 +970,7 @@ export default {
       isClassifying,
       lastClassification,
       selectedClassification,
+      municipiosYucatan,
 
       // Computed
       canSubmit,
