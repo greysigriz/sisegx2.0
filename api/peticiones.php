@@ -113,6 +113,8 @@ function getPetitionRelatedData($db, $petitionId) {
 if ($method === 'GET') {
     $baseQuery = "SELECT 
                     p.*,
+                    p.division_id,
+                    d.Municipio as nombre_municipio,
                     u.Nombre as nombre_usuario_seguimiento,
                     u.ApellidoP as apellido_paterno_usuario,
                     u.ApellidoM as apellido_materno_usuario,
@@ -128,7 +130,8 @@ if ($method === 'GET') {
                         END
                     ) as nombre_completo_usuario
                   FROM peticiones p
-                  LEFT JOIN Usuario u ON p.usuario_id = u.Id";
+                  LEFT JOIN Usuario u ON p.usuario_id = u.Id
+                  LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id";
     
     if (isset($_GET['id'])) {
         $id = $_GET['id'];
@@ -300,7 +303,7 @@ elseif ($method === 'POST') {
         exit;
     }
     
-    // ✅ Validación simplificada - solo campos obligatorios que existen
+    // ✅ Validación actualizada - incluir municipio_id
     $requiredFields = ['nombre', 'telefono', 'direccion', 'localidad', 'descripcion', 'NivelImportancia'];
     $camposFaltantes = [];
     
@@ -308,6 +311,12 @@ elseif ($method === 'POST') {
         if (!isset($data->$field) || empty(trim($data->$field))) {
             $camposFaltantes[] = $field;
         }
+    }
+    
+    // Validar que venga municipio_id o municipio
+    if ((!isset($data->municipio_id) || empty($data->municipio_id)) && 
+        (!isset($data->municipio) || empty($data->municipio))) {
+        $camposFaltantes[] = 'municipio';
     }
     
     if (!empty($camposFaltantes)) {
@@ -332,11 +341,30 @@ elseif ($method === 'POST') {
         $red_social = isset($data->red_social) && !empty(trim($data->red_social)) ? trim($data->red_social) : null;
         $nivelImportancia = max(1, min(4, intval($data->NivelImportancia)));
         
+        // ✅ NUEVO: Obtener division_id del municipio
+        $division_id = null;
+        
+        if (isset($data->municipio_id) && !empty($data->municipio_id)) {
+            // Si viene el ID directamente, usarlo
+            $division_id = intval($data->municipio_id);
+        } elseif (isset($data->municipio) && !empty($data->municipio)) {
+            // Si viene el nombre del municipio, buscar el ID
+            $municipioQuery = "SELECT Id FROM DivisionAdministrativa WHERE Municipio = ?";
+            $municipioStmt = $db->prepare($municipioQuery);
+            $municipioStmt->execute([trim($data->municipio)]);
+            $municipioResult = $municipioStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($municipioResult) {
+                $division_id = $municipioResult['Id'];
+            }
+        }
+        
+        // ✅ Query actualizada para incluir division_id correcto
         $query = "INSERT INTO peticiones 
                  (folio, nombre, telefono, direccion, localidad, descripcion, 
                   red_social, estado, NivelImportancia, division_id, usuario_id) 
                  VALUES 
-                 (?, ?, ?, ?, ?, ?, ?, 'Sin revisar', ?, 1, NULL)";
+                 (?, ?, ?, ?, ?, ?, ?, 'Sin revisar', ?, ?, NULL)";
         
         $stmt = $db->prepare($query);
         
@@ -348,7 +376,8 @@ elseif ($method === 'POST') {
             $localidad,
             $descripcion,
             $red_social,
-            $nivelImportancia
+            $nivelImportancia,
+            $division_id
         ]);
         
         if (!$success) {
@@ -398,6 +427,7 @@ elseif ($method === 'POST') {
             "message" => "Petición creada con éxito",
             "id" => $peticion_id,
             "folio" => $folio,
+            "division_id" => $division_id,
             "sugerencias_guardadas" => $sugerencias_guardadas
         ]);
         

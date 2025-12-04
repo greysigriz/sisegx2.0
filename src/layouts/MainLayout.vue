@@ -1,23 +1,23 @@
 <!-- -->
 <template>
   <div class="app-container">
-    
+
     <Sidebar />
 
-  
+
     <main class="main-content">
       <header class="page-header">
         <div class="breadcrumb">
           <h2>{{ pageTitle }}</h2>
         </div>
-        <div class="header-actions">
+        <!-- <div class="header-actions">
           <div class="date-display">{{ currentDate }}</div>
           <button class="action-button"><i class="fas fa-bell"></i></button>
           <button class="action-button"><i class="fas fa-cog"></i></button>
-        </div>
+        </div> -->
       </header>
 
-      
+
       <router-view />
     </main>
   </div>
@@ -37,7 +37,7 @@ export default {
   },
   setup() {
     const router = useRouter();
-    
+
     onMounted(() => {
       // Verificar si el usuario está autenticado al cargar el componente
       const userData = localStorage.getItem('user');
@@ -45,7 +45,7 @@ export default {
         router.push('/login');
       }
     });
-    
+
     return { router };
   },
   data() {
@@ -53,7 +53,7 @@ export default {
     const today = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const formattedDate = today.toLocaleDateString('es-ES', options);
-    
+
     return {
       currentDate: formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
     };
@@ -162,7 +162,7 @@ export default {
   .app-container {
     flex-direction: column;
   }
-  
+
   .main-content {
     height: auto;
   }

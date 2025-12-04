@@ -839,12 +839,11 @@ export default {
     async cargarDivisiones() {
       try {
         const response = await axios.get(`${this.backendUrl}/divisiones.php`);
-        this.divisiones = response.data.records || [];
+        // ✅ Manejar tanto 'records' como respuesta directa
+        this.divisiones = response.data.records || response.data || [];
       } catch (error) {
         console.error('Error al cargar divisiones:', error);
-        if (this.$toast) {
-          this.$toast.error('Error al cargar divisiones');
-        }
+        this.divisiones = [];
       }
     },
     async cargarUnidades() {
@@ -2335,7 +2334,7 @@ export default {
 .role-selection {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0,  0, 0, 0.1);
   border-radius: 4px;
   padding: 10px;
 }

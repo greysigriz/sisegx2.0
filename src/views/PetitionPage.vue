@@ -159,7 +159,7 @@
             <span v-if="errors.direccion" class="error-text">{{ errors.direccion }}</span>
           </div>
 
-          <!-- Municipio de Yucatán -->
+          <!-- Municipio de Yucatán - ACTUALIZADO para cargar desde API -->
           <div
             class="form-group"
             v-motion-fade-visible-once
@@ -171,17 +171,25 @@
             >
             <select
               id="municipio"
-              v-model="formData.municipio"
+              v-model="formData.municipio_id"
               required
               :class="{ 'error-input': errors.municipio }"
-              @change="validateField('municipio', formData.municipio)"
+              @change="onMunicipioChange"
+              :disabled="isLoadingMunicipios"
             >
-              <option value="">Seleccione un municipio</option>
-              <option v-for="municipio in municipiosYucatan" :key="municipio" :value="municipio">
-                {{ municipio }}
+              <option value="">
+                {{ isLoadingMunicipios ? 'Cargando municipios...' : 'Seleccione un municipio' }}
+              </option>
+              <option
+                v-for="municipio in municipiosYucatan"
+                :key="municipio.Id"
+                :value="municipio.Id"
+              >
+                {{ municipio.Municipio }}
               </option>
             </select>
             <span v-if="errors.municipio" class="error-text">{{ errors.municipio }}</span>
+            <span v-if="municipioError" class="error-text">{{ municipioError }}</span>
           </div>
 
           <!-- Localidad -->
@@ -530,7 +538,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 
 export default {
   name: "PetitionPage",
@@ -542,32 +550,17 @@ export default {
       nombre: "",
       telefono: "",
       direccion: "",
-      municipio: "",
+      municipio_id: "",  // ✅ Cambiado a municipio_id
       localidad: "",
       nivel_importancia: "",
       descripcion: "",
       red_social: "",
     });
 
-    // Lista de municipios de Yucatán (106 municipios)
-    const municipiosYucatan = ref([
-      "Abalá", "Acanceh", "Akil", "Baca", "Bokobá", "Buctzotz", "Cacalchén",
-      "Calotmul", "Cansahcab", "Cantamayec", "Celestún", "Cenotillo", "Conkal",
-      "Cuncunul", "Cuzamá", "Chacsinkín", "Chankom", "Chapab", "Chemax", "Chicxulub Pueblo",
-      "Chichimilá", "Chikindzonot", "Chocholá", "Chumayel", "Dzán", "Dzemul", "Dzidzantún",
-      "Dzilam de Bravo", "Dzilam González", "Dzitás", "Dzoncauich", "Espita", "Halachó",
-      "Hocabá", "Hoctún", "Homún", "Huhí", "Hunucmá", "Ixil", "Izamal",
-      "Kanasín", "Kantunil", "Kaua", "Kinchil", "Kopomá", "Mama", "Maní",
-      "Maxcanú", "Mayapán", "Mérida", "Mocochá", "Motul", "Muna", "Muxupip",
-      "Opichén", "Oxkutzcab", "Panabá", "Peto", "Progreso", "Quintana Roo", "Río Lagartos",
-      "Sacalum", "Samahil", "Sanahcat", "San Felipe", "Santa Elena", "Seyé", "Sinanché",
-      "Sotuta", "Sucilá", "Sudzal", "Suma", "Tahdziú", "Tahmek", "Teabo",
-      "Tecoh", "Tekal de Venegas", "Tekantó", "Tekax", "Tekit", "Tekom", "Telchac Pueblo",
-      "Telchac Puerto", "Temax", "Temozón", "Tepakán", "Tetiz", "Teya", "Ticul",
-      "Timucuy", "Tinum", "Tixcacalcupul", "Tixkokob", "Tixmehuac", "Tixpéhual", "Tizimín",
-      "Tunkás", "Tzucacab", "Uayma", "Ucú", "Umán", "Valladolid", "Xocchel",
-      "Yaxcabá", "Yaxkukul", "Yobaín"
-    ]);
+    // ✅ Municipios cargados desde la API
+    const municipiosYucatan = ref([]);
+    const isLoadingMunicipios = ref(false);
+    const municipioError = ref("");
 
     const errors = ref({});
     const successMessage = ref("");
@@ -583,6 +576,56 @@ export default {
     // APIs
     const API_BASE = "http://127.0.0.1:8000";
     const PETITION_API = "http://127.0.0.1/SISEE/api/peticiones.php";
+    const DIVISION_API = "http://127.0.0.1/SISEE/api/division.php";
+
+    // -----------------------
+    // ✅ NUEVO: Cargar municipios desde API
+    // -----------------------
+    const loadMunicipios = async () => {
+      try {
+        isLoadingMunicipios.value = true;
+        municipioError.value = "";
+
+        const response = await fetch(DIVISION_API, {
+          method: "GET",
+          headers: {
+            "Accept": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.divisions)) {
+          municipiosYucatan.value = data.divisions;
+          console.log(`✅ ${data.count} municipios cargados desde la base de datos`);
+        } else {
+          throw new Error(data.message || "Error al cargar municipios");
+        }
+      } catch (error) {
+        console.error("❌ Error cargando municipios:", error);
+        municipioError.value = "No se pudieron cargar los municipios. Intente recargar la página.";
+        municipiosYucatan.value = [];
+      } finally {
+        isLoadingMunicipios.value = false;
+      }
+    };
+
+    // ✅ Handler para cambio de municipio
+    const onMunicipioChange = () => {
+      validateField('municipio', formData.value.municipio_id);
+    };
+
+    // ✅ Obtener nombre del municipio seleccionado
+    const getSelectedMunicipioName = () => {
+      const selected = municipiosYucatan.value.find(
+        m => m.Id === formData.value.municipio_id
+      );
+      return selected ? selected.Municipio : "";
+    };
 
     // -----------------------
     // Computed
@@ -593,7 +636,7 @@ export default {
         formData.value.nombre.length >= 2 &&
         formData.value.telefono.length >= 10 &&
         formData.value.direccion.length >= 5 &&
-        formData.value.municipio !== "" &&
+        formData.value.municipio_id !== "" &&  // ✅ Cambiado
         formData.value.localidad.length >= 2 &&
         formData.value.nivel_importancia !== "" &&
         formData.value.descripcion.length >= 10 &&
@@ -604,7 +647,7 @@ export default {
     const canClassify = computed(() => formData.value.descripcion.length >= 10);
 
     // -----------------------
-    // Validaciones
+    // Validaciones - ACTUALIZADO
     // -----------------------
     const validateField = (field, value) => {
       errors.value = { ...errors.value };
@@ -658,15 +701,8 @@ export default {
       }
     };
 
-    const validatePhone = (event) => {
-      const value = event.target.value;
-      const cleanValue = value.replace(/[^\d\-\s]/g, "");
-      formData.value.telefono = cleanValue;
-      validateField("telefono", cleanValue);
-    };
-
     // -----------------------
-    // Clasificación
+    // Clasificación - RESTAURAR MÉTODOS COMPLETOS
     // -----------------------
     let debounceTimeout = null;
 
@@ -711,24 +747,28 @@ export default {
     const onDescriptionChange = () => {
       validateField("descripcion", formData.value.descripcion);
 
+      // Limpiar clasificación si el texto cambió significativamente
       if (
         classification.value &&
         Array.isArray(classification.value) &&
         classification.value.length > 0 &&
+        classification.value[0].texto_original &&
         Math.abs(
           formData.value.descripcion.length -
             classification.value[0].texto_original.length
         ) > 10
       ) {
         classification.value = null;
+        selectedClassification.value = null;
       }
 
+      // Debounce para clasificación automática
       if (debounceTimeout) clearTimeout(debounceTimeout);
 
       if (formData.value.descripcion.length >= 20) {
         debounceTimeout = setTimeout(() => {
           classifyDescription(formData.value.descripcion);
-        }, 1000);
+        }, 1500);
       }
     };
 
@@ -740,53 +780,13 @@ export default {
 
     const reclassifyDescription = () => {
       classification.value = null;
+      selectedClassification.value = null;
       classifyDescription(formData.value.descripcion);
     };
 
     const selectClassification = (sugerencia) => {
       selectedClassification.value = sugerencia;
       console.log("Clasificación seleccionada:", sugerencia);
-    };
-
-    watch(
-      () => formData.value.descripcion,
-      (newVal) => {
-        validateField("descripcion", newVal);
-        if (
-          classification.value &&
-          Array.isArray(classification.value) &&
-          classification.value.length > 0 &&
-          Math.abs(
-            newVal.length - classification.value[0].texto_original.length
-          ) > 10
-        ) {
-          classification.value = null;
-        }
-      }
-    );
-
-    // -----------------------
-    // Scroll helpers
-    // -----------------------
-    const scrollToSuccessMessage = async () => {
-      await nextTick();
-      const successElement = document.querySelector(".success-message");
-      if (successElement) {
-        successElement.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-          inline: "nearest",
-        });
-        setTimeout(() => {
-          const rect = successElement.getBoundingClientRect();
-          const scrollTop =
-            window.pageYOffset +
-            rect.top -
-            window.innerHeight / 2 +
-            successElement.offsetHeight / 2;
-          window.scrollTo({ top: scrollTop, behavior: "smooth" });
-        }, 100);
-      }
     };
 
     // -----------------------
@@ -800,23 +800,25 @@ export default {
         lastClassification.value = null;
 
         // Validar todos los campos
-        Object.entries(formData.value).forEach(([field, value]) => {
-          if (field !== "red_social") {
-            validateField(field, value);
-          }
-        });
+        validateField('nombre', formData.value.nombre);
+        validateField('telefono', formData.value.telefono);
+        validateField('direccion', formData.value.direccion);
+        validateField('municipio', formData.value.municipio_id);
+        validateField('localidad', formData.value.localidad);
+        validateField('nivel_importancia', formData.value.nivel_importancia);
+        validateField('descripcion', formData.value.descripcion);
 
         if (Object.keys(errors.value).length > 0) {
           throw new Error("Corrige los errores en el formulario antes de enviar.");
         }
 
-        // Payload simple - solo datos del formulario
+        // ✅ Payload actualizado - incluye municipio_id
         const petitionData = {
           nombre: formData.value.nombre,
-          email: formData.value.email,
           telefono: formData.value.telefono,
           direccion: formData.value.direccion,
-          municipio: formData.value.municipio,
+          municipio_id: formData.value.municipio_id,  // ✅ ID del municipio
+          municipio: getSelectedMunicipioName(),       // ✅ Nombre para referencia
           localidad: formData.value.localidad,
           descripcion: formData.value.descripcion,
           red_social: formData.value.red_social || null,
@@ -855,7 +857,7 @@ export default {
           lastClassification.value = selectedClassification.value;
           successMessage.value = "¡Petición enviada exitosamente!";
 
-          console.log("✅ Petición guardada. Folio:", generatedFolio.value);
+          console.log("✅ Petición guardada. Folio:", generatedFolio.value, "Division ID:", responseData.division_id);
           await scrollToSuccessMessage();
         } else {
           throw new Error(responseData.message || "Error desconocido al guardar");
@@ -875,14 +877,14 @@ export default {
     };
 
     // -----------------------
-    // Utilidades UI
+    // Reset Form - ACTUALIZADO
     // -----------------------
     const resetForm = () => {
       formData.value = {
         nombre: "",
         telefono: "",
         direccion: "",
-        municipio: "",
+        municipio_id: "",  // ✅ Cambiado
         localidad: "",
         nivel_importancia: "",
         descripcion: "",
@@ -905,53 +907,45 @@ export default {
       });
     };
 
-    const copyToClipboard = async (text) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        console.log("Folio copiado al portapapeles");
-      } catch (err) {
-        console.error("Error al copiar:", err);
+    // -----------------------
+    // Utilidades UI
+    // -----------------------
+    // -----------------------
+    // Utilidades UI - MOVER ANTES DE submitForm
+    // -----------------------
+    const scrollToSuccessMessage = async () => {
+      await nextTick();
+      const successElement = document.querySelector(".success-message");
+      if (successElement) {
+        successElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+          inline: "nearest",
+        });
+        setTimeout(() => {
+          const rect = successElement.getBoundingClientRect();
+          const scrollTop =
+            window.pageYOffset +
+            rect.top -
+            window.innerHeight / 2 +
+            successElement.offsetHeight / 2;
+          window.scrollTo({ top: scrollTop, behavior: "smooth" });
+        }, 100);
       }
     };
 
-    const printFolio = () => {
-      const printContent = `
-        <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
-          <h2>Petición Ciudadana</h2>
-          <p><strong>Folio de seguimiento:</strong></p>
-          <h1 style="font-size: 24px; border: 2px solid #000; padding: 10px; display: inline-block;">
-            ${generatedFolio.value}
-          </h1>
-          <p style="margin-top: 20px;">Guarde este folio para dar seguimiento a su petición.</p>
-          <p><small>Fecha: ${new Date().toLocaleString()}</small></p>
-        </div>
-      `;
-
-      const printWindow = window.open("", "_blank");
-      printWindow.document.write(`
-        <html>
-          <head><title>Folio de Petición</title></head>
-          <body>${printContent}</body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    };
-
     // -----------------------
-    // onMounted
+    // onMounted - ACTUALIZADO
     // -----------------------
     onMounted(async () => {
+      // ✅ Cargar municipios al iniciar
+      await loadMunicipios();
+
       // Checks opcionales de conectividad
       try {
-        await Promise.allSettled([
-          fetch(`${API_BASE}/api/clasificacion/categorias`),
-          fetch("http://127.0.0.1/SISEE/api/peticiones.php", {
-            headers: { Accept: "application/json" }
-          })
-        ]);
+        await fetch(`${API_BASE}/api/clasificacion/categorias`);
       } catch {
-        console.warn("APIs no disponibles");
+        console.warn("API de clasificación no disponible");
       }
     });
 
@@ -971,6 +965,8 @@ export default {
       lastClassification,
       selectedClassification,
       municipiosYucatan,
+      isLoadingMunicipios,
+      municipioError,
 
       // Computed
       canSubmit,
@@ -978,16 +974,44 @@ export default {
 
       // Métodos
       validateField,
-      validatePhone,
+      validatePhone: (event) => {
+        const value = event.target.value;
+        const cleanValue = value.replace(/[^\d\-\s]/g, "");
+        formData.value.telefono = cleanValue;
+        validateField("telefono", cleanValue);
+      },
+      onMunicipioChange,
       onDescriptionChange,
       testClassification,
       reclassifyDescription,
       selectClassification,
       submitForm,
       resetForm,
-      scrollToSuccessMessage,
-      copyToClipboard,
-      printFolio,
+      scrollToSuccessMessage, // ✅ Exportar la función definida arriba
+      copyToClipboard: async (text) => {
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch (err) {
+          console.error("Error al copiar:", err);
+        }
+      },
+      printFolio: () => {
+        const printContent = `
+          <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+            <h2>Petición Ciudadana</h2>
+            <p><strong>Folio de seguimiento:</strong></p>
+            <h1 style="font-size: 24px; border: 2px solid #000; padding: 10px; display: inline-block;">
+              ${generatedFolio.value}
+            </h1>
+            <p style="margin-top: 20px;">Guarde este folio para dar seguimiento a su petición.</p>
+            <p><small>Fecha: ${new Date().toLocaleString()}</small></p>
+          </div>
+        `;
+        const printWindow = window.open("", "_blank");
+        printWindow.document.write(`<html><head><title>Folio</title></head><body>${printContent}</body></html>`);
+        printWindow.document.close();
+        printWindow.print();
+      },
     };
   },
 };

@@ -17,51 +17,54 @@ routes.push({
 })
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
 
-// Guard de navegación CORREGIDO
-router.beforeEach((to, from, next) => {
-  // ✅ PÁGINAS PÚBLICAS (NO requieren autenticación)
-  const publicPages = ['/login', '/register', '/recuperar-password', '/petition']
-  const authRequired = !publicPages.includes(to.path)
-  
-  console.log('Router Guard:', {
-    to: to.path,
-    authRequired,
-    isAuthenticated: AuthService.isAuthenticated()
-  })
-  
-  // ✅ SI NO SE REQUIERE AUTENTICACIÓN, PERMITIR ACCESO
-  if (!authRequired) {
-    // Si está autenticado e intenta ir a login, redirigir al dashboard
-    if (AuthService.isAuthenticated() && to.path === '/login') {
-      return next('/bienvenido')
+// ✅ CORREGIDO: Router guard más robusto para evitar loops
+router.beforeEach(async (to, from, next) => {
+  console.log('Router Guard:', { to: to.path, from: from.path });
+
+  // Evitar loops - si ya estamos en la misma ruta, continuar
+  if (to.path === from.path) {
+    return next();
+  }
+
+  const publicPages = ['/login', '/register', '/recuperar-password', '/petition', '/'];
+  const authRequired = !publicPages.includes(to.path);
+  const isAuthenticated = AuthService.isAuthenticated();
+
+  // Si requiere autenticación y no está autenticado
+  if (authRequired && !isAuthenticated) {
+    console.log('🔒 Redirigiendo a login - no autenticado');
+
+    // Evitar loop infinito
+    if (to.path === '/login') {
+      return next();
     }
-    // Para otras páginas públicas, permitir acceso
-    return next()
+
+    return next({
+      path: '/login',
+      query: { redirect: to.fullPath }
+    });
   }
-  
-  // ✅ SI SE REQUIERE AUTENTICACIÓN, VERIFICAR
-  const isAuthenticated = AuthService.isAuthenticated()
-  
-  if (!isAuthenticated) {
-    console.log('Usuario no autenticado, redirigiendo a login')
-    return next('/login')
+
+  // Si está autenticado y trata de ir a login, redirigir a dashboard
+  if (isAuthenticated && to.path === '/login') {
+    console.log('✅ Ya autenticado, redirigiendo a dashboard');
+    return next('/dashboard');
   }
-  
-  // ✅ VERIFICAR VALIDEZ DE SESIÓN (más suave)
-  const isSessionValid = AuthService.checkSessionValidity()
-  if (!isSessionValid) {
-    console.log('Sesión expirada, limpiando y redirigiendo')
-    // Limpiar datos sin hacer logout completo
-    AuthService.clearAllData()
-    return next('/login?expired=true')
+
+  // Verificar permisos si la ruta los requiere
+  if (to.meta && to.meta.requiredPermission) {
+    const hasPermission = AuthService.hasPermission(to.meta.requiredPermission);
+    if (!hasPermission) {
+      console.log('🚫 Sin permisos para:', to.path);
+      return next('/dashboard');
+    }
   }
-  
-  // ✅ TODO OK, PERMITIR ACCESO
-  next()
-})
+
+  next();
+});
 
 export default router

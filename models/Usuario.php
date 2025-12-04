@@ -17,7 +17,6 @@ class Usuario {
     public $IdUnidad;
     public $IdRolSistema;
     public $Password;
-    public $FechaCreacion;
     
     // Constructor con conexión a la base de datos
     public function __construct($db) {
@@ -28,68 +27,41 @@ class Usuario {
     public function read() {
         // Consulta SQL
         $query = "SELECT 
-                    u.Id, 
-                    u.Usuario, 
-                    u.Nombre, 
-                    u.ApellidoP, 
-                    u.ApellidoM, 
-                    u.Puesto, 
-                    u.Estatus, 
-                    u.IdDivisionAdm, 
-                    u.IdUnidad, 
-                    u.IdRolSistema,
-                    r.Nombre AS NombreRol,
-                    d.Nombre AS NombreDivision
-                FROM 
-                    " . $this->table_name . " u
-                LEFT JOIN 
-                    RolSistema r ON u.IdRolSistema = r.Id
-                LEFT JOIN 
-                    DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
-                ORDER BY 
-                    u.Id DESC";
+                    u.Id, u.Usuario, u.Nombre, u.ApellidoP, u.ApellidoM, 
+                    u.Puesto, u.Estatus, u.IdDivisionAdm, u.IdUnidad, u.IdRolSistema,
+                    r.Nombre as NombreRol,
+                    d.Municipio as NombreDivision
+                  FROM " . $this->table_name . " u
+                  LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
+                  LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
+                  ORDER BY u.Id DESC";
         
         // Preparar consulta
         $stmt = $this->conn->prepare($query);
-        
         // Ejecutar consulta
         $stmt->execute();
         
         return $stmt;
     }
     
-    // Leer un usuario
+    // Leer un usuario específico
     public function readOne() {
         // Consulta SQL
         $query = "SELECT 
-                    u.Id, 
-                    u.Usuario, 
-                    u.Nombre, 
-                    u.ApellidoP, 
-                    u.ApellidoM, 
-                    u.Puesto, 
-                    u.Estatus, 
-                    u.IdDivisionAdm, 
-                    u.IdUnidad, 
-                    u.IdRolSistema,
-                    r.Nombre AS NombreRol,
-                    d.Nombre AS NombreDivision
-                FROM 
-                    " . $this->table_name . " u
-                LEFT JOIN 
-                    RolSistema r ON u.IdRolSistema = r.Id
-                LEFT JOIN 
-                    DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
-                WHERE 
-                    u.Id = ?
-                LIMIT 0,1";
+                    u.Id, u.Usuario, u.Nombre, u.ApellidoP, u.ApellidoM, 
+                    u.Puesto, u.Estatus, u.IdDivisionAdm, u.IdUnidad, u.IdRolSistema,
+                    r.Nombre as NombreRol,
+                    d.Municipio as NombreDivision
+                  FROM " . $this->table_name . " u
+                  LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
+                  LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
+                  WHERE u.Id = ?
+                  LIMIT 0,1";
         
         // Preparar consulta
         $stmt = $this->conn->prepare($query);
-        
         // Vincular ID
         $stmt->bindParam(1, $this->Id);
-        
         // Ejecutar consulta
         $stmt->execute();
         
@@ -107,32 +79,25 @@ class Usuario {
     public function create() {
         // Consulta SQL
         $query = "INSERT INTO " . $this->table_name . "
-                (Usuario, Nombre, ApellidoP, ApellidoM, Puesto, Estatus, IdDivisionAdm, IdUnidad, IdRolSistema, Password)
-                VALUES
-                (:Usuario, :Nombre, :ApellidoP, :ApellidoM, :Puesto, :Estatus, :IdDivisionAdm, :IdUnidad, :IdRolSistema, :Password)";
+                  SET Usuario=:usuario, Nombre=:nombre, ApellidoP=:apellidoP, 
+                      ApellidoM=:apellidoM, Puesto=:puesto, Estatus=:estatus,
+                      IdDivisionAdm=:idDivisionAdm, IdUnidad=:idUnidad, 
+                      IdRolSistema=:idRolSistema, Password=:password";
         
         // Preparar consulta
         $stmt = $this->conn->prepare($query);
         
-        // Sanitizar
-        $this->Usuario = htmlspecialchars(strip_tags($this->Usuario));
-        $this->Nombre = htmlspecialchars(strip_tags($this->Nombre));
-        $this->ApellidoP = htmlspecialchars(strip_tags($this->ApellidoP));
-        $this->ApellidoM = htmlspecialchars(strip_tags($this->ApellidoM));
-        $this->Puesto = htmlspecialchars(strip_tags($this->Puesto));
-        $this->Estatus = htmlspecialchars(strip_tags($this->Estatus));
-        
         // Vincular valores
-        $stmt->bindParam(":Usuario", $this->Usuario);
-        $stmt->bindParam(":Nombre", $this->Nombre);
-        $stmt->bindParam(":ApellidoP", $this->ApellidoP);
-        $stmt->bindParam(":ApellidoM", $this->ApellidoM);
-        $stmt->bindParam(":Puesto", $this->Puesto);
-        $stmt->bindParam(":Estatus", $this->Estatus);
-        $stmt->bindParam(":IdDivisionAdm", $this->IdDivisionAdm);
-        $stmt->bindParam(":IdUnidad", $this->IdUnidad);
-        $stmt->bindParam(":IdRolSistema", $this->IdRolSistema);
-        $stmt->bindParam(":Password", $this->Password);
+        $stmt->bindParam(":usuario", $this->Usuario);
+        $stmt->bindParam(":nombre", $this->Nombre);
+        $stmt->bindParam(":apellidoP", $this->ApellidoP);
+        $stmt->bindParam(":apellidoM", $this->ApellidoM);
+        $stmt->bindParam(":puesto", $this->Puesto);
+        $stmt->bindParam(":estatus", $this->Estatus);
+        $stmt->bindParam(":idDivisionAdm", $this->IdDivisionAdm);
+        $stmt->bindParam(":idUnidad", $this->IdUnidad);
+        $stmt->bindParam(":idRolSistema", $this->IdRolSistema);
+        $stmt->bindParam(":password", $this->Password);
         
         // Ejecutar consulta
         if($stmt->execute()) {
@@ -146,51 +111,36 @@ class Usuario {
     public function update() {
         // Consulta SQL base
         $query = "UPDATE " . $this->table_name . "
-                SET
-                    Usuario = :Usuario,
-                    Nombre = :Nombre,
-                    ApellidoP = :ApellidoP,
-                    ApellidoM = :ApellidoM,
-                    Puesto = :Puesto,
-                    Estatus = :Estatus,
-                    IdDivisionAdm = :IdDivisionAdm,
-                    IdUnidad = :IdUnidad,
-                    IdRolSistema = :IdRolSistema";
+                  SET Usuario=:usuario, Nombre=:nombre, ApellidoP=:apellidoP, 
+                      ApellidoM=:apellidoM, Puesto=:puesto, Estatus=:estatus,
+                      IdDivisionAdm=:idDivisionAdm, IdUnidad=:idUnidad, 
+                      IdRolSistema=:idRolSistema";
         
-        // Si hay contraseña, incluirla en la actualización
+        // Si se proporciona contraseña, actualizarla
         if(!empty($this->Password)) {
-            $query .= ", Password = :Password";
+            $query .= ", Password=:password";
         }
         
-        $query .= " WHERE Id = :Id";
+        $query .= " WHERE Id=:id";
         
         // Preparar consulta
         $stmt = $this->conn->prepare($query);
         
-        // Sanitizar
-        $this->Usuario = htmlspecialchars(strip_tags($this->Usuario));
-        $this->Nombre = htmlspecialchars(strip_tags($this->Nombre));
-        $this->ApellidoP = htmlspecialchars(strip_tags($this->ApellidoP));
-        $this->ApellidoM = htmlspecialchars(strip_tags($this->ApellidoM));
-        $this->Puesto = htmlspecialchars(strip_tags($this->Puesto));
-        $this->Estatus = htmlspecialchars(strip_tags($this->Estatus));
-        $this->Id = htmlspecialchars(strip_tags($this->Id));
-        
         // Vincular valores
-        $stmt->bindParam(":Usuario", $this->Usuario);
-        $stmt->bindParam(":Nombre", $this->Nombre);
-        $stmt->bindParam(":ApellidoP", $this->ApellidoP);
-        $stmt->bindParam(":ApellidoM", $this->ApellidoM);
-        $stmt->bindParam(":Puesto", $this->Puesto);
-        $stmt->bindParam(":Estatus", $this->Estatus);
-        $stmt->bindParam(":IdDivisionAdm", $this->IdDivisionAdm);
-        $stmt->bindParam(":IdUnidad", $this->IdUnidad);
-        $stmt->bindParam(":IdRolSistema", $this->IdRolSistema);
-        $stmt->bindParam(":Id", $this->Id);
+        $stmt->bindParam(":usuario", $this->Usuario);
+        $stmt->bindParam(":nombre", $this->Nombre);
+        $stmt->bindParam(":apellidoP", $this->ApellidoP);
+        $stmt->bindParam(":apellidoM", $this->ApellidoM);
+        $stmt->bindParam(":puesto", $this->Puesto);
+        $stmt->bindParam(":estatus", $this->Estatus);
+        $stmt->bindParam(":idDivisionAdm", $this->IdDivisionAdm);
+        $stmt->bindParam(":idUnidad", $this->IdUnidad);
+        $stmt->bindParam(":idRolSistema", $this->IdRolSistema);
+        $stmt->bindParam(":id", $this->Id);
         
         // Vincular contraseña si está presente
         if(!empty($this->Password)) {
-            $stmt->bindParam(":Password", $this->Password);
+            $stmt->bindParam(":password", $this->Password);
         }
         
         // Ejecutar consulta
@@ -201,7 +151,6 @@ class Usuario {
         return false;
     }
     
-    
     // Eliminar usuario
     public function delete() {
         // Consulta SQL
@@ -209,10 +158,6 @@ class Usuario {
         
         // Preparar consulta
         $stmt = $this->conn->prepare($query);
-        
-        // Sanitizar
-        $this->Id = htmlspecialchars(strip_tags($this->Id));
-        
         // Vincular ID
         $stmt->bindParam(1, $this->Id);
         

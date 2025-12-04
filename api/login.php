@@ -2,13 +2,13 @@
 // api/login.php
 // Configuración inicial para debugging 
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Cambiar a 1 solo para debugging local
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/logs/php_errors.log');
 
 // Crear directorio de logs si no existe
 if (!is_dir(__DIR__ . '/logs')) {
-    mkdir(__DIR__ . '/logs', 0755, true);
+    @mkdir(__DIR__ . '/logs', 0755, true);
 }
 
 // Función para logging personalizado
@@ -22,11 +22,44 @@ function debugLog($message, $data = null) {
     }
     
     $logMessage .= PHP_EOL;
-    file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+    @file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
 }
 
+// Registrar handler de errores fatales
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        debugLog("FATAL ERROR", $error);
+        
+        // Solo enviar respuesta si no se ha enviado ya
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=UTF-8');
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error fatal del servidor',
+                'debug' => [
+                    'error' => $error['message'],
+                    'file' => $error['file'],
+                    'line' => $error['line']
+                ]
+            ]);
+        }
+    }
+});
+
 // CORS debe ir PRIMERO, antes de cualquier output
-require_once __DIR__ . '/cors.php';
+$corsFile = __DIR__ . '/cors.php';
+if (!file_exists($corsFile)) {
+    header('Content-Type: application/json; charset=UTF-8');
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error de configuración: archivo cors.php no encontrado'
+    ]);
+    exit;
+}
+require_once $corsFile;
 
 // Headers después de CORS
 header('Cache-Control: no-store, no-cache, must-revalidate');
@@ -40,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'OPTIONS') {
 
 debugLog("=== INICIO LOGIN REQUEST ===");
 debugLog("Request Method: " . $_SERVER['REQUEST_METHOD']);
-debugLog("Headers", getallheaders());
+debugLog("PHP Version: " . phpversion());
 
 // Verificar método HTTP
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -91,21 +124,81 @@ try {
         exit;
     }
 
-    // Verificar conexión a base de datos
-    debugLog("Intentando conectar a base de datos");
-    require_once __DIR__ . '/../config/database.php';
+    // Verificar extensiones PHP necesarias
+    if (!extension_loaded('pdo')) {
+        debugLog("ERROR: Extensión PDO no cargada");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de configuración: extensión PDO no disponible'
+        ]);
+        exit;
+    }
     
-    if (!file_exists(__DIR__ . '/../config/database.php')) {
-        debugLog("ERROR: No se encuentra database.php");
-        throw new Exception("Archivo de configuración de base de datos no encontrado");
+    if (!extension_loaded('pdo_mysql')) {
+        debugLog("ERROR: Extensión PDO_MySQL no cargada");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de configuración: extensión PDO_MySQL no disponible'
+        ]);
+        exit;
     }
 
+    // Verificar archivo de base de datos
+    $dbConfigPath = __DIR__ . '/../config/database.php';
+    debugLog("Buscando database.php en: " . $dbConfigPath);
+    
+    if (!file_exists($dbConfigPath)) {
+        debugLog("ERROR: database.php no encontrado");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de configuración del servidor',
+            'debug' => 'database.php no encontrado en: ' . $dbConfigPath
+        ]);
+        exit;
+    }
+
+    debugLog("Cargando database.php");
+    require_once $dbConfigPath;
+    
+    if (!class_exists('Database')) {
+        debugLog("ERROR: Clase Database no existe después de require");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de configuración: clase Database no definida'
+        ]);
+        exit;
+    }
+
+    debugLog("Creando instancia de Database");
     $database = new Database();
-    $db = $database->getConnection();
+    
+    debugLog("Obteniendo conexión");
+    
+    // ✅ CAMBIO: Manejar la excepción que ahora lanza getConnection()
+    try {
+        $db = $database->getConnection();
+    } catch (Exception $dbException) {
+        debugLog("ERROR de conexión a BD: " . $dbException->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de conexión a la base de datos: ' . $dbException->getMessage()
+        ]);
+        exit;
+    }
     
     if (!$db) {
-        debugLog("ERROR: No se pudo conectar a la base de datos");
-        throw new Exception("Error de conexión a la base de datos");
+        debugLog("ERROR: getConnection() devolvió null");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error de conexión a la base de datos.'
+        ]);
+        exit;
     }
     
     debugLog("Conexión a base de datos exitosa");
@@ -122,14 +215,22 @@ try {
         public function login($usuario, $password) {
             debugLog("Iniciando proceso de login para usuario: " . $usuario);
             
-            $query = "SELECT u.Id, u.Usuario, u.Nombre, u.ApellidoP, u.ApellidoM, u.Puesto, 
-                             u.Estatus, u.IdDivisionAdm, u.IdUnidad, u.IdRolSistema, u.Password,
-                             r.Nombre as RolNombre, r.Descripcion as RolDescripcion,
-                             d.Nombre as DivisionNombre, d.Pais, d.Region, d.Ciudad 
-                      FROM " . $this->table_name . " u
-                      LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
-                      LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
-                      WHERE u.Usuario = :usuario";
+            // Primero verificar que la tabla existe
+            try {
+                $checkTable = $this->conn->query("SHOW TABLES LIKE 'Usuario'");
+                if ($checkTable->rowCount() == 0) {
+                    debugLog("ERROR: Tabla Usuario no existe");
+                    return ['success' => false, 'message' => 'Error de configuración: tabla Usuario no existe'];
+                }
+            } catch (Exception $e) {
+                debugLog("Error verificando tabla: " . $e->getMessage());
+            }
+            
+            // ✅ Query simplificado - solo tabla Usuario primero
+            $query = "SELECT Id, Usuario, Nombre, ApellidoP, ApellidoM, Puesto, 
+                             Estatus, IdDivisionAdm, IdUnidad, IdRolSistema, Password
+                      FROM " . $this->table_name . "
+                      WHERE Usuario = :usuario";
 
             try {
                 $stmt = $this->conn->prepare($query);
@@ -174,24 +275,20 @@ try {
 
                         debugLog("Login exitoso, obteniendo datos adicionales");
                         
+                        // ✅ Obtener datos del rol por separado
+                        $rolData = $this->getRolData($user['IdRolSistema']);
+                        
+                        // ✅ Obtener datos de división por separado
+                        $divisionData = $this->getDivisionData($user['IdDivisionAdm']);
+                        
                         $unidades = $this->getUserUnidades($user['Id']);
                         $permisos = $this->getRolPermisos($user['IdRolSistema']);
                         unset($user['Password']);
 
                         $userData = [
                             'usuario' => $user,
-                            'rol' => [
-                                'id' => $user['IdRolSistema'],
-                                'nombre' => $user['RolNombre'],
-                                'descripcion' => $user['RolDescripcion']
-                            ],
-                            'division' => [
-                                'id' => $user['IdDivisionAdm'],
-                                'nombre' => $user['DivisionNombre'],
-                                'pais' => $user['Pais'],
-                                'region' => $user['Region'],
-                                'ciudad' => $user['Ciudad']
-                            ],
+                            'rol' => $rolData,
+                            'division' => $divisionData,
                             'unidades' => $unidades,
                             'permisos' => $permisos
                         ];
@@ -211,6 +308,67 @@ try {
                 debugLog("Error en query de login: " . $e->getMessage());
                 throw $e;
             }
+        }
+
+        // ✅ Nuevo método para obtener datos del rol
+        private function getRolData($rolId) {
+            if (!$rolId) {
+                return ['id' => null, 'nombre' => 'Sin rol', 'descripcion' => ''];
+            }
+            
+            try {
+                $stmt = $this->conn->query("DESCRIBE RolSistema");
+                $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                debugLog("Columnas de RolSistema: ", $columns);
+                
+                $stmt = $this->conn->prepare("SELECT * FROM RolSistema WHERE Id = :id");
+                $stmt->bindParam(':id', $rolId);
+                $stmt->execute();
+                $rol = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($rol) {
+                    return [
+                        'id' => $rol['Id'] ?? $rolId,
+                        'nombre' => $rol['Nombre'] ?? $rol['nombre'] ?? 'Rol ' . $rolId,
+                        'descripcion' => $rol['Descripcion'] ?? $rol['descripcion'] ?? ''
+                    ];
+                }
+            } catch (Exception $e) {
+                debugLog("Error obteniendo rol: " . $e->getMessage());
+            }
+            
+            return ['id' => $rolId, 'nombre' => 'Rol ' . $rolId, 'descripcion' => ''];
+        }
+
+        // ✅ Método actualizado para obtener datos de división con columnas correctas
+        private function getDivisionData($divisionId) {
+            if (!$divisionId) {
+                return ['id' => null, 'nombre' => 'Sin división', 'pais' => '', 'estado' => '', 'municipio' => '', 'codigoPostal' => '', 'cabecera' => ''];
+            }
+            
+            try {
+                $stmt = $this->conn->prepare("SELECT * FROM DivisionAdministrativa WHERE Id = :id");
+                $stmt->bindParam(':id', $divisionId);
+                $stmt->execute();
+                $division = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($division) {
+                    debugLog("División encontrada: ", $division);
+                    return [
+                        'id' => $division['Id'],
+                        'nombre' => $division['Municipio'] ?? 'División ' . $divisionId,
+                        'municipio' => $division['Municipio'] ?? '',
+                        'pais' => $division['Pais'] ?? 'México',
+                        'estado' => $division['Estado'] ?? 'Yucatán',
+                        'codigoPostal' => $division['CodigoPostal'] ?? '',
+                        'cabecera' => $division['Cabecera'] ?? ''
+                    ];
+                }
+            } catch (Exception $e) {
+                debugLog("Error obteniendo división: " . $e->getMessage());
+            }
+            
+            return ['id' => $divisionId, 'nombre' => 'División ' . $divisionId, 'pais' => '', 'estado' => '', 'municipio' => '', 'codigoPostal' => '', 'cabecera' => ''];
         }
 
         private function getUserUnidades($userId) {
@@ -243,14 +401,10 @@ try {
                     ]);
                     break;
                 case 9:
-                    $permisos = array_merge($permisos, [
-                        'ver_dashboard', 'ver_departamentos'
-                    ]);
+                    $permisos = array_merge($permisos, ['ver_dashboard', 'ver_departamentos']);
                     break;
                 case 10:
-                    $permisos = array_merge($permisos, [
-                        'ver_tablero'
-                    ]);
+                    $permisos = array_merge($permisos, ['ver_tablero']);
                     break;
             }
 
@@ -282,17 +436,6 @@ try {
             'unidades' => $result['user']['unidades']
         ];
 
-        // Log de éxito
-        $logFile = __DIR__ . '/logs/login_success.log';
-        $logMessage = sprintf(
-            "[%s] Login exitoso - User ID: %s, IP: %s, User Agent: %s\n",
-            date('Y-m-d H:i:s'),
-            $result['user']['usuario']['Id'],
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 200)
-        );
-        file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
-
         debugLog("Sesión configurada, enviando respuesta exitosa");
         
         http_response_code(200);
@@ -317,7 +460,11 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error del servidor: ' . $e->getMessage()
+        'message' => 'Error del servidor: ' . $e->getMessage(),
+        'debug' => [
+            'file' => basename($e->getFile()),
+            'line' => $e->getLine()
+        ]
     ]);
 }
 
