@@ -1,6 +1,6 @@
 <template>
-  <div class="chart-wrapper pie-chart-wrapper ">
-    <div ref="pieChart" class="chart1-derecha"></div>
+  <div class="chart-wrapper pie-chart-wrapper">
+    <div ref="pieChart" class="chart1-derecha pie-chart"></div>
   </div>
 </template>
 

@@ -380,6 +380,51 @@
             </div>
           </div>
 
+          <!-- Imagen de la petición (Opcional) -->
+          <div
+            class="form-group"
+            v-motion-fade-visible-once
+            :initial="{ opacity: 0, x: -30 }"
+            :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 950 } }"
+          >
+            <label for="imagen">
+              <font-awesome-icon icon="fa-solid fa-image" />
+              Imagen de la petición
+              <span class="optional-badge">Opcional</span>
+            </label>
+            <div class="image-upload-container">
+              <input
+                type="file"
+                id="imagen"
+                ref="imageInput"
+                accept="image/*"
+                @change="handleImageChange"
+                class="image-input"
+              />
+              <label for="imagen" class="image-upload-label">
+                <font-awesome-icon icon="fa-solid fa-cloud-upload-alt" class="upload-icon" />
+                <span v-if="!selectedImage">Haga clic para seleccionar una imagen</span>
+                <span v-else>Cambiar imagen</span>
+              </label>
+              
+              <div v-if="imagePreview" class="image-preview-container">
+                <img :src="imagePreview" alt="Vista previa" class="image-preview" />
+                <button type="button" @click="removeImage" class="remove-image-btn">
+                  <font-awesome-icon icon="fa-solid fa-times-circle" />
+                  Eliminar imagen
+                </button>
+                <div class="image-info">
+                  <font-awesome-icon icon="fa-solid fa-file-image" />
+                  {{ selectedImage.name }} ({{ formatFileSize(selectedImage.size) }})
+                </div>
+              </div>
+            </div>
+            <div class="help-text">
+              <font-awesome-icon icon="fa-solid fa-info-circle" />
+              Puede adjuntar una foto que ayude a ilustrar su petición (máximo 5MB)
+            </div>
+          </div>
+
           <!-- Red social -->
           <div
             class="form-group"
@@ -572,6 +617,8 @@ export default {
     const isClassifying = ref(false);
     const lastClassification = ref(null);
     const selectedClassification = ref(null);
+    const selectedImage = ref(null);
+    const imagePreview = ref(null);
 
     // APIs
     const API_BASE = "http://127.0.0.1:8000";
@@ -898,6 +945,8 @@ export default {
       successMessage.value = "";
       errorMessage.value = "";
       generatedFolio.value = "";
+      selectedImage.value = null;
+      imagePreview.value = null;
 
       nextTick(() => {
         const formElement = document.querySelector(".form-container");
@@ -967,6 +1016,8 @@ export default {
       municipiosYucatan,
       isLoadingMunicipios,
       municipioError,
+      selectedImage,
+      imagePreview,
 
       // Computed
       canSubmit,
@@ -979,6 +1030,48 @@ export default {
         const cleanValue = value.replace(/[^\d\-\s]/g, "");
         formData.value.telefono = cleanValue;
         validateField("telefono", cleanValue);
+      },
+      handleImageChange: (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          // Validar tamaño (máximo 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            errorMessage.value = "La imagen no debe superar los 5MB";
+            event.target.value = "";
+            return;
+          }
+          
+          // Validar tipo de archivo
+          if (!file.type.startsWith("image/")) {
+            errorMessage.value = "Solo se permiten archivos de imagen";
+            event.target.value = "";
+            return;
+          }
+          
+          selectedImage.value = file;
+          
+          // Crear preview
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+          };
+          reader.readAsDataURL(file);
+          
+          errorMessage.value = "";
+        }
+      },
+      removeImage: () => {
+        selectedImage.value = null;
+        imagePreview.value = null;
+        const input = document.getElementById("imagen");
+        if (input) input.value = "";
+      },
+      formatFileSize: (bytes) => {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
       },
       onMunicipioChange,
       onDescriptionChange,
