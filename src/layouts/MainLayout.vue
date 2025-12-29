@@ -123,7 +123,7 @@ export default {
 .breadcrumb h2 {
   font-size: 22px;
   font-weight: 600;
-  color: var(--secondary-color);
+  color: #1630b1; /* Cambia este valor al color que desees */
 }
 
 .header-actions {

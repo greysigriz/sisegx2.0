@@ -43,7 +43,7 @@
           </div>
 
           <!-- Unidades -->
-          <div class="config-item" @click="redirectTo('unidades/crear')">
+          <!-- <div class="config-item" @click="redirectTo('unidades/crear')">
             <div class="config-icon">
               <font-awesome-icon :icon="['fas', 'building']" />
             </div>
@@ -56,7 +56,7 @@
                 <font-awesome-icon :icon="['fas', 'chevron-right']" />
               </div>
             </div>
-          </div>
+          </div> -->
 
         </div>
       </div>
