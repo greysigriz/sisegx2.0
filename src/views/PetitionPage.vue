@@ -406,7 +406,7 @@
                 <span v-if="!selectedImage">Haga clic para seleccionar una imagen</span>
                 <span v-else>Cambiar imagen</span>
               </label>
-              
+
               <div v-if="imagePreview" class="image-preview-container">
                 <img :src="imagePreview" alt="Vista previa" class="image-preview" />
                 <button type="button" @click="removeImage" class="remove-image-btn">
@@ -1040,23 +1040,23 @@ export default {
             event.target.value = "";
             return;
           }
-          
+
           // Validar tipo de archivo
           if (!file.type.startsWith("image/")) {
             errorMessage.value = "Solo se permiten archivos de imagen";
             event.target.value = "";
             return;
           }
-          
+
           selectedImage.value = file;
-          
+
           // Crear preview
           const reader = new FileReader();
           reader.onload = (e) => {
             imagePreview.value = e.target.result;
           };
           reader.readAsDataURL(file);
-          
+
           errorMessage.value = "";
         }
       },

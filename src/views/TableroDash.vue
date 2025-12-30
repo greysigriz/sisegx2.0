@@ -2,7 +2,7 @@
   <div>
     <!-- Header de Yucatán -->
     <YucatanHeader />
-    
+
     <!-- Dashboard Cards y Gráficos -->
     <DashboardCards />
     <AreaChart />

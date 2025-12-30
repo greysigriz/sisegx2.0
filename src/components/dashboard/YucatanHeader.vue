@@ -5,7 +5,7 @@
         <div class="escudo">
           <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
             <!-- Escudo estilizado de Yucatán -->
-            <path d="M50 10 L85 30 L85 80 C85 95 70 110 50 110 C30 110 15 95 15 80 L15 30 Z" 
+            <path d="M50 10 L85 30 L85 80 C85 95 70 110 50 110 C30 110 15 95 15 80 L15 30 Z"
                   fill="#006341" stroke="#FFD700" stroke-width="2"/>
             <circle cx="50" cy="55" r="20" fill="#FFD700"/>
             <text x="50" y="62" font-size="16" fill="#006341" text-anchor="middle" font-weight="bold">Y</text>
@@ -142,11 +142,11 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .main-title {
     font-size: 1.5rem;
   }
-  
+
   .escudo {
     width: 60px;
     height: 72px;

@@ -9,8 +9,8 @@
         Municipios de Yucatán
       </h2>
       <div class="filter-buttons">
-        <button 
-          v-for="region in regiones" 
+        <button
+          v-for="region in regiones"
           :key="region.id"
           :class="['filter-btn', { active: filtroActivo === region.id }]"
           @click="filtrarPorRegion(region.id)"
@@ -52,8 +52,8 @@
     </div>
 
     <div class="municipios-grid">
-      <div 
-        v-for="municipio in municipiosFiltrados" 
+      <div
+        v-for="municipio in municipiosFiltrados"
         :key="municipio.id"
         class="municipio-card"
         @click="seleccionarMunicipio(municipio)"
@@ -80,8 +80,8 @@
         </div>
         <div class="municipio-footer">
           <div class="progress-bar">
-            <div 
-              class="progress-fill" 
+            <div
+              class="progress-fill"
               :style="{ width: `${(municipio.atendidos / municipio.reportes * 100)}%` }"
             ></div>
           </div>
@@ -406,7 +406,7 @@ export default {
   .municipios-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .municipios-stats {
     grid-template-columns: repeat(2, 1fr);
   }
