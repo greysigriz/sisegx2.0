@@ -47,6 +47,7 @@ import { useRouter } from 'vue-router'
 import authService from '@/services/auth' // ✅ Cambio agregado
 
 export default {
+    name: 'LoginView',
     setup() {
         const router = useRouter()
         return { router }

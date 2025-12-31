@@ -1,11 +1,12 @@
-/* Variables CSS para consistencia */
+/* Variables CSS para consistencia - Colores de Yucatán */
 :root {
-  --primary-blue: hsl(221, 83%, 53%);
-  --primary-blue-hover: #1d4ed8;
-  --primary-blue-light: #3b82f6;
-  --secondary-blue: #e0f2fe;
-  --secondary-blue-dark: #b3e5fc;
-  --accent-blue: #0284c7;
+  /* Colores principales de Yucatán - Verde */
+  --primary-green: #008542;
+  --primary-green-hover: #006633;
+  --primary-green-light: #10a854;
+  --secondary-green: #e8f5e9;
+  --secondary-green-dark: #c8e6c9;
+  --accent-green: #00a550;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --background: #f8fafc;
@@ -40,12 +41,12 @@ body {
 /* Contenedor principal */
 .petition-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--white) 100%);
+  background: linear-gradient(135deg, var(--secondary-green) 0%, var(--white) 100%);
 }
 
 /* Banner principal */
 .hero-banner {
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
   color: white;
   padding: 4rem 2rem;
   text-align: center;
@@ -132,15 +133,15 @@ body {
 .user-info-section h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--primary-blue);
+  color: var(--primary-green);
   margin-bottom: 1rem;
 }
 
 .user-info-card {
-  background: var(--secondary-blue);
+  background: var(--secondary-green);
   padding: 1.5rem;
   border-radius: var(--border-radius-sm);
-  border: 1px solid var(--secondary-blue-dark);
+  border: 1px solid var(--secondary-green-dark);
 }
 
 .user-info-item {
@@ -162,7 +163,7 @@ body {
 
 .user-info-item span {
   font-weight: 600;
-  color: var(--primary-blue);
+  color: var(--primary-green);
 }
 
 /* Grupos de formulario */
@@ -183,6 +184,17 @@ body {
   font-weight: 600;
 }
 
+.optional-badge {
+  display: inline-block;
+  background: var(--gray-200);
+  color: var(--text-secondary);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
 /* Inputs */
 .form-group input,
 .form-group select,
@@ -200,8 +212,8 @@ body {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(0, 133, 66, 0.1);
 }
 
 .form-group input::placeholder,
@@ -255,12 +267,12 @@ body {
 }
 
 .primary-button {
-  background: var(--primary-blue);
+  background: var(--primary-green);
   color: white;
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--primary-blue-hover);
+  background: var(--primary-green-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -284,7 +296,7 @@ body {
 
 .classify-button,
 .reclassify-btn {
-  background: var(--accent-blue);
+  background: var(--accent-green);
   color: white;
   margin-top: 1rem;
   margin-right: 15px;
@@ -292,17 +304,17 @@ body {
 
 .classify-button:hover:not(:disabled),
 .reclassify-btn:hover:not(:disabled) {
-  background: #0369a1;
+  background: var(--primary-green-hover);
 }
 
 .new-petition-btn {
-  background: #0055ff;
+  background: var(--primary-green);
   color: white;
   margin-right: 15px;
 }
 
 .new-petition-btn:hover {
-  background: #007acc;
+  background: var(--primary-green-hover);
 }
 
 /* Acciones del formulario */
@@ -327,7 +339,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--primary-blue);
+  color: var(--primary-green);
   font-weight: 600;
   margin-bottom: 1.5rem;
 }
@@ -341,7 +353,7 @@ body {
 }
 
 .classification-info h4 {
-  color: var(--primary-blue);
+  color: var(--primary-green);
   font-weight: 600;
   margin-bottom: 1rem;
 }
@@ -364,7 +376,7 @@ body {
 }
 
 .classification-value {
-  color: var(--primary-blue);
+  color: var(--primary-green);
   font-weight: 600;
 }
 
@@ -376,8 +388,8 @@ body {
 }
 
 .keyword-tag {
-  background: var(--secondary-blue);
-  color: var(--primary-blue);
+  background: var(--secondary-green);
+  color: var(--primary-green);
   padding: 0.25rem 0.5rem;
   border-radius: 20px;
   font-size: 0.875rem;
@@ -393,11 +405,11 @@ body {
 
 /* Mensajes */
 .success-message {
-  background: linear-gradient(135deg, #0a6abe 0%, #4889f2 100%);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
   color: white;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(46, 143, 204, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 133, 66, 0.3);
   text-align: center;
   margin: 20px 0;
   animation: successSlideIn 0.6s ease-out;
@@ -461,7 +473,7 @@ body {
 .info-icon {
   width: 3rem;
   height: 3rem;
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -477,7 +489,7 @@ body {
 .info-card h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--primary-blue);
+  color: var(--primary-green);
   margin-bottom: 0.75rem;
 }
 
@@ -622,3 +634,97 @@ body {
     padding: 1rem;
   }
 }
+
+/* Estilos para carga de imagen */
+.image-upload-container {
+  margin-top: 0.5rem;
+}
+
+.image-input {
+  display: none;
+}
+
+.image-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--border-radius-sm);
+  background: var(--gray-100);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.image-upload-label:hover {
+  border-color: var(--primary-green);
+  background: var(--secondary-green);
+  color: var(--primary-green);
+}
+
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.6;
+}
+
+.image-upload-label:hover .upload-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.image-preview-container {
+  margin-top: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius-sm);
+  padding: 1rem;
+  background: var(--white);
+}
+
+.image-preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 0.75rem;
+}
+
+.remove-image-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--error);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.remove-image-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.image-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  background: var(--gray-100);
+  border-radius: 6px;
+}
+
+.image-info svg {
+  color: var(--primary-green);
+}
+

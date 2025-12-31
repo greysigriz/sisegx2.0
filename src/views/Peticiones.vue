@@ -2,7 +2,19 @@
   <div class="peticiones-container">
     <div class="card">
       <div class="card-header">
-        <h3>Gestión de Peticiones</h3>
+        <div class="header-title-section">
+          <h3>Gestión de Peticiones</h3>
+          <!-- ✅ NUEVO: Indicador del municipio que observa el usuario -->
+          <div v-if="municipioUsuario" class="municipio-indicator">
+            <i class="fas fa-map-marker-alt"></i>
+            <span class="municipio-label">Municipio:</span>
+            <span class="municipio-nombre">{{ municipioUsuario }}</span>
+          </div>
+          <div v-else-if="!loading && usuarioLogueado" class="municipio-indicator warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Sin municipio asignado - Mostrando todas las peticiones</span>
+          </div>
+        </div>
         <div class="header-actions">
           <button @click="filtrarMisPeticiones" class="btn-filter">
             <i class="fas fa-user"></i> Mis Peticiones
@@ -19,7 +31,17 @@
         </div>
       </div>
       <div class="card-body">
-        <p class="welcome-message">Administra las peticiones recibidas</p>
+        <p class="welcome-message">
+          <template v-if="municipioUsuario">
+            Administrando peticiones del municipio de <strong>{{ municipioUsuario }}</strong>
+          </template>
+          <template v-else>
+            Administra las peticiones recibidas
+          </template>
+          <span v-if="peticiones.length > 0" class="peticiones-count">
+            ({{ peticiones.length }} petición{{ peticiones.length !== 1 ? 'es' : '' }} en total)
+          </span>
+        </p>
 
         <!-- Filtros -->
         <div class="filtros-container">
@@ -827,6 +849,7 @@ export default {
     const showImportanciaModal = ref(false);
     const peticionActiva = ref(null);
     const usuarioLogueado = ref(null);
+    const municipioUsuario = ref(null);
 
     // Estado para gestión de departamentos
     const departamentosAsignados = ref([]);
@@ -871,17 +894,40 @@ export default {
 
         if (response.data.success && response.data.user) {
           usuarioLogueado.value = response.data.user;
+          console.log('✅ Usuario logueado:', usuarioLogueado.value);
+          console.log('🏢 División del usuario:', usuarioLogueado.value.IdDivisionAdm);
+
+          // ✅ NUEVO: Obtener nombre del municipio
+          if (usuarioLogueado.value.NombreDivision) {
+            municipioUsuario.value = usuarioLogueado.value.NombreDivision;
+          } else if (usuarioLogueado.value.IdDivisionAdm) {
+            // Si no viene el nombre, intentar obtenerlo
+            await obtenerNombreMunicipio(usuarioLogueado.value.IdDivisionAdm);
+          }
+
           return response.data.user.Id;
         }
 
-        const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
+        // Fallback a localStorage
+        const userData = localStorage.getItem('user');
         if (userData) {
           try {
-            const user = JSON.parse(userData);
+            const parsedData = JSON.parse(userData);
+            const user = parsedData.usuario || parsedData;
             usuarioLogueado.value = user;
+
+            // ✅ NUEVO: Intentar obtener municipio desde localStorage
+            if (parsedData.division?.nombre) {
+              municipioUsuario.value = parsedData.division.nombre;
+            } else if (parsedData.division?.municipio) {
+              municipioUsuario.value = parsedData.division.municipio;
+            } else if (user.IdDivisionAdm) {
+              await obtenerNombreMunicipio(user.IdDivisionAdm);
+            }
+
             return user.Id || user.id;
           } catch (e) {
-            console.error('Error al parsear datos del usuario del almacenamiento local:', e);
+            console.error('Error al parsear datos del usuario:', e);
           }
         }
 
@@ -889,24 +935,39 @@ export default {
         return null;
       } catch (error) {
         console.error('Error al obtener usuario logueado:', error);
-
-        const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
-        if (userData) {
-          try {
-            const user = JSON.parse(userData);
-            usuarioLogueado.value = user;
-            return user.Id || user.id;
-          } catch (e) {
-            console.error('Error en fallback al almacenamiento local:', e);
-          }
-        }
-
         return null;
       }
     };
 
+    // ✅ NUEVA: Función para obtener el nombre del municipio desde la API
+    const obtenerNombreMunicipio = async (divisionId) => {
+      if (!divisionId) return;
+
+      try {
+        const response = await axios.get(`${backendUrl}/division.php`);
+        if (response.data.success && response.data.divisions) {
+          const division = response.data.divisions.find(d => d.Id === divisionId);
+          if (division) {
+            municipioUsuario.value = division.Municipio;
+            console.log('🏢 Municipio obtenido:', municipioUsuario.value);
+          }
+        }
+      } catch (error) {
+        console.error('Error al obtener nombre del municipio:', error);
+      }
+    };
+
+    // ✅ AGREGAR: Función para obtener info del usuario logueado
     const obtenerInfoUsuarioLogueado = () => {
       return usuarioLogueado.value;
+    };
+
+    // ✅ NUEVA: Función para obtener la división del usuario
+    const obtenerDivisionUsuario = () => {
+      if (usuarioLogueado.value && usuarioLogueado.value.IdDivisionAdm) {
+        return usuarioLogueado.value.IdDivisionAdm;
+      }
+      return null;
     };
 
     // Función mejorada para ordenar peticiones por prioridad
@@ -954,24 +1015,44 @@ export default {
 
         const peticionesRaw = response.data.records || [];
 
-        console.log('📊 Total peticiones:', peticionesRaw.length);
+        console.log('📊 Total peticiones recibidas:', peticionesRaw.length);
 
-        // ✅ DEBUG: Ver estructura de la primera petición
-        if (peticionesRaw.length > 0) {
-          console.log('📋 Primera petición completa:', peticionesRaw[0]);
-          console.log('🏢 Departamentos de primera petición:', peticionesRaw[0].departamentos);
+        // ✅ NUEVO: Filtrar por división administrativa del usuario
+        const divisionUsuario = obtenerDivisionUsuario();
+        console.log('🏢 División del usuario logueado:', divisionUsuario);
+
+        let peticionesFiltradas_temp = peticionesRaw;
+
+        if (divisionUsuario) {
+          peticionesFiltradas_temp = peticionesRaw.filter(pet => {
+            const divisionPeticion = parseInt(pet.division_id);
+            const divisionUser = parseInt(divisionUsuario);
+
+            // Si la petición no tiene división, no mostrarla (o cambiar lógica según necesidad)
+            if (!pet.division_id) {
+              console.log(`⚠️ Petición ${pet.folio} sin división asignada`);
+              return false;
+            }
+
+            const coincide = divisionPeticion === divisionUser;
+            if (!coincide) {
+              console.log(`❌ Petición ${pet.folio} excluida: división ${divisionPeticion} != ${divisionUser}`);
+            }
+            return coincide;
+          });
+
+          console.log(`✅ Peticiones filtradas por división ${divisionUsuario}:`, peticionesFiltradas_temp.length);
+        } else {
+          console.warn('⚠️ Usuario sin división asignada - mostrando todas las peticiones');
         }
 
-        // ✅ ASEGURAR que todas las peticiones tengan array de departamentos
-        peticiones.value = peticionesRaw.map(pet => ({
+        // Asegurar que todas las peticiones tengan array de departamentos
+        peticiones.value = peticionesFiltradas_temp.map(pet => ({
           ...pet,
-          departamentos: pet.departamentos || [] // Siempre un array
+          departamentos: pet.departamentos || []
         }));
 
         console.log('✅ Peticiones procesadas:', peticiones.value.length);
-        console.log('🔍 Peticiones con departamentos:',
-          peticiones.value.filter(p => p.departamentos && p.departamentos.length > 0).length
-        );
 
         // Ordenamos las peticiones por prioridad
         peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
@@ -1813,7 +1894,9 @@ export default {
     };
 
     onMounted(async () => {
+      // ✅ IMPORTANTE: Obtener usuario ANTES de cargar peticiones
       await obtenerUsuarioLogueado();
+
       await Promise.all([
         cargarPeticiones(),
         cargarDepartamentos()
@@ -1852,6 +1935,9 @@ export default {
       }
 
       if (departamentos.length === 1) {
+
+
+
         const dept = departamentos[0];
         return `Departamento: ${dept.nombre_unidad}\nEstado: ${dept.estado_asignacion}\nFecha: ${formatearFecha(dept.fecha_asignacion)}`;
       }
@@ -2001,19 +2087,16 @@ export default {
       guardarPeticion,
       guardarEstado,
       guardarImportancia,
-      toggleAccionesMenu,
-      cerrarMenuAcciones,
-      cancelarAccion,
-      filtrarMisPeticiones,
+      esUsuarioAsignado,
+      obtenerUsuarioLogueado,
+      obtenerInfoUsuarioLogueado, // ✅ Ahora la función está definida
+      obtenerDivisionUsuario,
       tieneUsuarioAsignado,
       obtenerIconoSeguimiento,
       obtenerTituloSeguimiento,
       obtenerClaseSeguimiento,
-      esUsuarioAsignado,
-      obtenerUsuarioLogueado,
-      obtenerInfoUsuarioLogueado,
       obtenerEtiquetaNivelImportancia,
-      obtenerTextoNivelImportancia, // ✅ Agregar a exports
+      obtenerTextoNivelImportancia,
 
       sugerenciasIA,
       asignarDesdeSugerencia,
@@ -2038,6 +2121,10 @@ export default {
       limpiarFiltros,
 
       puedeEditarPeticion,
+      toggleAccionesMenu,
+      cerrarMenuAcciones,
+      cancelarAccion,
+      filtrarMisPeticiones,
 
       // ✅ Modal de estados de departamentos
       showModalDepartamentosEstados,
@@ -2056,6 +2143,7 @@ export default {
       cerrarHistorialDepartamento,
       truncarTexto,
       formatearFechaCompleta,
+      municipioUsuario,
     };
   }
 };
@@ -2084,5 +2172,96 @@ export default {
 .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
   color: white !important;
   background: transparent !important;
+}
+
+/* Estilos para el header con título y municipio */
+.header-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-title-section h3 {
+  margin: 0;
+}
+
+/* Estilos para el indicador de municipio */
+.municipio-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.municipio-indicator i {
+  font-size: 14px;
+  color: #43a047;
+}
+
+.municipio-indicator .municipio-label {
+  font-weight: 500;
+  color: #388e3c;
+}
+
+.municipio-indicator .municipio-nombre {
+  font-weight: 700;
+  color: #1b5e20;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.municipio-indicator.warning {
+  background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+  color: #e65100;
+  border-color: #ffcc80;
+}
+
+.municipio-indicator.warning i {
+  color: #ff9800;
+}
+
+.municipio-indicator.warning span {
+  color: #e65100;
+  font-weight: 500;
+}
+
+/* Estilos para el mensaje de bienvenida y contador */
+.welcome-message {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+.welcome-message strong {
+  color: #1b5e20;
+  text-transform: uppercase;
+}
+
+.peticiones-count {
+  color: #999;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-title-section {
+    align-items: flex-start;
+  }
+
+  .municipio-indicator {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .municipio-indicator .municipio-label {
+    display: none;
+  }
 }
 </style>

@@ -95,12 +95,22 @@ try {
 
     // Obtener datos desde la base de datos
     require_once __DIR__ . '/../config/database.php';
-    $database = new Database();
-    $db = $database->getConnection();
+
+    try {
+        $database = new Database();
+        $db = $database->getConnection();
+    } catch (Exception $dbException) {
+        logError('Error de conexión a BD: ' . $dbException->getMessage());
+        sendJsonResponse([
+            'success' => false,
+            'message' => 'Error de conexión a la base de datos',
+            'code' => 'DB_CONNECTION_ERROR'
+        ], 500);
+    }
 
     $query = "SELECT u.Id, u.Usuario, u.Nombre, u.ApellidoP, u.ApellidoM,
                      u.Puesto, u.Estatus, u.IdDivisionAdm, u.IdUnidad,
-                     u.IdRolSistema, d.Nombre as NombreDivision
+                     u.IdRolSistema, d.Municipio as NombreDivision, d.Estado, d.Pais
               FROM Usuario u
               LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
               WHERE u.Id = :user_id AND u.Estatus = 'ACTIVO'";
@@ -120,7 +130,7 @@ try {
         ], 401);
     }
 
-    // Respuesta exitosa
+    // Respuesta exitosa - asegurar que IdDivisionAdm está incluido
     sendJsonResponse([
         'success' => true,
         'message' => 'Sesión válida',
@@ -132,10 +142,12 @@ try {
             'ApellidoM' => $user['ApellidoM'],
             'Puesto' => $user['Puesto'],
             'Estatus' => $user['Estatus'],
-            'IdDivisionAdm' => $user['IdDivisionAdm'],
+            'IdDivisionAdm' => $user['IdDivisionAdm'],  // ✅ Asegurar que está incluido
             'IdUnidad' => $user['IdUnidad'],
             'IdRolSistema' => $user['IdRolSistema'],
-            'NombreDivision' => $user['NombreDivision']
+            'NombreDivision' => $user['NombreDivision'],
+            'Estado' => $user['Estado'] ?? 'Yucatán',
+            'Pais' => $user['Pais'] ?? 'México'
         ],
         'session_info' => [
             'login_time' => $loginTime,

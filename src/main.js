@@ -34,7 +34,10 @@ import {
   faWandMagicSparkles,  // en lugar de faMagic
   faRobot,
   faSyncAlt,            // en lugar de faRefresh
-  faTimes
+  faTimes,
+  faInfoCircle,
+  faExclamationTriangle,
+  faMapMarkerAlt        // para los municipios
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -60,7 +63,10 @@ library.add(
   faWandMagicSparkles,
   faRobot,
   faSyncAlt,
-  faTimes
+  faTimes,
+  faInfoCircle,
+  faExclamationTriangle,
+  faMapMarkerAlt
 )
 
 const app = createApp(App)

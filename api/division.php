@@ -1,14 +1,13 @@
 <?php
-// C:\xampp\htdocs\SISE\api\division.php
+// C:\xampp\htdocs\SISEE\api\division.php
 
 // Include CORS headers first
 require_once __DIR__ . '/cors.php';
 
-// Start session
-session_start();
-
 // Include database connection
 require_once __DIR__ . '/../config/database.php';
+
+header('Content-Type: application/json; charset=UTF-8');
 
 try {
     // Get request method
@@ -28,33 +27,12 @@ try {
     $database = new Database();
     $db = $database->getConnection();
 
-    // Get division ID from URL or query parameter
-    $division_id = null;
-    
-    // Check for ID in query parameters first
-    if (isset($_GET['id'])) {
-        $division_id = intval($_GET['id']);
-    } else {
-        // Parse URL path for ID (e.g., /api/division/1)
-        $request_uri = $_SERVER['REQUEST_URI'];
-        $path = parse_url($request_uri, PHP_URL_PATH);
-        
-        // Remove base path to isolate the ID
-        $base_patterns = ['/SISE/api/division', '/api/division'];
-        foreach ($base_patterns as $pattern) {
-            if (strpos($path, $pattern) === 0) {
-                $remaining_path = substr($path, strlen($pattern));
-                if (preg_match('/^\/(\d+)$/', $remaining_path, $matches)) {
-                    $division_id = intval($matches[1]);
-                }
-                break;
-            }
-        }
-    }
+    // Get division ID from query parameter
+    $division_id = isset($_GET['id']) ? intval($_GET['id']) : null;
     
     if ($division_id && $division_id > 0) {
         // Get specific division
-        $query = "SELECT Id, Nombre, Pais, Region, Ciudad, FechaCreacion 
+        $query = "SELECT Id, Municipio, Pais, Estado, CodigoPostal, Cabecera, FechaCreacion 
                   FROM DivisionAdministrativa 
                   WHERE Id = :id";
         
@@ -78,10 +56,10 @@ try {
             ]);
         }
     } else {
-        // Get all divisions
-        $query = "SELECT Id, Nombre, Pais, Region, Ciudad, FechaCreacion 
+        // Get all divisions (municipios)
+        $query = "SELECT Id, Municipio, Pais, Estado, CodigoPostal, Cabecera, FechaCreacion 
                   FROM DivisionAdministrativa 
-                  ORDER BY Nombre ASC";
+                  ORDER BY Municipio ASC";
         
         $stmt = $db->prepare($query);
         $stmt->execute();

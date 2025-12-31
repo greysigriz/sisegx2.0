@@ -1,5 +1,5 @@
 <?php
-//C:\xampp\htdocs\SISE\api\jerarquias.php
+//C:\xampp\htdocs\SISEE\api\jerarquias.php
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
 
@@ -11,14 +11,17 @@ $db = $database->getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    // Consulta para obtener todas las jerarquías
-    $query = "SELECT jr.IdRolSuperior, jr.IdRolSubordinado, 
-              r1.Nombre as NombreRolSuperior, r2.Nombre as NombreRolSubordinado 
-              FROM JerarquiaRol jr
-              JOIN RolSistema r1 ON jr.IdRolSuperior = r1.Id
-              JOIN RolSistema r2 ON jr.IdRolSubordinado = r2.Id
-              ORDER BY r1.Nombre, r2.Nombre";
-              
+    // Consulta para obtener todas las jerarquías de usuarios
+    $query = "SELECT ju.Id, ju.IdUsuarioSuperior, ju.IdUsuarioSubordinado,
+              CONCAT(u1.Nombre, ' ', u1.ApellidoP) as NombreUsuarioSuperior,
+              CONCAT(u2.Nombre, ' ', u2.ApellidoP) as NombreUsuarioSubordinado,
+              u1.Usuario as UsuarioSuperior,
+              u2.Usuario as UsuarioSubordinado
+              FROM JerarquiaUsuario ju
+              JOIN Usuario u1 ON ju.IdUsuarioSuperior = u1.Id
+              JOIN Usuario u2 ON ju.IdUsuarioSubordinado = u2.Id
+              ORDER BY u1.Nombre, u2.Nombre";
+
     $stmt = $db->prepare($query);
     $stmt->execute();
     $num = $stmt->rowCount();
@@ -31,10 +34,13 @@ if ($method === 'GET') {
             extract($row);
 
             $jerarquia_item = array(
-                "IdRolSuperior" => $IdRolSuperior,
-                "IdRolSubordinado" => $IdRolSubordinado,
-                "NombreRolSuperior" => $NombreRolSuperior,
-                "NombreRolSubordinado" => $NombreRolSubordinado
+                "Id" => $Id,
+                "IdUsuarioSuperior" => $IdUsuarioSuperior,
+                "IdUsuarioSubordinado" => $IdUsuarioSubordinado,
+                "NombreUsuarioSuperior" => $NombreUsuarioSuperior,
+                "NombreUsuarioSubordinado" => $NombreUsuarioSubordinado,
+                "UsuarioSuperior" => $UsuarioSuperior,
+                "UsuarioSubordinado" => $UsuarioSubordinado
             );
 
             array_push($jerarquias_arr["records"], $jerarquia_item);
@@ -43,71 +49,71 @@ if ($method === 'GET') {
 
     http_response_code(200);
     echo json_encode($jerarquias_arr);
-} 
+}
 elseif ($method === 'POST') {
     // Recibir los datos enviados
     $data = json_decode(file_get_contents("php://input"));
-    
-    if(!empty($data->rolId)) {
+
+    if(!empty($data->usuarioId)) {
         try {
             // Comenzar transacción
             $db->beginTransaction();
-            
-            // 1. Eliminar todas las relaciones existentes donde el rol es superior
-            $query = "DELETE FROM JerarquiaRol WHERE IdRolSuperior = :rolId";
+
+            // 1. Eliminar todas las relaciones existentes donde el usuario es superior
+            $query = "DELETE FROM JerarquiaUsuario WHERE IdUsuarioSuperior = :usuarioId";
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':rolId', $data->rolId);
+            $stmt->bindParam(':usuarioId', $data->usuarioId);
             $stmt->execute();
-            
-            // 2. Eliminar todas las relaciones existentes donde el rol es subordinado
-            $query = "DELETE FROM JerarquiaRol WHERE IdRolSubordinado = :rolId";
+
+            // 2. Eliminar todas las relaciones existentes donde el usuario es subordinado
+            $query = "DELETE FROM JerarquiaUsuario WHERE IdUsuarioSubordinado = :usuarioId";
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':rolId', $data->rolId);
+            $stmt->bindParam(':usuarioId', $data->usuarioId);
             $stmt->execute();
-            
-            // 3. Insertar nuevas relaciones donde el rol es superior
+
+            // 3. Insertar nuevas relaciones donde el usuario es superior
             if (!empty($data->subordinados) && is_array($data->subordinados)) {
-                $query = "INSERT INTO JerarquiaRol (IdRolSuperior, IdRolSubordinado) VALUES (:rolId, :subordinadoId)";
+                $query = "INSERT INTO JerarquiaUsuario (IdUsuarioSuperior, IdUsuarioSubordinado) VALUES (:usuarioId, :subordinadoId)";
                 $stmt = $db->prepare($query);
-                
+
                 foreach ($data->subordinados as $subordinadoId) {
-                    $stmt->bindParam(':rolId', $data->rolId);
+                    $stmt->bindParam(':usuarioId', $data->usuarioId);
                     $stmt->bindParam(':subordinadoId', $subordinadoId);
                     $stmt->execute();
                 }
             }
-            
-            // 4. Insertar nuevas relaciones donde el rol es subordinado
+
+            // 4. Insertar nuevas relaciones donde el usuario es subordinado
             if (!empty($data->superiores) && is_array($data->superiores)) {
-                $query = "INSERT INTO JerarquiaRol (IdRolSuperior, IdRolSubordinado) VALUES (:superiorId, :rolId)";
+                $query = "INSERT INTO JerarquiaUsuario (IdUsuarioSuperior, IdUsuarioSubordinado) VALUES (:superiorId, :usuarioId)";
                 $stmt = $db->prepare($query);
-                
+
                 foreach ($data->superiores as $superiorId) {
                     $stmt->bindParam(':superiorId', $superiorId);
-                    $stmt->bindParam(':rolId', $data->rolId);
+                    $stmt->bindParam(':usuarioId', $data->usuarioId);
                     $stmt->execute();
                 }
             }
-            
+
             // Confirmar transacción
             $db->commit();
-            
+
             http_response_code(200);
             echo json_encode(array("message" => "Jerarquías actualizadas con éxito."));
-        } 
+        }
         catch (Exception $e) {
             // Revertir cambios en caso de error
             $db->rollBack();
-            
+
             http_response_code(500);
             echo json_encode(array("message" => "Error al actualizar jerarquías: " . $e->getMessage()));
         }
-    } 
+    }
     else {
         http_response_code(400);
         echo json_encode(array("message" => "Datos incompletos."));
     }
-} 
+}
 else {
     http_response_code(405);
     echo json_encode(array("message" => "Método no permitido."));
