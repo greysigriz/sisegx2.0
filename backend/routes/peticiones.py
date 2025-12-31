@@ -8,7 +8,7 @@ router = APIRouter(
     tags=["clasificacion"]
 )
 
-clasificador = ClasificadorDependencias(config_path="dependencias_cancun.json")
+clasificador = ClasificadorDependencias(config_path="dependecias_yucatan.json")
 
 # Modelo de entrada para la petición
 class PeticionRequest(BaseModel):

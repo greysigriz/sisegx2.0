@@ -51,6 +51,22 @@ class ClasificacionRequest(BaseModel):
             }
         }
 
+class FeedbackClasificacion(BaseModel):
+    texto: str = Field(..., min_length=10, description="Texto original de la petición")
+    dependencia_confirmada: str = Field(..., description="Dependencia confirmada por el usuario")
+    dependencias_sugeridas: Optional[list] = Field(None, description="Dependencias que sugirió el modelo")
+    fue_correcta: bool = Field(default=True, description="Si la primera sugerencia fue correcta")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "texto": "Necesito que reparen el bache en mi calle",
+                "dependencia_confirmada": "Secretaría de Desarrollo Rural (SEDER)",
+                "dependencias_sugeridas": ["SEDER", "SSP"],
+                "fue_correcta": True
+            }
+        }
+
 class ClasificacionResponse(BaseModel):
     categoria: str
     dependencia: str

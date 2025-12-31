@@ -36,3 +36,8 @@ vite.config.local.js
 .env.production.local
 .env.development.local
 .env.*.local
+
+# Entorno virtual de Python
+venv/
+__pycache__/
+*.pyc

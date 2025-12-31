@@ -1,0 +1,1702 @@
+{
+  "sistema_clasificacion_dependencias": {
+    "version": "2.0",
+    "entidad": "Gobierno del Estado de Yucatán",
+    "descripcion": "Base de conocimientos para clasificación de peticiones ciudadanas y canalización a dependencias estatales.",
+    "catalogo_dependencias": {
+      "secretaria_general_de_gobierno": {
+        "nombre": "Secretaría General de Gobierno (SGG)",
+        "categoria_sugerida": "Gobernabilidad, Protección Civil y Derechos Humanos",
+        "palabras_clave_globales": [
+          "gobernación",
+          "gobierno",
+          "protección civil",
+          "prevención",
+          "asociaciones",
+          "vulnerabilidad"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Apoyo a Organizaciones Civiles y Religiosas",
+            "descripcion_breve": "Apoyo económico a organizaciones sin fines de lucro y religiosas con carencias.",
+            "palabras_clave_especificas": [
+              "iglesia",
+              "asociación civil",
+              "OSC",
+              "grupo religioso",
+              "financiamiento ong"
+            ],
+            "ejemplos_peticion": [
+              "Soy pastor y nuestra iglesia necesita ayuda para reparaciones",
+              "Tenemos una asociación civil y buscamos apoyo del gobierno",
+              "Apoyos para agrupaciones religiosas",
+              "Cómo registrar mi asociación para recibir recursos"
+            ]
+          },
+          {
+            "tramite": "Reinserción Social (Apoyo a Liberados)",
+            "descripcion_breve": "Ayuda económica y herramientas para personas que salieron de prisión y sus familias.",
+            "palabras_clave_especificas": [
+              "liberados",
+              "ex reclusos",
+              "cárcel",
+              "cereso",
+              "antecedentes penales",
+              "reinserción"
+            ],
+            "ejemplos_peticion": [
+              "Acabo de salir del penal y necesito trabajo o apoyo",
+              "Mi esposo salió de la cárcel y no tenemos para comer",
+              "Apoyo para personas liberadas",
+              "Ayuda para ex presos para poner un negocio"
+            ]
+          },
+          {
+            "tramite": "Mejoramiento de Casas Ejidales",
+            "descripcion_breve": "Recursos para arreglar o equipar la casa ejidal.",
+            "palabras_clave_especificas": [
+              "ejido",
+              "casa ejidal",
+              "comisario ejidal",
+              "ejidatarios",
+              "muebles ejido"
+            ],
+            "ejemplos_peticion": [
+              "El techo de la casa ejidal se está cayendo",
+              "Necesitamos sillas para las juntas del ejido",
+              "Soy comisario y quiero solicitar apoyo para pintar la casa ejidal",
+              "Remodelación de espacios agrarios"
+            ]
+          },
+          {
+            "tramite": "Banda de Marcha Muuk Báalam",
+            "descripcion_breve": "Apoyo económico para integrantes de la banda juvenil.",
+            "palabras_clave_especificas": [
+              "banda de guerra",
+              "banda de marcha",
+              "música",
+              "instrumentos",
+              "Muuk Báalam"
+            ],
+            "ejemplos_peticion": [
+              "Quiero entrar a la banda de marcha del gobierno",
+              "¿Dan beca por tocar en la banda Muuk Báalam?",
+              "Inscripciones para la banda de música juvenil"
+            ]
+          },
+          {
+            "tramite": "Atención Emergente a Vulnerables",
+            "descripcion_breve": "Apoyo urgente por situaciones de riesgo o discriminación.",
+            "palabras_clave_especificas": [
+              "urgencia",
+              "crisis",
+              "sin dinero",
+              "desalojo",
+              "discriminación",
+              "vulnerable"
+            ],
+            "ejemplos_peticion": [
+              "Me quedé sin casa y no tengo a dónde ir",
+              "Necesito ayuda urgente por discriminación",
+              "Estoy en una situación crítica y no tengo para comer hoy",
+              "Apoyo extraordinario por vulnerabilidad"
+            ]
+          },
+          {
+            "tramite": "Atención Psicológica para Hombres (Reeducación)",
+            "descripcion_breve": "Terapia gratuita para hombres para prevenir violencia de género.",
+            "palabras_clave_especificas": [
+              "ira",
+              "agresividad",
+              "violencia de género",
+              "psicólogo para hombres",
+              "celos"
+            ],
+            "ejemplos_peticion": [
+              "Tengo problemas de ira y quiero cambiar",
+              "Ayuda psicológica para hombres violentos",
+              "No quiero golpear a mi pareja, necesito ayuda",
+              "Terapia para controlar los celos",
+              "Centro de reeducación para hombres"
+            ]
+          },
+          {
+            "tramite": "Prevención del Delito (General y Municipios)",
+            "descripcion_breve": "Talleres, deportes y cultura para alejar a jóvenes de la delincuencia.",
+            "palabras_clave_especificas": [
+              "prevención del delito",
+              "seguridad vecinal",
+              "charlas",
+              "talleres para jóvenes",
+              "cultura de paz"
+            ],
+            "ejemplos_peticion": [
+              "Queremos talleres de prevención del delito en mi colonia",
+              "Actividades para que los chavos no caigan en drogas",
+              "Pláticas de seguridad para la escuela",
+              "Torneos deportivos contra la violencia"
+            ]
+          },
+          {
+            "tramite": "Gestión Integral de Riesgos (Protección Civil)",
+            "descripcion_breve": "Preparación y auxilio ante desastres naturales (Huracanes, incendios, etc).",
+            "palabras_clave_especificas": [
+              "protección civil",
+              "procivy",
+              "huracán",
+              "ciclón",
+              "inundación",
+              "refugio temporal",
+              "desastre"
+            ],
+            "ejemplos_peticion": [
+              "¿Dónde están los refugios para el huracán?",
+              "Reportar un árbol a punto de caer por la lluvia",
+              "Necesito costales de arena, se inunda mi calle",
+              "Plan de emergencia para ciclones"
+            ]
+          },
+          {
+            "tramite": "Programa Integral Protégete (Adolescentes)",
+            "descripcion_breve": "Educación sexual y prevención de embarazo adolescente.",
+            "palabras_clave_especificas": [
+              "embarazo adolescente",
+              "educación sexual",
+              "preservativos",
+              "sexualidad",
+              "pláticas secundaria"
+            ],
+            "ejemplos_peticion": [
+              "Información sobre prevención de embarazo",
+              "Pláticas de sexualidad para mi escuela",
+              "Soy adolescente y estoy embarazada, ¿qué hago?",
+              "Talleres del programa protégete"
+            ]
+          }
+        ]
+      },
+      "consejeria_juridica": {
+        "nombre": "Consejería Jurídica (Registro Civil)",
+        "categoria_sugerida": "Trámites Legales e Identidad",
+        "palabras_clave_globales": [
+          "registro civil",
+          "consejería",
+          "legalidad",
+          "certeza jurídica",
+          "juez civil"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Bodas del Renacimiento Maya (Registro de Matrimonio)",
+            "descripcion_breve": "Programa para facilitar la inscripción del matrimonio civil y entrega del acta oficial.",
+            "palabras_clave_especificas": [
+              "matrimonio",
+              "boda civil",
+              "casarse",
+              "unión legal",
+              "acta de matrimonio",
+              "bodas colectivas"
+            ],
+            "ejemplos_peticion": [
+              "Me quiero casar por el civil",
+              "Requisitos para las Bodas del Renacimiento Maya",
+              "Queremos legalizar nuestra unión",
+              "¿Cuándo son las próximas bodas del gobierno?",
+              "Necesito inscribir mi matrimonio",
+              "Busco fecha para casarme en el registro civil"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_salud": {
+        "nombre": "Secretaría de Salud de Yucatán (SSY)",
+        "categoria_sugerida": "Salud y Bienestar Social",
+        "palabras_clave_globales": [
+          "salud",
+          "hospital",
+          "clínica",
+          "doctor",
+          "enfermedad",
+          "medicamento",
+          "urgencia"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Atención Médica General y Urgencias (CRUM)",
+            "descripcion_breve": "Consultas generales, traslado de ambulancias, antídotos y atención hospitalaria para personas sin seguro.",
+            "palabras_clave_especificas": [
+              "ambulancia",
+              "urgencia médica",
+              "mordedura de serpiente",
+              "accidente",
+              "consulta general",
+              "seguro popular",
+              "insabi",
+              "hospital o'horan"
+            ],
+            "ejemplos_peticion": [
+              "Necesito una ambulancia urgente hubo un choque",
+              "Me mordió una araña y se me está hinchando el brazo",
+              "No tengo seguro social y necesito ver a un doctor",
+              "Dónde atienden urgencias si no tengo IMSS"
+            ]
+          },
+          {
+            "tramite": "Salud Mental y Adicciones (Aliados por la Vida)",
+            "descripcion_breve": "Atención psicológica para depresión, suicidio, adicciones y violencia.",
+            "palabras_clave_especificas": [
+              "psicólogo",
+              "suicidio",
+              "depresión",
+              "drogas",
+              "adicciones",
+              "rehabilitación",
+              "ansiedad",
+              "psiquiátrico"
+            ],
+            "ejemplos_peticion": [
+              "Mi hijo anda en malos pasos con drogas necesito ayuda",
+              "Me siento muy deprimido y quiero hablar con alguien",
+              "Ayuda psicológica gratuita",
+              "Terapia para dejar de fumar o beber",
+              "Mi familiar tiene esquizofrenia y se puso agresivo"
+            ]
+          },
+          {
+            "tramite": "Salud de la Mujer y Materna",
+            "descripcion_breve": "Embarazo, parto, cáncer de mama/cervicouterino y planificación familiar.",
+            "palabras_clave_especificas": [
+              "embarazada",
+              "parto",
+              "control prenatal",
+              "papanicolaou",
+              "mastografía",
+              "métodos anticonceptivos",
+              "implante",
+              "cáncer de mama"
+            ],
+            "ejemplos_peticion": [
+              "Quiero ponerme el implante anticonceptivo",
+              "Estoy embarazada y necesito control médico",
+              "Dónde hacen mastografías gratis",
+              "Prueba de cáncer cervicouterino",
+              "Parteras tradicionales"
+            ]
+          },
+          {
+            "tramite": "Control de Vectores y Zoonosis (Fumigación)",
+            "descripcion_breve": "Combate al dengue, zika, rabia y fumigación.",
+            "palabras_clave_especificas": [
+              "fumigación",
+              "mosquitos",
+              "dengue",
+              "zika",
+              "descacharrización",
+              "perro con rabia",
+              "vacuna antirrábica"
+            ],
+            "ejemplos_peticion": [
+              "Hay muchos mosquitos en mi colonia, vengan a fumigar",
+              "Mi vecino tiene dengue, necesito que revisen la cuadra",
+              "Me mordió un perro callejero",
+              "Campaña de vacunación para perros y gatos"
+            ]
+          },
+          {
+            "tramite": "Enfermedades Crónicas (Diabetes y Obesidad)",
+            "descripcion_breve": "Tratamiento y detección de diabetes, hipertensión y obesidad.",
+            "palabras_clave_especificas": [
+              "diabetes",
+              "azúcar",
+              "presión alta",
+              "hipertensión",
+              "insulina",
+              "nutriólogo",
+              "obesidad"
+            ],
+            "ejemplos_peticion": [
+              "Necesito control para mi diabetes",
+              "Mi abuelita tiene la presión muy alta",
+              "Busco nutriólogo para bajar de peso por salud",
+              "Pruebas de glucosa"
+            ]
+          },
+          {
+            "tramite": "Salud Infantil y Vacunación Universal",
+            "descripcion_breve": "Atención a niños, tamiz auditivo y esquema de vacunas.",
+            "palabras_clave_especificas": [
+              "vacunas",
+              "cartilla de vacunación",
+              "tamiz",
+              "sordera",
+              "pediatra",
+              "niño enfermo"
+            ],
+            "ejemplos_peticion": [
+              "Dónde ponen la vacuna de la influenza",
+              "A mi bebé le toca la vacuna de los 4 meses",
+              "Prueba del tamiz auditivo para recién nacidos",
+              "Campaña de vacunación en escuelas"
+            ]
+          },
+          {
+            "tramite": "Salud Bucal (Dental)",
+            "descripcion_breve": "Consultas dentales, limpieza y extracciones.",
+            "palabras_clave_especificas": [
+              "dentista",
+              "diente",
+              "muela",
+              "caries",
+              "dolor de muela",
+              "salud bucal"
+            ],
+            "ejemplos_peticion": [
+              "Me duele mucho la muela necesito dentista",
+              "Sacan muelas en el centro de salud?",
+              "Limpieza dental gratuita",
+              "Tengo infección en la boca"
+            ]
+          },
+          {
+            "tramite": "Quejas y Arbitraje Médico (CODAMEDY)",
+            "descripcion_breve": "Resolución de conflictos por negligencia o mala atención médica.",
+            "palabras_clave_especificas": [
+              "negligencia médica",
+              "queja doctor",
+              "demanda hospital",
+              "arbitraje médico",
+              "mala praxis"
+            ],
+            "ejemplos_peticion": [
+              "El doctor me operó mal y quiero demandar",
+              "No me atendieron bien en el hospital",
+              "Poner una queja contra un médico",
+              "Ayuda legal por error médico"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_bienestar": {
+        "nombre": "Secretaría de Bienestar (SEDESOL Yucatán)",
+        "categoria_sugerida": "Desarrollo Social y Combate a la Pobreza",
+        "palabras_clave_globales": [
+          "apoyo",
+          "ayuda económica",
+          "bienestar",
+          "sedesol",
+          "pobreza",
+          "recursos",
+          "subsidio"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Apoyos Educativos (Escolar y Universitario)",
+            "descripcion_breve": "Entrega de útiles/zapatos a niños de primaria y becas económicas a universitarios.",
+            "palabras_clave_especificas": [
+              "beca universitaria",
+              "útiles escolares",
+              "mochila",
+              "zapatos escolares",
+              "apoyo estudiante",
+              "primaria",
+              "universidad"
+            ],
+            "ejemplos_peticion": [
+              "Necesito útiles para mi hijo que entra a la primaria",
+              "Soy estudiante de universidad y busco una beca",
+              "Cuándo dan las mochilas y zapatos del gobierno",
+              "Apoyo económico para seguir estudiando la carrera",
+              "Inscripción para Juventudes Renacimiento"
+            ]
+          },
+          {
+            "tramite": "Mejoramiento de Vivienda (Cuartos y Pisos)",
+            "descripcion_breve": "Construcción de cuartos dormitorios o pisos firmes para combatir el hacinamiento.",
+            "palabras_clave_especificas": [
+              "cuarto adicional",
+              "piso de tierra",
+              "piso firme",
+              "material de construcción",
+              "vivimos apretados",
+              "hacinamiento",
+              "techo",
+              "construcción"
+            ],
+            "ejemplos_peticion": [
+              "Mi casa tiene piso de tierra y quiero cemento",
+              "Necesito un cuarto más porque dormimos todos amontonados",
+              "Apoyo para construir una habitación",
+              "Programa de vivienda para cuartos dormitorios"
+            ]
+          },
+          {
+            "tramite": "Apoyo a Mujeres y Madres Autónomas",
+            "descripcion_breve": "Apoyo económico bimestral para madres solteras/autónomas en vulnerabilidad.",
+            "palabras_clave_especificas": [
+              "madre soltera",
+              "mamá autónoma",
+              "tarjeta mujeres",
+              "apoyo mujeres",
+              "jefa de familia"
+            ],
+            "ejemplos_peticion": [
+              "Soy mamá soltera y necesito ayuda económica",
+              "Requisitos para el programa Mujeres Renacimiento",
+              "Apoyo para madres que trabajan y mantienen a sus hijos",
+              "Inscripción a la tarjeta para mujeres"
+            ]
+          },
+          {
+            "tramite": "Microcréditos y Emprendimiento",
+            "descripcion_breve": "Préstamos (créditos) para trabajadores independientes y negocios.",
+            "palabras_clave_especificas": [
+              "crédito",
+              "préstamo",
+              "negocio",
+              "herramientas",
+              "emprendedor",
+              "microcrédito",
+              "financiamiento"
+            ],
+            "ejemplos_peticion": [
+              "Quiero un préstamo para comprar mercancía",
+              "Necesito dinero para herramientas de mi taller",
+              "Créditos para iniciar un negocio",
+              "Soy trabajador independiente y necesito financiamiento",
+              "Apoyo para comprar maquinaria"
+            ]
+          },
+          {
+            "tramite": "Albergue y Comida Hospital O'Horán",
+            "descripcion_breve": "Hospedaje, baño y comida para familiares de pacientes del Hospital O'Horán.",
+            "palabras_clave_especificas": [
+              "albergue",
+              "dormir",
+              "comida hospital",
+              "familiares o'horan",
+              "bañarse"
+            ],
+            "ejemplos_peticion": [
+              "Tengo un familiar internado en el O'Horán y no tengo dónde dormir",
+              "Necesito comida, estoy cuidando a un paciente",
+              "¿Hay algún albergue cerca del hospital?",
+              "Lugar para bañarse cerca del O'Horán"
+            ]
+          },
+          {
+            "tramite": "Apoyos Generales (Ventanilla del Bienestar)",
+            "descripcion_breve": "Atención a casos de pobreza extrema o vulnerabilidad que requieren ayuda inmediata.",
+            "palabras_clave_especificas": [
+              "pobreza extrema",
+              "vulnerabilidad",
+              "despensa",
+              "ayuda urgente",
+              "recursos económicos",
+              "solicitud de apoyo"
+            ],
+            "ejemplos_peticion": [
+              "Soy una persona de bajos recursos y necesito ayuda",
+              "Solicitud de despensa o apoyo económico",
+              "Estoy en situación de calle o muy vulnerable",
+              "Ventanilla única de apoyos"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_educacion": {
+        "nombre": "Secretaría de Educación del Gobierno del Estado de Yucatán (SEGEY)",
+        "categoria_sugerida": "Educación y Cultura",
+        "palabras_clave_globales": [
+          "escuela",
+          "clases",
+          "maestro",
+          "alumno",
+          "beca",
+          "certificado",
+          "promedio",
+          "segey"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Becas a la Excelencia (Académica, Artística y Deportiva)",
+            "descripcion_breve": "Apoyo económico mensual para estudiantes destacados por promedio alto, talento artístico o deportivo (Todos los niveles).",
+            "palabras_clave_especificas": [
+              "buen promedio",
+              "calificaciones",
+              "alto rendimiento",
+              "deportista",
+              "artista",
+              "beca excelencia",
+              "10 de promedio"
+            ],
+            "ejemplos_peticion": [
+              "Mi hijo sacó puro 10 y quiero ver si le dan beca",
+              "Soy deportista de alto rendimiento y necesito apoyo",
+              "Beca por promedio para secundaria",
+              "Convocatoria para alumnos destacados en arte",
+              "Premios al esfuerzo educativo"
+            ]
+          },
+          {
+            "tramite": "Apoyos Especiales Educación Superior (STEM y Hijos de Policías)",
+            "descripcion_breve": "Exención de pagos y colegiaturas para mujeres en ingenierías/ciencias y para hijos de policías.",
+            "palabras_clave_especificas": [
+              "hijo de policía",
+              "papá policía",
+              "mujeres en ciencia",
+              "ingeniería",
+              "STEM",
+              "exención de pago",
+              "no pagar inscripción"
+            ],
+            "ejemplos_peticion": [
+              "Mi papá es policía estatal y me dijeron que tengo beca",
+              "Soy mujer y voy a estudiar una ingeniería, hay apoyos?",
+              "Beca para carreras de tecnología",
+              "Exención de colegiatura para hijos de agentes",
+              "Apoyo para estudiar matemáticas o ciencias"
+            ]
+          },
+          {
+            "tramite": "Apoyo de Útiles Escolares (Bienestar Escolar)",
+            "descripcion_breve": "Entrega de mochilas, útiles y uniformes (Gestionado con Sedesol, pero solicitado en escuelas).",
+            "palabras_clave_especificas": [
+              "útiles escolares",
+              "mochila",
+              "lista de útiles",
+              "paquete escolar",
+              "primaria",
+              "secundaria"
+            ],
+            "ejemplos_peticion": [
+              "¿Cuándo entregan los útiles en la escuela?",
+              "A mi hijo no le llegó su mochila",
+              "Paquete de útiles escolares para secundaria",
+              "Apoyo de materiales educativos"
+            ]
+          },
+          {
+            "tramite": "Fomento Universitario (Apoyos Varios)",
+            "descripcion_breve": "Ayuda económica para adeudos, inscripciones, congresos o eventos académicos.",
+            "palabras_clave_especificas": [
+              "adeudo escuela",
+              "pagar título",
+              "viaje escolar",
+              "congreso",
+              "evento académico",
+              "falta de dinero para inscripción"
+            ],
+            "ejemplos_peticion": [
+              "Debo la inscripción y no quiero dejar la carrera",
+              "Necesito apoyo para ir a un concurso académico en otro estado",
+              "Ayuda para pagar mi titulación",
+              "Tengo un adeudo en la universidad y necesito ayuda"
+            ]
+          },
+          {
+            "tramite": "Agentes Educativos (Educación Inicial)",
+            "descripcion_breve": "Pago mensual a voluntarios que imparten educación inicial no escolarizada.",
+            "palabras_clave_especificas": [
+              "dar clases",
+              "voluntario educación",
+              "agente educativo",
+              "educación inicial",
+              "instructores"
+            ],
+            "ejemplos_peticion": [
+              "Quiero ser voluntaria para dar clases de educación inicial",
+              "Pago a los agentes educativos",
+              "Apoyo para quienes enseñan en comunidades",
+              "Programa de educación no escolarizada"
+            ]
+          },
+          {
+            "tramite": "Apoyo a Organizaciones Educativas (Donativos)",
+            "descripcion_breve": "Recursos para Asociaciones Civiles (AC) con proyectos educativos.",
+            "palabras_clave_especificas": [
+              "asociación civil",
+              "proyecto educativo",
+              "OSC educación",
+              "financiamiento escuela",
+              "donativo educación"
+            ],
+            "ejemplos_peticion": [
+              "Tenemos una AC educativa y buscamos financiamiento",
+              "Apoyo para proyecto de intervención escolar",
+              "Donativos para mejorar la educación en mi comunidad"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_las_juventudes": {
+        "nombre": "Secretaría de las Juventudes (SEJUVE)",
+        "categoria_sugerida": "Desarrollo Juvenil y Oportunidades",
+        "palabras_clave_globales": [
+          "jóvenes",
+          "chavos",
+          "juventud",
+          "descuentos",
+          "tarjeta joven",
+          "talento",
+          "eventos"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Tarjeta Bienestar Joven (Descuentos)",
+            "descripcion_breve": "Tarjeta de identidad juvenil que otorga descuentos en comercios, transporte, cine y servicios.",
+            "palabras_clave_especificas": [
+              "tarjeta de descuentos",
+              "pagar menos",
+              "promociones estudiantes",
+              "tarjeta joven",
+              "beneficios comerciales"
+            ],
+            "ejemplos_peticion": [
+              "Quiero tramitar mi tarjeta joven",
+              "¿Dónde aceptan la tarjeta de descuentos para chavos?",
+              "Requisitos para la tarjeta bienestar joven",
+              "Busco descuentos para el cine o gimnasio"
+            ]
+          },
+          {
+            "tramite": "Apoyos en Especie (Talento Deportivo/Cultural)",
+            "descripcion_breve": "Entrega de materiales, equipo o herramientas para jóvenes que practican deportes, arte o cultura (No es beca en efectivo, es en especie).",
+            "palabras_clave_especificas": [
+              "uniforme deportivo",
+              "instrumento musical",
+              "material de arte",
+              "equipo deportivo",
+              "tenis",
+              "balones",
+              "apoyo talento"
+            ],
+            "ejemplos_peticion": [
+              "Soy boxeador y necesito guantes nuevos",
+              "Toco en una banda y me falta un instrumento",
+              "Necesitamos uniformes para el equipo de fútbol de la colonia",
+              "Apoyo para comprar materiales de pintura"
+            ]
+          },
+          {
+            "tramite": "Acceso a Eventos (Juventud-es Conciencia)",
+            "descripcion_breve": "Boletos o pases gratuitos para conciertos, partidos y eventos culturales para estudiantes.",
+            "palabras_clave_especificas": [
+              "boletos gratis",
+              "entrada libre",
+              "concierto",
+              "partido de béisbol",
+              "fútbol venados",
+              "leones de yucatán",
+              "evento cultural"
+            ],
+            "ejemplos_peticion": [
+              "¿Cómo consigo boletos gratis para el partido?",
+              "Quiero ir al concierto pero no tengo dinero",
+              "Entradas para estudiantes",
+              "Pases para eventos culturales"
+            ]
+          },
+          {
+            "tramite": "Programa de Participación (Xe’ek de Voces)",
+            "descripcion_breve": "Apoyo económico mensual temporal a cambio de participar activamente en el desarrollo de programas juveniles.",
+            "palabras_clave_especificas": [
+              "vocero",
+              "participación juvenil",
+              "apoyo mensual",
+              "embajador joven",
+              "xeek",
+              "voluntariado pagado"
+            ],
+            "ejemplos_peticion": [
+              "Quiero participar en el programa Xe'ek",
+              "Busco un apoyo económico por colaborar con la secretaría",
+              "Convocatoria para ser vocero de las juventudes",
+              "¿Dan apoyo por participar en actividades del gobierno?"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_seguridad_publica": {
+        "nombre": "Secretaría de Seguridad Pública (SSP)",
+        "categoria_sugerida": "Seguridad, Tránsito y Emergencias",
+        "palabras_clave_globales": [
+          "policía",
+          "patrulla",
+          "ssp",
+          "seguridad",
+          "tránsito",
+          "emergencia",
+          "denuncia",
+          "coche",
+          "licencia"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Trámites Vehiculares (Licencias y Placas)",
+            "descripcion_breve": "Emisión de licencias de conducir, permisos provisionales, emplacamiento y cambio de propietario.",
+            "palabras_clave_especificas": [
+              "licencia de conducir",
+              "renovación licencia",
+              "placas",
+              "tarjeta de circulación",
+              "cambio de propietario",
+              "examen de manejo",
+              "permiso provisional",
+              "baja de placas"
+            ],
+            "ejemplos_peticion": [
+              "Quiero renovar mi licencia de chofer",
+              "Compré un coche usado y quiero ponerlo a mi nombre",
+              "Cita para sacar placas nuevas",
+              "Perdí mi licencia, ¿qué hago?",
+              "Requisitos para el permiso de conducir de menor de edad"
+            ]
+          },
+          {
+            "tramite": "Emergencias 9-1-1 (Auxilio Inmediato)",
+            "descripcion_breve": "Línea de reacción inmediata para delitos en curso, accidentes viales, incendios o urgencias médicas.",
+            "palabras_clave_especificas": [
+              "ayuda",
+              "auxilio",
+              "ladrón",
+              "robo en casa",
+              "choque",
+              "accidente",
+              "bomberos",
+              "ambulancia",
+              "están robando"
+            ],
+            "ejemplos_peticion": [
+              "Manden una patrulla rápido se metieron a mi casa",
+              "Acabo de chocar en el periférico",
+              "Hay un incendio en el terreno de al lado",
+              "Están asaltando la tienda de la esquina",
+              "Necesito auxilio policía"
+            ]
+          },
+          {
+            "tramite": "Denuncia Anónima 089 (Investigación)",
+            "descripcion_breve": "Reporte confidencial de actividades ilícitas que requieren investigación (no urgencias inmediatas).",
+            "palabras_clave_especificas": [
+              "venta de drogas",
+              "narcomenudeo",
+              "sospechosos",
+              "denuncia anónima",
+              "extorsión",
+              "secuestro",
+              "vecino ruidoso",
+              "maltrato"
+            ],
+            "ejemplos_peticion": [
+              "Quiero reportar venta de drogas en mi colonia sin dar mi nombre",
+              "Hay gente muy rara vigilando las casas",
+              "Denunciar una casa de seguridad",
+              "Me están extorsionando por teléfono",
+              "Quiero hacer una denuncia anónima"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_economia_y_trabajo": {
+        "nombre": "Secretaría de Fomento Económico y Trabajo (SEFOET)",
+        "categoria_sugerida": "Empleo, Emprendimiento y Negocios",
+        "palabras_clave_globales": [
+          "trabajo",
+          "chamba",
+          "empleo",
+          "negocio",
+          "crédito",
+          "empresa",
+          "pyme",
+          "vender",
+          "exportar"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Bolsa de Trabajo y Vinculación Laboral",
+            "descripcion_breve": "Ayuda para encontrar empleo (vacantes) o para empresas que buscan personal.",
+            "palabras_clave_especificas": [
+              "buscar trabajo",
+              "bolsa de trabajo",
+              "vacantes",
+              "desempleado",
+              "quiero trabajar",
+              "contratar personal",
+              "feria de empleo"
+            ],
+            "ejemplos_peticion": [
+              "Ando buscando chamba de lo que sea",
+              "Necesito ver las vacantes disponibles",
+              "Soy empresa y quiero contratar gente",
+              "¿Dónde es la feria del empleo?",
+              "No encuentro trabajo, ayúdenme"
+            ]
+          },
+          {
+            "tramite": "Abriendo Espacios (Empleo Inclusivo)",
+            "descripcion_breve": "Bolsa de trabajo especializada para adultos mayores y personas con discapacidad.",
+            "palabras_clave_especificas": [
+              "trabajo para discapacitados",
+              "empleo adulto mayor",
+              "tercera edad",
+              "inclusión laboral",
+              "silla de ruedas"
+            ],
+            "ejemplos_peticion": [
+              "Soy persona con discapacidad y busco empleo",
+              "Mi papá es adulto mayor y quiere seguir trabajando",
+              "Bolsa de trabajo para gente mayor",
+              "Tengo una discapacidad y quiero ser útil"
+            ]
+          },
+          {
+            "tramite": "Créditos Mujer Transformadora",
+            "descripcion_breve": "Préstamos exclusivos para negocios liderados por mujeres (maquinaria, insumos o remodelación).",
+            "palabras_clave_especificas": [
+              "crédito mujer",
+              "préstamo emprendedora",
+              "financiamiento mujeres",
+              "negocio mujer",
+              "avío",
+              "refaccionario"
+            ],
+            "ejemplos_peticion": [
+              "Soy mujer y quiero un préstamo para mi negocio",
+              "Crédito para ampliar mi tienda",
+              "Necesito comprar maquinaria y soy dueña del negocio",
+              "Apoyo económico para mujeres empresarias"
+            ]
+          },
+          {
+            "tramite": "Apoyo al Autoempleo (Herramientas en Especie)",
+            "descripcion_breve": "Entrega de mobiliario, maquinaria o equipo para iniciar un negocio propio (incluye motos adaptadas).",
+            "palabras_clave_especificas": [
+              "herramientas para trabajar",
+              "maquinaria",
+              "equipo de trabajo",
+              "moto adaptada",
+              "iniciar negocio",
+              "apoyo en especie"
+            ],
+            "ejemplos_peticion": [
+              "Necesito un horno para poner mi panadería",
+              "Quiero herramientas para mi taller de carpintería",
+              "Soy discapacitado y necesito una moto adaptada para vender",
+              "Apoyo de equipo para autoemplearme"
+            ]
+          },
+          {
+            "tramite": "Capacitación y Digitalización Empresarial",
+            "descripcion_breve": "Cursos para aprender a vender, usar redes sociales y administrar negocios.",
+            "palabras_clave_especificas": [
+              "cursos negocio",
+              "aprender a vender",
+              "marketing digital",
+              "capacitación pyme",
+              "administración"
+            ],
+            "ejemplos_peticion": [
+              "Quiero aprender a vender por internet",
+              "Cursos para mejorar mi negocio",
+              "Capacitación para emprendedores",
+              "Cómo administrar mi tienda"
+            ]
+          },
+          {
+            "tramite": "Expansión Comercial (Yucatán Expone / Sin Fronteras)",
+            "descripcion_breve": "Apoyo para llevar productos a ferias en otros estados/países y exportación.",
+            "palabras_clave_especificas": [
+              "yucatán expone",
+              "ferias",
+              "vender en cdmx",
+              "exportar",
+              "llevar productos",
+              "stand"
+            ],
+            "ejemplos_peticion": [
+              "Quiero participar en Yucatán Expone",
+              "Soy artesano y quiero vender en la Ciudad de México",
+              "Apoyo para ir a ferias comerciales",
+              "Quiero exportar mis productos"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_fomento_turistico": {
+        "nombre": "Secretaría de Fomento Turístico (SEFOTUR)",
+        "categoria_sugerida": "Turismo y Desarrollo Económico",
+        "palabras_clave_globales": [
+          "turismo",
+          "hotel",
+          "agencia de viajes",
+          "cenote",
+          "turista",
+          "guía de turistas",
+          "sefotur",
+          "visitantes"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Capacitación y Certificación Turística (Distintivos)",
+            "descripcion_breve": "Cursos y certificaciones de calidad (Distintivo H, M, Punto Limpio) para personal y empresas turísticas.",
+            "palabras_clave_especificas": [
+              "distintivo H",
+              "distintivo M",
+              "punto limpio",
+              "curso para meseros",
+              "certificación hotel",
+              "capacitación turismo",
+              "calidad turística"
+            ],
+            "ejemplos_peticion": [
+              "Quiero capacitar a mi personal del hotel",
+              "Requisitos para obtener el Distintivo H en mi restaurante",
+              "Cursos de atención al turista",
+              "Certificación de buenas prácticas para mi agencia"
+            ]
+          },
+          {
+            "tramite": "Registro y Normatividad (RNT e InvenTur)",
+            "descripcion_breve": "Inscripción al Registro Nacional de Turismo (RNT) y al directorio estatal InvenTur para operar legalmente.",
+            "palabras_clave_especificas": [
+              "RNT",
+              "registro nacional de turismo",
+              "inventur",
+              "dar de alta agencia",
+              "permiso turismo",
+              "verificación turística",
+              "directorio turístico"
+            ],
+            "ejemplos_peticion": [
+              "Necesito dar de alta mi agencia de viajes en el RNT",
+              "Quiero aparecer en el directorio de turismo del estado",
+              "Requisitos para operar legalmente como guía de turistas",
+              "Me llegó una verificación de turismo, ¿qué hago?"
+            ]
+          },
+          {
+            "tramite": "Asesoría en Turismo de Naturaleza (Cenotes y Aventura)",
+            "descripcion_breve": "Apoyo técnico para dueños de cenotes, grutas y proyectos de ecoturismo para operar de forma sustentable.",
+            "palabras_clave_especificas": [
+              "cenote",
+              "gruta",
+              "ecoturismo",
+              "turismo de aventura",
+              "parador turístico",
+              "turismo rural"
+            ],
+            "ejemplos_peticion": [
+              "Tengo un cenote en mi terreno y quiero abrirlo al público",
+              "Asesoría para un proyecto de cabañas ecológicas",
+              "Reglamento para operar un cenote",
+              "Apoyo para turismo de aventura"
+            ]
+          },
+          {
+            "tramite": "Inversión y Estadísticas (DataTur)",
+            "descripcion_breve": "Información, estudios de mercado y estadísticas para inversionistas que quieren desarrollar proyectos en Yucatán.",
+            "palabras_clave_especificas": [
+              "invertir en turismo",
+              "construir hotel",
+              "estadísticas ocupación",
+              "datatur",
+              "estudio de mercado",
+              "inversión hotelera"
+            ],
+            "ejemplos_peticion": [
+              "Quiero invertir en un hotel en la costa",
+              "Necesito estadísticas de ocupación hotelera",
+              "Datos sobre la afluencia de turistas en Mérida",
+              "Oportunidades de inversión turística"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_desarrollo_rural": {
+        "nombre": "Secretaría de Desarrollo Rural (SEDER)",
+        "categoria_sugerida": "Campo, Agricultura y Ganadería",
+        "palabras_clave_globales": [
+          "campo",
+          "agricultor",
+          "ganadero",
+          "campesino",
+          "siembra",
+          "cosecha",
+          "animales de granja",
+          "milpa",
+          "fertilizante"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Herramientas e Insumos Agrícolas (Tipo Peso a Peso)",
+            "descripcion_breve": "Apoyo al 50% (o 70% orgánico) para comprar herramientas pequeñas, alambre, fertilizantes y semillas.",
+            "palabras_clave_especificas": [
+              "peso a peso",
+              "alambre de púas",
+              "fertilizante",
+              "herbicida",
+              "machete",
+              "bomba aspersora",
+              "semillas de maíz"
+            ],
+            "ejemplos_peticion": [
+              "Necesito alambre para cercar mi terreno",
+              "Apoyo para comprar fertilizante para la milpa",
+              "¿Cuándo abre la ventanilla del programa de herramientas?",
+              "Quiero semillas de maíz y frijol",
+              "Bombas para fumigar a mitad de precio"
+            ]
+          },
+          {
+            "tramite": "Infraestructura y Mecanización (Pozos y Tractores)",
+            "descripcion_breve": "Apoyo para perforación de pozos, sistemas de riego, paneles solares y maquinaria pesada (tractores).",
+            "palabras_clave_especificas": [
+              "pozo profundo",
+              "sistema de riego",
+              "paneles solares campo",
+              "tractor",
+              "mecanización",
+              "bomba de agua",
+              "veleta"
+            ],
+            "ejemplos_peticion": [
+              "Necesito perforar un pozo para regar mis cultivos",
+              "Apoyo para comprar un tractor",
+              "Paneles solares para la bomba de mi rancho",
+              "Sistema de riego por goteo",
+              "Tecnificación del campo"
+            ]
+          },
+          {
+            "tramite": "Apicultura (Miel y Abejas)",
+            "descripcion_breve": "Apoyos específicos para productores de miel: cajas, abejas reina, azúcar y equipo.",
+            "palabras_clave_especificas": [
+              "abejas",
+              "miel",
+              "colmena",
+              "apiario",
+              "cajas para abejas",
+              "azúcar abejas",
+              "abeja reina"
+            ],
+            "ejemplos_peticion": [
+              "Soy apicultor y necesito cajas nuevas",
+              "Apoyo de azúcar para alimentar a las abejas",
+              "Quiero mejorar la genética de mis abejas",
+              "Equipo de protección para sacar miel",
+              "Renacimiento apícola"
+            ]
+          },
+          {
+            "tramite": "Ganadería (Mejoramiento Genético y Repoblamiento)",
+            "descripcion_breve": "Apoyo para adquirir sementales, vacas, borregos o material genético.",
+            "palabras_clave_especificas": [
+              "semental",
+              "toro",
+              "novillona",
+              "borrego",
+              "ganado",
+              "inseminación",
+              "higa",
+              "vacas"
+            ],
+            "ejemplos_peticion": [
+              "Quiero comprar un semental para mis vacas",
+              "Apoyo para comprar borregos",
+              "Mejoramiento genético de ganado",
+              "Repoblamiento de hato ganadero"
+            ]
+          },
+          {
+            "tramite": "Caminos Sacacosechas (Vías Rurales)",
+            "descripcion_breve": "Construcción o reparación de caminos rurales para acceder a las unidades de producción.",
+            "palabras_clave_especificas": [
+              "camino sacacosechas",
+              "camino rural",
+              "acceso al rancho",
+              "terracería",
+              "camino blanco"
+            ],
+            "ejemplos_peticion": [
+              "El camino a mi parcela está intransitable",
+              "Necesitamos que arreglen el camino sacacosechas",
+              "No puedo sacar mi cosecha porque el camino está feo",
+              "Solicitud de maquinaria para arreglar la entrada al ejido"
+            ]
+          },
+          {
+            "tramite": "Producción de Traspatio (Autoconsumo)",
+            "descripcion_breve": "Paquetes pequeños para familias: huertos, aves de traspatio (pollitos) y hortalizas.",
+            "palabras_clave_especificas": [
+              "pollitos",
+              "gallinas ponedoras",
+              "huerto familiar",
+              "semillas hortalizas",
+              "traspatio",
+              "autoconsumo"
+            ],
+            "ejemplos_peticion": [
+              "Quiero unos pollitos para criar en mi casa",
+              "Semillas para hacer un huerto en mi patio",
+              "Apoyo de animales de traspatio",
+              "Paquete de aves"
+            ]
+          },
+          {
+            "tramite": "Artesanías Rurales",
+            "descripcion_breve": "Insumos y herramientas para artesanos (hilos, máquinas de coser, urdido de hamacas).",
+            "palabras_clave_especificas": [
+              "urdido de hamacas",
+              "hilo para hamaca",
+              "bordado",
+              "máquina de coser",
+              "artesano rural",
+              "hipil"
+            ],
+            "ejemplos_peticion": [
+              "Soy urdidora de hamacas y necesito hilo",
+              "Apoyo para comprar una máquina de coser industrial",
+              "Insumos para bordar",
+              "Herramientas para taller de artesanía"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_desarrollo_sustentable": {
+        "nombre": "Secretaría de Desarrollo Sustentable (SDS)",
+        "categoria_sugerida": "Medio Ambiente y Ecología",
+        "palabras_clave_globales": [
+          "medio ambiente",
+          "arbolitos",
+          "basura",
+          "reciclaje",
+          "ecología",
+          "sustentabilidad",
+          "plantas",
+          "reforestación"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Donación de Árboles y Reforestación (Renacimiento Verde)",
+            "descripcion_breve": "Entrega de árboles nativos (Maculis, Balché, Ramón, etc.) para escuelas, ONGs y ciudadanos que quieran reforestar.",
+            "palabras_clave_especificas": [
+              "regalan árboles",
+              "adopta un árbol",
+              "reforestar",
+              "maculis",
+              "plantar árbol",
+              "donación plantas"
+            ],
+            "ejemplos_peticion": [
+              "Quiero un arbolito para la banqueta de mi casa",
+              "¿Dónde regalan plantas nativas?",
+              "Nuestra escuela quiere hacer una campaña de reforestación",
+              "Busco un maculis o un balché para sembrar"
+            ]
+          },
+          {
+            "tramite": "Producción de Plantas (Reverdece Yucatán)",
+            "descripcion_breve": "Apoyo económico y en especie (herramientas/insumos) a grupos sociales (prioridad mujeres) para producir plantas nativas en viveros.",
+            "palabras_clave_especificas": [
+              "vivero",
+              "producir plantas",
+              "grupo de mujeres",
+              "restauración",
+              "apoyo económico ecología",
+              "insumos plantas"
+            ],
+            "ejemplos_peticion": [
+              "Somos un grupo de mujeres y queremos poner un vivero",
+              "Apoyo para producir plantas nativas",
+              "Herramientas para restauración ecológica",
+              "Proyecto de producción de plantas"
+            ]
+          },
+          {
+            "tramite": "Gestión de Residuos y Reciclaje",
+            "descripcion_breve": "Asesoría y capacitación para el manejo correcto de la basura (Residuos Sólidos) y programas de reciclaje.",
+            "palabras_clave_especificas": [
+              "basura",
+              "separar residuos",
+              "reciclaje",
+              "relleno sanitario",
+              "manejo de residuos",
+              "residuos especiales"
+            ],
+            "ejemplos_peticion": [
+              "¿Qué hago con las pilas usadas?",
+              "Capacitación para mi empresa sobre manejo de basura",
+              "Asesoría para gestión de residuos sólidos",
+              "Cultura del reciclaje"
+            ]
+          },
+          {
+            "tramite": "Educación Ambiental y Escuelas Sustentables",
+            "descripcion_breve": "Talleres, charlas y certificaciones para escuelas y empresas sobre cuidado del medio ambiente.",
+            "palabras_clave_especificas": [
+              "plática ambiental",
+              "escuela sustentable",
+              "taller ecología",
+              "educación ambiental",
+              "curso medio ambiente"
+            ],
+            "ejemplos_peticion": [
+              "Queremos una plática sobre cuidado del agua en la escuela",
+              "Cómo certificar mi escuela como sustentable",
+              "Talleres de educación ambiental para niños",
+              "Curso de cultura para la sustentabilidad"
+            ]
+          },
+          {
+            "tramite": "Parque Ecológico Yumtsil",
+            "descripcion_breve": "Actividades, talleres y visitas en el Parque Ecológico Metropolitano del Sur Yumtsil.",
+            "palabras_clave_especificas": [
+              "parque yumtsil",
+              "parque ecológico sur",
+              "visitar parque",
+              "actividades yumtsil"
+            ],
+            "ejemplos_peticion": [
+              "¿Qué actividades hay en el parque Yumtsil?",
+              "Talleres en el parque ecológico del sur",
+              "Horarios del parque Yumtsil",
+              "Eventos de biodiversidad en el parque"
+            ]
+          }
+        ]
+      },
+      "secretaria_anticorrupcion_y_buen_gobierno": {
+        "nombre": "Secretaría Anticorrupción y Buen Gobierno",
+        "categoria_sugerida": "Transparencia, Rendición de Cuentas y Combate a la Corrupción",
+        "palabras_clave_globales": [
+          "corrupción",
+          "transparencia",
+          "vigilancia",
+          "contraloría",
+          "rendición de cuentas",
+          "honradez",
+          "buen gobierno"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Premios de Transparencia y Contraloría Social",
+            "descripcion_breve": "Concursos con premios en efectivo para ciudadanos que vigilan al gobierno y jóvenes que crean videos sobre transparencia.",
+            "palabras_clave_especificas": [
+              "concurso de video",
+              "transparencia en corto",
+              "premio nacional",
+              "ganar dinero video",
+              "premio contraloría",
+              "propuestas de mejora"
+            ],
+            "ejemplos_peticion": [
+              "Quiero participar en el concurso de cortometrajes de transparencia",
+              "Convocatoria para el premio de contraloría social",
+              "Soy estudiante y quiero mandar mi video para el concurso",
+              "Premios para comités de vigilancia"
+            ]
+          },
+          {
+            "tramite": "Contraloría Social (Vigilancia Ciudadana)",
+            "descripcion_breve": "Formación de comités de ciudadanos para supervisar que las obras y programas sociales se entreguen correctamente.",
+            "palabras_clave_especificas": [
+              "vigilar obra",
+              "comité de vecinos",
+              "supervisar apoyos",
+              "contraloría social",
+              "vigilancia ciudadana",
+              "reportar mala obra"
+            ],
+            "ejemplos_peticion": [
+              "Queremos armar un comité para vigilar que pavimenten bien la calle",
+              "Cómo supervisar que entreguen los apoyos completos",
+              "Vigilancia de programas sociales",
+              "Somos beneficiarios y queremos revisar las cuentas"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_ciencia_e_innovacion": {
+        "nombre": "Secretaría de Ciencia, Humanidades, Tecnología e Innovación (Antes SIIES)",
+        "categoria_sugerida": "Ciencia, Educación Superior y Tecnología",
+        "palabras_clave_globales": [
+          "ciencia",
+          "investigación",
+          "beca posgrado",
+          "maestría",
+          "doctorado",
+          "intercambio",
+          "extranjero",
+          "tecnología",
+          "inglés"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Movilidad Internacional (Intercambios y Cursos de Idiomas)",
+            "descripcion_breve": "Apoyos en especie (vuelos, hospedaje, cursos) para estudiantes y maestros que quieren realizar estancias cortas en el extranjero para aprender idiomas (Inglés) o habilidades académicas.",
+            "palabras_clave_especificas": [
+              "ir al extranjero",
+              "aprender inglés",
+              "beca movilidad",
+              "intercambio canadá",
+              "estancia corta",
+              "vuelo internacional",
+              "agenda internacional"
+            ],
+            "ejemplos_peticion": [
+              "Quiero la beca para ir a estudiar inglés a Canadá",
+              "Convocatoria de movilidad internacional para universitarios",
+              "Soy maestro de inglés y quiero ir al extranjero a perfeccionar",
+              "Apoyo para boletos de avión para estancia académica"
+            ]
+          },
+          {
+            "tramite": "Becas de Posgrado (Maestría, Doctorado y Postdoctorado)",
+            "descripcion_breve": "Becas económicas complementarias para quienes estudian posgrados de calidad (PNPC/CONAHCYT) o en el extranjero.",
+            "palabras_clave_especificas": [
+              "beca maestría",
+              "beca doctorado",
+              "posgrado de calidad",
+              "estancia posdoctoral",
+              "beca tesis",
+              "recursos humanos alto nivel"
+            ],
+            "ejemplos_peticion": [
+              "Busco beca para estudiar mi maestría",
+              "Fui aceptado en un doctorado y necesito apoyo económico",
+              "Apoyo para mujeres en posgrados",
+              "Becas para científicos"
+            ]
+          },
+          {
+            "tramite": "Fomento Científico Temprano (Niños y Jóvenes)",
+            "descripcion_breve": "Programas (Savia, Raíces, Impulso) para despertar el interés científico en niños, adolescentes y universitarios mediante talleres y estancias cortas.",
+            "palabras_clave_especificas": [
+              "taller de ciencia",
+              "savia",
+              "raíces científicas",
+              "impulso científico",
+              "verano de investigación",
+              "niños científicos",
+              "asesoría tesis"
+            ],
+            "ejemplos_peticion": [
+              "Mi hijo está en secundaria y le gusta mucho la ciencia",
+              "Quiero entrar al programa Savia",
+              "Soy universitario y busco un tutor investigador",
+              "Talleres de robótica o ciencia para niños"
+            ]
+          },
+          {
+            "tramite": "Fondos para Investigación y Divulgación (Institucional)",
+            "descripcion_breve": "Apoyos a centros de investigación y ONGs para infraestructura, equipo de laboratorio o proyectos de divulgación científica.",
+            "palabras_clave_especificas": [
+              "financiamiento investigación",
+              "equipamiento laboratorio",
+              "proyecto tecnológico",
+              "divulgación científica",
+              "museo de ciencia",
+              "fondos innovación"
+            ],
+            "ejemplos_peticion": [
+              "Somos una asociación civil y tenemos un proyecto de divulgación",
+              "Necesitamos financiamiento para equipo de laboratorio",
+              "Apoyo para ferias de ciencia",
+              "Fondos para proyectos de agrobiotecnología"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_cultura_y_artes": {
+        "nombre": "Secretaría de la Cultura y las Artes (SEDECULTA)",
+        "categoria_sugerida": "Arte, Cultura y Patrimonio",
+        "palabras_clave_globales": [
+          "arte",
+          "cultura",
+          "música",
+          "pintura",
+          "danza",
+          "teatro",
+          "museo",
+          "concierto",
+          "artista",
+          "beca cultural"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Becas y Estímulos a la Creación (PECDA / Apoyos Artistas)",
+            "descripcion_breve": "Estímulos económicos para artistas (músicos, escritores, pintores, actores) para desarrollar proyectos creativos inéditos.",
+            "palabras_clave_especificas": [
+              "pecda",
+              "beca para artistas",
+              "proyecto cultural",
+              "estímulo a la creación",
+              "apoyo músico",
+              "finiciar obra de teatro",
+              "grabar disco"
+            ],
+            "ejemplos_peticion": [
+              "Soy pintor y busco financiamiento para mi exposición",
+              "Convocatoria del PECDA para escritores",
+              "Tengo un grupo de teatro y necesitamos apoyo para el montaje",
+              "Becas para artistas visuales"
+            ]
+          },
+          {
+            "tramite": "Cultura Comunitaria y Popular (PACMyC)",
+            "descripcion_breve": "Apoyo a proyectos comunitarios que rescaten tradiciones, cultura indígena, lenguas originarias o artesanía cultural.",
+            "palabras_clave_especificas": [
+              "pacmyc",
+              "cultura maya",
+              "tradición",
+              "rescatar costumbres",
+              "cultura popular",
+              "comunidad indígena",
+              "fiesta tradicional"
+            ],
+            "ejemplos_peticion": [
+              "Queremos hacer un proyecto para rescatar la lengua maya en mi pueblo",
+              "Apoyo para el grupo de jarana de la comunidad",
+              "Financiamiento para preservar tradiciones mayas",
+              "Convocatoria PACMyC"
+            ]
+          },
+          {
+            "tramite": "Premios y Reconocimientos (Medallas al Mérito)",
+            "descripcion_breve": "Premios económicos y medallas (Yucatán, Bellas Artes, Periodismo) para reconocer la trayectoria de personas destacadas.",
+            "palabras_clave_especificas": [
+              "medalla yucatán",
+              "premio al mérito",
+              "trayectoria artística",
+              "reconocimiento cultura",
+              "medalla oswaldo baqueiro"
+            ],
+            "ejemplos_peticion": [
+              "Convocatoria para la Medalla Yucatán",
+              "Quiero postular a alguien para el premio al mérito cultural",
+              "Reconocimientos a periodistas culturales"
+            ]
+          },
+          {
+            "tramite": "Apoyo a Museos y Asociaciones Culturales",
+            "descripcion_breve": "Donativos económicos para museos de Mérida gestionados por Asociaciones Civiles.",
+            "palabras_clave_especificas": [
+              "museo",
+              "asociación civil cultural",
+              "mantenimiento museo",
+              "exposición museo",
+              "apoyo AC"
+            ],
+            "ejemplos_peticion": [
+              "Somos una AC que administra un museo y buscamos recursos",
+              "Apoyo para exposiciones en museos de la ciudad",
+              "Donativos para recintos culturales"
+            ]
+          }
+        ]
+      },
+      "secretaria_de_pesca_y_acuacultura": {
+        "nombre": "Secretaría de Pesca y Acuacultura Sustentables (SEPASY)",
+        "categoria_sugerida": "Pesca y Economía Costera",
+        "palabras_clave_globales": [
+          "pesca",
+          "pescador",
+          "mar",
+          "lancha",
+          "barco",
+          "veda",
+          "mero",
+          "puerto",
+          "costa"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Apoyo Económico por Veda (Respeto la Veda)",
+            "descripcion_breve": "Apoyo económico bimestral entregado durante la temporada de Veda del Mero a pescadores y trabajadores del mar (fileteros/deshuesadores).",
+            "palabras_clave_especificas": [
+              "veda del mero",
+              "cobrar veda",
+              "dinero pescadores",
+              "filetero",
+              "deshuesador",
+              "apoyo bimestral",
+              "cuándo pagan la veda"
+            ],
+            "ejemplos_peticion": [
+              "¿Cuándo depositan el apoyo de la veda del mero?",
+              "Soy filetera y quiero saber si entro en el programa de apoyo",
+              "No puedo pescar por la veda, necesito el apoyo",
+              "Inscripción al programa Respeto la Veda"
+            ]
+          },
+          {
+            "tramite": "Equipamiento e Insumos (Peso a Peso Pesca/Acuacultura)",
+            "descripcion_breve": "Apoyo en especie al 50% para adquirir motores, redes, GPS, insumos acuícolas o equipamiento de embarcaciones.",
+            "palabras_clave_especificas": [
+              "peso a peso pesca",
+              "motor fuera de borda",
+              "redes de pesca",
+              "reparar lancha",
+              "insumos acuacultura",
+              "granja de peces",
+              "avituallamiento"
+            ],
+            "ejemplos_peticion": [
+              "Necesito un motor nuevo para mi lancha con el peso a peso",
+              "Apoyo para comprar redes y plomos",
+              "Tengo una granja de tilapia y necesito equipo",
+              "Herramientas para pescadores a mitad de precio"
+            ]
+          },
+          {
+            "tramite": "Seguridad y Seguro en el Mar",
+            "descripcion_breve": "Entrega de equipos de seguridad (radios, chalecos, GPS) y apoyo económico (seguro de vida) a familiares en caso de fallecimiento del pescador.",
+            "palabras_clave_especificas": [
+              "chaleco salvavidas",
+              "radio marino",
+              "gps lancha",
+              "seguro de vida pescador",
+              "falleció en el mar",
+              "naufragio",
+              "seguridad marítima"
+            ],
+            "ejemplos_peticion": [
+              "Quiero solicitar radios y chalecos para mi tripulación",
+              "Mi esposo pescador falleció en el mar, ¿hay algún apoyo?",
+              "Curso de seguridad marítima",
+              "Apoyo para deudos de pescadores",
+              "Equipo de rescate y seguridad"
+            ]
+          }
+        ]
+      }, 
+      "secretaria_de_las_mujeres": {
+        "nombre": "Secretaría de las Mujeres (SEMUJERES)",
+        "categoria_sugerida": "Mujeres, Género y Prevención de Violencia",
+        "palabras_clave_globales": [
+          "mujer",
+          "violencia",
+          "género",
+          "feminismo",
+          "golpes",
+          "maltrato",
+          "psicóloga",
+          "abogada",
+          "violeta"
+        ],
+        "servicios_comunes": [
+          {
+            "tramite": "Atención Jurídica y Psicológica (Centros Violeta/Regional)",
+            "descripcion_breve": "Asesoría legal, psicológica y de trabajo social gratuita para mujeres en situación de violencia (Centros Violeta).",
+            "palabras_clave_especificas": [
+              "asesoría legal mujer",
+              "psicóloga gratis",
+              "divorcio por violencia",
+              "pensión alimenticia",
+              "centro violeta",
+              "ayuda psicológica mujeres"
+            ],
+            "ejemplos_peticion": [
+              "Mi esposo me golpeó y quiero denunciar",
+              "Necesito una abogada porque no me pasan pensión",
+              "Busco ayuda psicológica, me siento muy mal",
+              "Dónde están los centros de atención a la mujer"
+            ]
+          },
+          {
+            "tramite": "Apoyos Económicos y Refugio para Víctimas",
+            "descripcion_breve": "Apoyo para renta de vivienda segura, gastos funerarios, alimentos o apoyo a cuidadores de víctimas de feminicidio.",
+            "palabras_clave_especificas": [
+              "renta vivienda segura",
+              "víctima de feminicidio",
+              "huérfanos feminicidio",
+              "refugio mujer",
+              "apoyo económico víctimas",
+              "escapar de casa"
+            ],
+            "ejemplos_peticion": [
+              "Tengo que salir de mi casa por violencia y no tengo dónde ir",
+              "Apoyo para pagar renta y alejarme de mi agresor",
+              "Soy abuela y cuido a mis nietos víctimas de feminicidio",
+              "Apoyo para gastos funerarios por violencia"
+            ]
+          },
+          {
+            "tramite": "Espacios Seguros (Ko’olel Salva / OXXO)",
+            "descripcion_breve": "Red de espacios seguros (Tiendas OXXO) con botón de pánico para pedir auxilio inmediato.",
+            "palabras_clave_especificas": [
+              "botón de pánico",
+              "oxxo seguro",
+              "koolel salva",
+              "me están siguiendo",
+              "pedir auxilio calle"
+            ],
+            "ejemplos_peticion": [
+              "¿Cuáles son los Oxxos donde puedo pedir ayuda?",
+              "Me siento insegura en la calle",
+              "Botón de pánico para mujeres"
+            ]
+          },
+          {
+            "tramite": "Autonomía y Emprendimiento (Tejiendo Caminos)",
+            "descripcion_breve": "Capacitación para artesanas y emprendedoras para lograr independencia económica (no da créditos, da capacitación y vinculación).",
+            "palabras_clave_especificas": [
+              "mujeres emprendedoras",
+              "artesanas",
+              "vender productos",
+              "autonomía económica",
+              "cursos para mujeres"
+            ],
+            "ejemplos_peticion": [
+              "Soy artesana y quiero vender mejor mis productos",
+              "Capacitación para mujeres que quieren poner un negocio",
+              "Grupo de mujeres productivas"
+            ]
+          },
+          {
+            "tramite": "Prevención y Adolescentes (Embarazo y Promotoras)",
+            "descripcion_breve": "Charlas de prevención de embarazo adolescente y apoyos a promotoras comunitarias.",
+            "palabras_clave_especificas": [
+              "embarazo adolescente",
+              "pláticas en escuelas",
+              "promotora comunitaria",
+              "prevención violencia",
+              "educación sexual"
+            ],
+            "ejemplos_peticion": [
+              "Queremos una plática de prevención de embarazo en la secundaria",
+              "Quiero ser promotora comunitaria de la secretaría",
+              "Información sobre derechos sexuales para adolescentes"
+            ]
+          }
+        ]
+      }
+    },
+    "reglas_de_desambiguacion": [
+      {
+        "caso": "Peso a Peso",
+        "regla": "Si menciona 'peso a peso' + (alambre, campo, milpa, fertilizante) -> SEDER. Si menciona 'peso a peso' + (motor, lancha, redes, mar) -> SEPASY."
+      },
+      {
+        "caso": "Becas Escolares",
+        "regla": "Si menciona 'útiles', 'mochila' o 'primaria/secundaria' -> SEDESOL/SEGEY (Bienestar Escolar). Si menciona 'promedio', 'excelencia' o 'calificaciones' -> SEGEY (Excelencia)."
+      },
+      {
+        "caso": "Créditos",
+        "regla": "Si menciona 'mujer', 'empresa', 'maquinaria industrial' -> SEFOET. Si menciona 'negocito', 'pobreza', 'ayuda para vender' -> SEDESOL."
+      },
+      {
+        "caso": "Árboles",
+        "regla": "Si quiere 'un árbol' (donación) -> SDS. Si quiere 'producir plantas' (vivero) -> SDS. Si quiere 'reforestar selva baja' con enfoque forestal productivo -> SEDER."
+      },
+      {
+        "caso": "Policía vs Educación",
+        "regla": "Si menciona 'hijo de policía' + 'beca' -> SEGEY. Si menciona 'policía' + 'robo' -> SSP."
+      },
+      {
+        "caso": "Extranjero",
+        "regla": "Si es 'turismo' -> SEFOTUR. Si es 'estudiar inglés' o 'intercambio' -> SIIES. Si es 'exportar productos' -> SEFOET."
+      }
+    ]
+  }
+}
