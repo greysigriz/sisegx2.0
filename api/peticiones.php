@@ -388,7 +388,7 @@ elseif ($method === 'POST') {
         $sugerencias_guardadas = 0;
         
         // ✅ Guardar sugerencias de IA si existen
-        if (isset($data->sugerencias_ia) && is_array($data->sugerencias_ia)) {
+        if (isset($data->sugerencias_ia) && is_array($data->sugerencias_ia) && count($data->sugerencias_ia) > 0) {
             $sugQuery = "INSERT IGNORE INTO peticion_sugerencias 
                         (peticion_id, departamento_nombre, estado_sugerencia) 
                         VALUES (?, ?, ?)";
@@ -404,19 +404,32 @@ elseif ($method === 'POST') {
             }
         }
         
-        // ✅ Marcar sugerencia seleccionada como Aceptada
+        // ✅ Manejar clasificación seleccionada
         if (isset($data->clasificacion_seleccionada) && 
             isset($data->clasificacion_seleccionada->dependencia)) {
             
-            $updateQuery = "UPDATE peticion_sugerencias 
-                           SET estado_sugerencia = 'Aceptada' 
-                           WHERE peticion_id = ? AND departamento_nombre = ?";
+            $dependenciaSeleccionada = $data->clasificacion_seleccionada->dependencia;
             
-            $updateStmt = $db->prepare($updateQuery);
-            $updateStmt->execute([
-                $peticion_id,
-                $data->clasificacion_seleccionada->dependencia
-            ]);
+            // Si hay sugerencias de IA, marcar la seleccionada como Aceptada
+            if ($sugerencias_guardadas > 0) {
+                $updateQuery = "UPDATE peticion_sugerencias 
+                               SET estado_sugerencia = 'Aceptada' 
+                               WHERE peticion_id = ? AND departamento_nombre = ?";
+                
+                $updateStmt = $db->prepare($updateQuery);
+                $updateStmt->execute([$peticion_id, $dependenciaSeleccionada]);
+            } 
+            // Si no hay sugerencias de IA (clasificación manual), crear una directamente como Aceptada
+            else {
+                $insertQuery = "INSERT INTO peticion_sugerencias 
+                               (peticion_id, departamento_nombre, estado_sugerencia) 
+                               VALUES (?, ?, 'Aceptada')";
+                
+                $insertStmt = $db->prepare($insertQuery);
+                if ($insertStmt->execute([$peticion_id, $dependenciaSeleccionada])) {
+                    $sugerencias_guardadas++;
+                }
+            }
         }
 
         $db->commit();

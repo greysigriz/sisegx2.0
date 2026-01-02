@@ -40,3 +40,7 @@ async def login(request: Request):
     if usuario == "Admin" and password == "Admin":
         return {"success": True, "user": {"usuario": usuario}}
     return JSONResponse({"success": False, "message": "Credenciales inválidas"}, status_code=401)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
