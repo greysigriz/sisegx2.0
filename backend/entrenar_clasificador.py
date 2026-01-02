@@ -19,9 +19,10 @@ def limpiar_texto(texto):
 
 # 2. Cargar datos (Asegúrate de guardar tu excel/texto como 'dataset_yucatan.csv')
 try:
-    df = pd.read_csv('backend/ejemplos_dependencias.csv')
+    # Usar CSV aumentado generado previamente
+    df = pd.read_csv('ejemplos_dependencias_aumentado.csv')
 except FileNotFoundError:
-    print("Error: No se encuentra el archivo 'backend/ejemplos_dependencias.csv'. Asegúrate de crearlo con los datos.")
+    print("Error: No se encuentra el archivo 'ejemplos_dependencias_aumentado.csv'. Asegúrate de generarlo antes de entrenar.")
     exit()
 
 # Aplicar limpieza
@@ -72,8 +73,8 @@ modelo_data = {
     'version': '1.0'
 }
 
-joblib.dump(modelo_data, 'backend/modelo_dependencias.joblib')
-print("\nModelo guardado en backend/modelo_dependencias.joblib")
+joblib.dump(modelo_data, 'modelo_dependencias.joblib')
+print("\nModelo guardado en modelo_dependencias.joblib")
 
 # 9. Prueba rápida (opcional)
 def prueba_rapida():

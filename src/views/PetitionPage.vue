@@ -320,18 +320,8 @@
 
               <div class="classification-content">
                 <div class="classification-item">
-                  <strong>Categoría:</strong>
-                  <span class="classification-value">{{ sugerencia.categoria }}</span>
-                </div>
-
-                <div class="classification-item">
                   <strong>Dependencia:</strong>
                   <span class="classification-value">{{ sugerencia.dependencia }}</span>
-                </div>
-
-                <div class="classification-item">
-                  <strong>Tipo de petición:</strong>
-                  <span class="classification-value">{{ sugerencia.tipo_peticion }}</span>
                 </div>
 
                 <div
@@ -377,6 +367,78 @@
                 <font-awesome-icon icon="fa-solid fa-times" />
                 Limpiar selección
               </button>
+
+              <button
+                type="button"
+                @click="showManualClassification = !showManualClassification"
+                class="manual-classify-btn"
+              >
+                <font-awesome-icon icon="fa-solid fa-hand-pointer" />
+                {{ showManualClassification ? 'Ocultar clasificación manual' : 'Clasificar manualmente' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Clasificación Manual -->
+          <div
+            v-if="showManualClassification"
+            class="manual-classification-section"
+            v-motion-fade-visible-once
+            :initial="{ opacity: 0, y: 20 }"
+            :enter="{ opacity: 1, y: 0, transition: { duration: 600 } }"
+          >
+            <h3>
+              <font-awesome-icon icon="fa-solid fa-hand-pointer" />
+              Clasificación Manual
+            </h3>
+            <p class="classification-help">
+              Si ninguna de las opciones automáticas es correcta, seleccione manualmente:
+            </p>
+
+            <div class="manual-selectors">
+              <div class="form-group">
+                <label for="manual-dependencia">Dependencia</label>
+                <select
+                  id="manual-dependencia"
+                  v-model="manualClassification.dependencia"
+                  class="manual-select"
+                >
+                  <option value="">Seleccione una dependencia</option>
+                  <option
+                    v-for="dep in allDependencias"
+                    :key="dep"
+                    :value="dep"
+                  >
+                    {{ dep }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="manual-classification-actions">
+              <button
+                type="button"
+                @click="applyManualClassification"
+                :disabled="!manualClassification.dependencia"
+                class="apply-manual-btn"
+              >
+                <font-awesome-icon icon="fa-solid fa-check" />
+                Aplicar clasificación manual
+              </button>
+
+              <button
+                type="button"
+                @click="clearManualClassification"
+                class="clear-manual-btn"
+              >
+                <font-awesome-icon icon="fa-solid fa-times" />
+                Limpiar
+              </button>
+            </div>
+
+            <div v-if="manualClassificationApplied" class="manual-applied-indicator">
+              <font-awesome-icon icon="fa-solid fa-check-circle" />
+              Clasificación manual aplicada
             </div>
           </div>
 
@@ -620,6 +682,15 @@ export default {
     const selectedImage = ref(null);
     const imagePreview = ref(null);
 
+    // Manual classification
+    const showManualClassification = ref(false);
+    const manualClassification = ref({
+      dependencia: ''
+    });
+    const manualClassificationApplied = ref(false);
+    const allDependencias = ref([]);
+    const dependenciasData = ref(null);
+
     // APIs
     const API_BASE = "http://127.0.0.1:8000";
     const PETITION_API = "http://127.0.0.1/SISEE/api/peticiones.php";
@@ -677,6 +748,10 @@ export default {
     // -----------------------
     // Computed
     // -----------------------
+    const isManualClassificationComplete = computed(() => {
+      return manualClassification.value.dependencia !== '';
+    });
+
     const canSubmit = computed(() => {
       return (
         Object.keys(errors.value).length === 0 &&
@@ -873,12 +948,9 @@ export default {
           estado: "Sin revisar"
         };
 
-        // Adjuntar IA si existe
-        if (classification.value && Array.isArray(classification.value)) {
-          petitionData.sugerencias_ia = classification.value;
-        }
+        // Solo enviar el nombre de la dependencia (de IA o manual)
         if (selectedClassification.value) {
-          petitionData.clasificacion_seleccionada = selectedClassification.value;
+          petitionData.dependencia = selectedClassification.value.dependencia;
         }
 
         console.log("📤 Enviando petición:", petitionData);
@@ -984,11 +1056,53 @@ export default {
     };
 
     // -----------------------
+    // Manual Classification Methods
+    // -----------------------
+    const loadDependenciasData = async () => {
+      try {
+        const response = await fetch('/src/assets/dependencias_yucatan.json');
+        const data = await response.json();
+        dependenciasData.value = data.sistema_clasificacion_dependencias;
+
+        // Cargar todas las dependencias de todas las categorías de Yucatán
+        const dependenciasSet = new Set();
+        Object.values(data.sistema_clasificacion_dependencias.catalogo_dependencias).forEach(dep => {
+          dependenciasSet.add(dep.nombre);
+        });
+        allDependencias.value = Array.from(dependenciasSet).sort();
+      } catch (error) {
+        console.error('Error cargando dependencias:', error);
+      }
+    };
+
+    const applyManualClassification = () => {
+      if (manualClassification.value.dependencia) {
+        selectedClassification.value = {
+          dependencia: manualClassification.value.dependencia,
+          puntuacion: 1.0,
+          manual: true
+        };
+        manualClassificationApplied.value = true;
+        showManualClassification.value = false;
+      }
+    };
+
+    const clearManualClassification = () => {
+      manualClassification.value = {
+        dependencia: ''
+      };
+      manualClassificationApplied.value = false;
+    };
+
+    // -----------------------
     // onMounted - ACTUALIZADO
     // -----------------------
     onMounted(async () => {
       // ✅ Cargar municipios al iniciar
       await loadMunicipios();
+
+      // Cargar datos de dependencias para clasificación manual
+      await loadDependenciasData();
 
       // Checks opcionales de conectividad
       try {
@@ -1081,6 +1195,14 @@ export default {
       submitForm,
       resetForm,
       scrollToSuccessMessage, // ✅ Exportar la función definida arriba
+      // Manual classification
+      showManualClassification,
+      manualClassification,
+      manualClassificationApplied,
+      allDependencias,
+      isManualClassificationComplete,
+      applyManualClassification,
+      clearManualClassification,
       copyToClipboard: async (text) => {
         try {
           await navigator.clipboard.writeText(text);
