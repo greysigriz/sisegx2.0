@@ -1,155 +1,75 @@
 <template>
-  <div class="yucatan-header">
+  <header class="yucatan-header">
     <div class="header-content">
+      <!-- Lado izquierdo: Título -->
       <div class="header-left">
-        <div class="escudo">
-          <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-            <!-- Escudo estilizado de Yucatán -->
-            <path d="M50 10 L85 30 L85 80 C85 95 70 110 50 110 C30 110 15 95 15 80 L15 30 Z"
-                  fill="#006341" stroke="#FFD700" stroke-width="2"/>
-            <circle cx="50" cy="55" r="20" fill="#FFD700"/>
-            <text x="50" y="62" font-size="16" fill="#006341" text-anchor="middle" font-weight="bold">Y</text>
-          </svg>
-        </div>
         <div class="titles">
-          <h1 class="main-title">Estado de Yucatán</h1>
-          <p class="subtitle">Sistema Integral de Seguimiento de Solicitudes</p>
+          <h1 class="main-title">Sistema de Reportes Ciudadanos - Yucatán</h1>
+          <p class="subtitle">Panel de Control y Monitoreo</p>
         </div>
       </div>
+
+      <!-- Lado derecho: Buscador de Municipio, Notificaciones -->
       <div class="header-right">
-        <div class="info-badge">
-          <span class="badge-label">Municipios</span>
-          <span class="badge-value">106</span>
+        <!-- Buscador/Selector de Municipio combinado -->
+        <div class="select-wrapper municipality-combobox">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Buscar municipio..."
+            class="municipality-select search-input"
+            @input="onSearch"
+            @focus="onInputFocus"
+            @blur="onInputBlur"
+            @keydown="handleKeyDown"
+          />
+          <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" @mousedown.prevent="toggleSuggestions">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+          
+          <ul v-if="showSuggestions" class="suggestions">
+            <li
+              class="suggestion-item suggestion-all"
+              :class="{ highlighted: highlightedIndex === -1 }"
+              @mousedown.prevent="selectSuggestion('Todos')"
+            >
+              Todos los municipios
+            </li>
+            <li
+              v-for="(m, idx) in filteredMunicipalities"
+              :key="m"
+              :class="['suggestion-item', { highlighted: idx === highlightedIndex }]"
+              @mousedown.prevent="selectSuggestion(m)"
+            >
+              {{ m }}
+            </li>
+          </ul>
         </div>
-        <div class="info-badge">
-          <span class="badge-label">Habitantes</span>
-          <span class="badge-value">2.3M</span>
-        </div>
+
+        <!-- Botón de Notificaciones -->
+        <button class="notification-btn" @click="$emit('notifications')">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+          </svg>
+          <span v-if="notificationCount > 0" class="notification-badge">{{ notificationCount }}</span>
+        </button>
       </div>
     </div>
-    <div class="header-decoration">
-      <div class="decoration-line"></div>
-    </div>
-  </div>
+  </header>
 </template>
 
 <script>
+import '@/assets/css/header_dashboard.css'
+import HeaderFuncionalidad from '@/components/TableroDash/header_funcionalidad.vue'
+
 export default {
-  name: "YucatanHeader"
-}
+  name: "YucatanHeader",
+  mixins: [HeaderFuncionalidad]
+};
 </script>
 
-<style scoped>
-.yucatan-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  padding: 2rem 2rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-left: 6px solid #006341;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.escudo {
-  width: 80px;
-  height: 96px;
-  flex-shrink: 0;
-}
-
-.escudo svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.main-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #006341;
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  font-size: 1rem;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-}
-
-.header-right {
-  display: flex;
-  gap: 1rem;
-}
-
-.info-badge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-}
-
-.badge-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.badge-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #006341;
-  margin-top: 0.25rem;
-}
-
-.header-decoration {
-  margin-top: 1rem;
-}
-
-.decoration-line {
-  height: 3px;
-  background: linear-gradient(90deg, #006341 0%, #FFD700 50%, #006341 100%);
-  border-radius: 2px;
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .main-title {
-    font-size: 1.5rem;
-  }
-
-  .escudo {
-    width: 60px;
-    height: 72px;
-  }
-}
-</style>

@@ -153,19 +153,20 @@
   max-width: 1400px;
   margin: 2rem auto;
   align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .chart1-derecha {
-  flex: 1.5;
-  max-width: none;
+  flex: 0 0 48%;
+  max-width: 48%;
   margin: 0;
-  width: 100%;
+  width: 48%;
   height: 550px;
 }
 
 .pie-chart-wrapper {
-  flex: 1;
-  max-width: 900px;
+  flex: 0 0 48%;
+  max-width: 48%;
   height: 550px;
 }
 

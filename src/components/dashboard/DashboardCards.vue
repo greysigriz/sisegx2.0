@@ -1,35 +1,103 @@
 <template>
-  <div class="dashboard-wrapper">
-    <div class="dashboard">
-      <div
-        v-for="(card, index) in cards"
-        :key="index"
-        class="card"
-        @mousemove="handleMouseMove($event, index)"
-        @mouseleave="resetTransform(index)"
-        :style="{ transform: card.transform }"
-      >
-        <div class="card-title">{{ card.title }}</div>
-        <div class="card-number">
-          {{ Math.floor(card.displayValue).toLocaleString() }}
+  <div class="dashboard-metrics">
+    <div class="metrics-container">
+      <div class="metrics-grid">
+        <!-- Card 1: Reportes Totales -->
+        <div class="metric-card">
+          <div class="metric-label">Reportes Totales</div>
+          <div class="metric-value-row">
+            <div class="metric-value">{{ Math.floor(cards[0].displayValue).toLocaleString() }}</div>
+            <span :class="['metric-badge', cards[0].trend > 0 ? 'badge-up' : 'badge-down']">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  :d="cards[0].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
+                  stroke="currentColor" 
+                  stroke-width="2" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>{{ Math.abs(cards[0].trend) }}%</span>
+            </span>
+          </div>
         </div>
-        <div class="card-subtext">{{ card.subtext }}</div>
+
+        <!-- Card 2: Pendientes -->
+        <div class="metric-card">
+          <div class="metric-label">Pendientes</div>
+          <div class="metric-value-row">
+            <div class="metric-value">{{ Math.floor(cards[1].displayValue).toLocaleString() }}</div>
+            <span :class="['metric-badge', cards[1].trend > 0 ? 'badge-up' : 'badge-down']">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  :d="cards[1].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
+                  stroke="currentColor" 
+                  stroke-width="2" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>{{ Math.abs(cards[1].trend) }}%</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 3: Atendidos -->
+        <div class="metric-card">
+          <div class="metric-label">Atendidos</div>
+          <div class="metric-value-row">
+            <div class="metric-value">{{ Math.floor(cards[2].displayValue).toLocaleString() }}</div>
+            <span :class="['metric-badge', cards[2].trend > 0 ? 'badge-up' : 'badge-down']">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  :d="cards[2].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
+                  stroke="currentColor" 
+                  stroke-width="2" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>{{ Math.abs(cards[2].trend) }}%</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Card 4: En Proceso -->
+        <div class="metric-card">
+          <div class="metric-label">En Proceso</div>
+          <div class="metric-value-row">
+            <div class="metric-value">{{ Math.floor(cards[3].displayValue).toLocaleString() }}</div>
+            <span :class="['metric-badge', cards[3].trend > 0 ? 'badge-up' : 'badge-down']">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path 
+                  :d="cards[3].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
+                  stroke="currentColor" 
+                  stroke-width="2" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>{{ Math.abs(cards[3].trend) }}%</span>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+  import '@/assets/css/cards_dashboard.css'
 import { ref, onMounted } from "vue"
 
 export default {
   name: "DashboardCards",
   setup() {
     const cards = ref([
-      { title: 'Reportes Totales', value: 1240, displayValue: 0, subtext: 'Actualizado hoy', transform: '' },
-      { title: 'Pendientes', value: 312, displayValue: 0, subtext: 'Requieren seguimiento', transform: '' },
-      { title: 'Atendidos', value: 872, displayValue: 0, subtext: 'Última semana', transform: '' },
-      { title: 'En Proceso', value: 56, displayValue: 0, subtext: 'Actualmente en curso', transform: '' },
+      { title: 'Reportes Totales', value: 1240, displayValue: 0, trend: 1.8 },
+      { title: 'Pendientes', value: 312, displayValue: 0, trend: -2.5 },
+      { title: 'Atendidos', value: 872, displayValue: 0, trend: 5.2 },
+      { title: 'En Proceso', value: 56, displayValue: 0, trend: 2.2 },
     ])
 
     const animateNumber = (index, targetValue, duration = 1500) => {
@@ -48,25 +116,12 @@ export default {
       }, frameRate)
     }
 
-    const handleMouseMove = (e, index) => {
-      const card = e.currentTarget
-      const rect = card.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      const rotateX = ((y / rect.height) - 0.5) * -10
-      const rotateY = ((x / rect.width) - 0.5) * 10
-      cards.value[index].transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
-    }
-
-    const resetTransform = (index) => {
-      cards.value[index].transform = 'perspective(600px) rotateX(0deg) rotateY(0deg)'
-    }
-
     onMounted(() => {
       cards.value.forEach((c, i) => animateNumber(i, c.value))
     })
 
-    return { cards, handleMouseMove, resetTransform }
+    return { cards }
   }
 }
 </script>
+

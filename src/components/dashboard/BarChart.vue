@@ -1,69 +1,72 @@
 <template>
   <div class="chart-wrapper chart1-derecha">
-    <div class="filter-buttons">
-      <button
-        v-for="item in allData"
-        :key="item.estatus"
-        :class="{ active: visibleStatus.includes(item.estatus) }"
-        :style="{
-          backgroundColor: visibleStatus.includes(item.estatus) ? item.color : 'transparent',
-          borderColor: item.color,
-          color: visibleStatus.includes(item.estatus) ? '#fff' : item.color
-        }"
-        @click="toggleStatus(item.estatus)"
-      >
-        {{ item.estatus }}
-      </button>
+    <div class="chart-header">
+      <div class="chart-header-left">
+        <h3 class="chart-title">Top Departamentos</h3>
+        <p class="chart-description">Departamentos con más seguimientos</p>
+      </div>
+      <div class="chart-header-right">
+        <select v-model="topFilter" class="top-filter-select">
+          <option value="10">Top 10</option>
+          <option value="15">Top 15</option>
+          <option value="all">Todos</option>
+        </select>
+      </div>
     </div>
 
     <div ref="barChart" class="bar-chart"></div>
   </div>
 </template>
-
 <script setup>
+import '@/assets/css/bar_dashboard.css'
 import * as echarts from 'echarts'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
 
 const barChart = ref(null)
 let barChartInstance = null
 
-const allData = ref([
-  { estatus: 'Completado', cantidad: 120, color: '#2563EB' },
-  { estatus: 'Sin revisar', cantidad: 80, color: '#1E40AF' },
-  { estatus: 'Esperando revisión', cantidad: 60, color: '#3B82F6' },
-  { estatus: 'Rechazado por el departamento', cantidad: 40, color: '#60A5FA' },
-  { estatus: 'No completado', cantidad: 20, color: '#93C5FD' }
+// Datos de ejemplo (simula reportes agrupados por departamento)
+const allReports = ref([
+  { category: 'Obras Públicas', count: 245 },
+  { category: 'Servicios Urbanos', count: 198 },
+  { category: 'Seguridad', count: 167 },
+  { category: 'Medio Ambiente', count: 143 },
+  { category: 'Tránsito', count: 128 },
+  { category: 'Alumbrado', count: 115 },
+  { category: 'Parques y Jardines', count: 98 },
+  { category: 'Agua Potable', count: 87 },
+  { category: 'Alcantarillado', count: 76 },
+  { category: 'Limpieza', count: 65 },
+  { category: 'Desarrollo Social', count: 54 },
+  { category: 'Salud', count: 48 },
+  { category: 'Cultura', count: 42 },
+  { category: 'Deporte', count: 38 },
+  { category: 'Educación', count: 35 },
+  { category: 'Turismo', count: 28 }
 ])
 
-const visibleStatus = ref(allData.value.map(i => i.estatus))
+const topFilter = ref('10')
 
-const toggleStatus = (status) => {
-  const index = visibleStatus.value.indexOf(status)
-  if (index > -1) visibleStatus.value.splice(index, 1)
-  else visibleStatus.value.push(status)
-  renderBarChart()
-}
+const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
+
+const filteredData = computed(() => {
+  const sorted = [...allReports.value].sort((a, b) => b.count - a.count)
+  
+  if (topFilter.value === '10') return sorted.slice(0, 10)
+  if (topFilter.value === '15') return sorted.slice(0, 15)
+  return sorted
+})
 
 const renderBarChart = () => {
   if (!barChartInstance) return
 
-  const filtered = allData.value.filter(d => visibleStatus.value.includes(d.estatus))
+  const data = filteredData.value
 
   const option = {
-    title: {
-        text: 'Estado de Reportes',
-        left: 'center',
-        top: 15,
-        textStyle: {
-          fontSize: 29,
-          fontWeight: '700',
-          color: '#1E40AF',
-          fontFamily: '"Inter", "Segoe UI", sans-serif'
-        },
-      },
+             
     tooltip: {
-      trigger: 'item',
+      trigger: 'axis',
       backgroundColor: '#ffffff',
       borderColor: '#E5E7EB',
       borderWidth: 1,
@@ -73,46 +76,74 @@ const renderBarChart = () => {
         fontSize: 13,
         fontFamily: '"Inter", "Segoe UI", sans-serif'
       },
+      axisPointer: {
+        type: 'shadow',
+        shadowStyle: {
+          color: 'rgba(216, 227, 240, 0.5)'
+        }
+      },
+      formatter: (params) => {
+        const param = params[0]
+        return `<div style="padding: 8px;">
+          <strong style="color: #1e293b; font-weight: 600;">${param.name}</strong><br/>
+          <span style="color: #64748b;">Total: ${param.value} seguimientos</span>
+        </div>`
+      }
     },
-
     grid: {
-      left: '17%',
-      right: '10%',
-      bottom: '15%',
-      top: '15%'
+      left: '8%',
+      right: '8%',
+      bottom: '12%',
+      top: '22%',
+      containLabel: true
     },
     xAxis: {
-      type: 'value',
-      name: 'Cantidad',
-      axisLine: { lineStyle: { color: '#E5E7EB' } },
-      axisLabel: { color: '#6B7280', fontSize: 12 },
-      splitLine: { lineStyle: { color: '#F3F4F6' } }
+      type: 'category',
+      data: data.map(d => d.category),
+      position: 'top',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { 
+        color: '#1e293b', 
+        fontSize: 10,
+        fontWeight: 500,
+        interval: 0,
+        rotate: 45,
+        margin: 12
+      }
     },
     yAxis: {
-      type: 'category',
-      axisLine: { lineStyle: { color: '#E5E7EB' } },
-      axisLabel: { color: '#374151', fontSize: 13 },
-      data: filtered.map(d => d.estatus)
+      type: 'value',
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { show: false },
+      splitLine: { show: false }
     },
     series: [
       {
         type: 'bar',
-        data: filtered.map(d => ({
-          value: d.cantidad,
+        data: data.map((d, index) => ({
+          value: d.count,
           itemStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: d.color },
-              { offset: 1, color: d.color + 'CC' }
-            ]),
-            borderRadius: [0, 8, 8, 0]
+            color: colors[index % colors.length],
+            borderRadius: [10, 10, 0, 0]
           }
         })),
-        barWidth: '75%'
+        barWidth: '35%',
+        label: {
+          show: true,
+          position: 'bottom',
+          formatter: '{c}',
+          color: '#304758',
+          fontSize: 11,
+          fontWeight: 600,
+          distance: 10
+        }
       }
     ]
   }
 
-  barChartInstance.setOption(option)
+  barChartInstance.setOption(option, true)
 }
 
 const initBarChart = () => {
@@ -121,6 +152,11 @@ const initBarChart = () => {
 }
 
 const { resizeHandler } = useDashboardCharts(() => barChartInstance)
+
+// Watch for filter changes
+watch(topFilter, () => {
+  renderBarChart()
+})
 
 onMounted(() => {
   initBarChart()
@@ -132,3 +168,4 @@ onUnmounted(() => {
   if (barChartInstance) barChartInstance.dispose()
 })
 </script>
+

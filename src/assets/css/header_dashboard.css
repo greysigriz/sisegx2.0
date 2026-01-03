@@ -1,0 +1,261 @@
+/* Styles moved from YucatanHeader.vue */
+.yucatan-header {
+  background: #ffffff;
+  border-bottom: 2px solid #2563eb;
+  padding: 1rem 1.5rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.main-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #2563eb;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Buscador */
+.search-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #3b82f6;
+  pointer-events: none;
+}
+
+.search-input {
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 2px solid #93c5fd;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  width: 16rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Suggestions dropdown for combobox */
+.combobox { position: relative; }
+.suggestions {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e6edf8;
+    box-shadow: 0 8px 20px rgba(2,6,23,0.08);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow: auto;
+    z-index: 50;
+    padding: 0.25rem 0;
+}
+.suggestion-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #0f172a;
+    cursor: pointer;
+}
+.suggestion-item:hover,
+.suggestion-item.highlighted {
+    background: #eff6ff;
+}
+
+/* Selector de Municipio */
+.select-wrapper {
+    position: relative;
+}
+
+/* Combobox de municipio combinado */
+.municipality-combobox {
+    position: relative;
+}
+
+.municipality-combobox .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: #3b82f6;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.municipality-combobox .search-input {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+}
+
+.municipality-combobox .select-arrow {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.municipality-combobox .suggestions {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e6edf8;
+    box-shadow: 0 8px 20px rgba(2,6,23,0.08);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow: auto;
+    z-index: 50;
+    padding: 0.25rem 0;
+    list-style: none;
+    margin: 0;
+}
+
+.municipality-combobox .suggestion-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.municipality-combobox .suggestion-item:hover,
+.municipality-combobox .suggestion-item.highlighted {
+    background: #eff6ff;
+}
+
+.municipality-combobox .suggestion-all {
+    font-weight: 500;
+    color: #2563eb;
+    border-bottom: 1px solid #e6edf8;
+}
+
+.municipality-select {
+    appearance: none;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 2px solid #3b82f6;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background: #ffffff;
+    color: #1e3a8a;
+    cursor: pointer;
+    min-width: 12rem;
+    outline: none;
+    transition: box-shadow 0.2s;
+}
+
+.municipality-select:focus {
+    box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.select-arrow {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    color: #3b82f6;
+    pointer-events: none;
+}
+
+/* Botón de Notificaciones */
+.notification-btn {
+    position: relative;
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: #2563eb;
+    transition: background-color 0.2s;
+}
+
+.notification-btn:hover {
+  background-color: #eff6ff;
+}
+
+.notification-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .municipality-select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 1.125rem;
+  }
+}

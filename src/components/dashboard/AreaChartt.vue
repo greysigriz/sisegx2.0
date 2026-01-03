@@ -6,6 +6,7 @@
 </template>
 
 <script setup>
+  import '@/assets/css/areachartt_dashboard.css'
 import { onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 
@@ -59,17 +60,17 @@ onMounted(() => {
         }
       },
       formatter: function(params) {
-        let result = `<div style="padding: 12px;">
-          <div style="font-weight: 600; color: #1F2937; margin-bottom: 12px; font-size: 15px;">
+        let result = `<div class="tooltip-container">
+          <div class="tooltip-title">
             📅 ${params[0].axisValue}
           </div>`;
 
         params.reverse().forEach(item => {
           result += `
-            <div style="display: flex; align-items: center; margin-bottom: 6px; color: #6B7280; font-size: 13px;">
-              <div style="width: 10px; height: 10px; background: ${item.color}; border-radius: 50%; margin-right: 10px;"></div>
-              <span style="flex: 1;">${item.seriesName}:</span>
-              <strong style="color: #1F2937; margin-left: 8px;">${item.value}</strong>
+            <div class="tooltip-item">
+              <div class="tooltip-color-dot" style="background: ${item.color};"></div>
+              <span class="tooltip-label">${item.seriesName}:</span>
+              <strong class="tooltip-value">${item.value}</strong>
             </div>`;
         });
 
@@ -112,8 +113,8 @@ onMounted(() => {
       }
     },
     grid: {
-      left: '4%',
-      right: '4%',
+      left: '2%',
+      right: '2%',
       bottom: '8%',
       top: '25%',
       containLabel: true
@@ -268,46 +269,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.area-chart-wrapper {
-  padding: 32px;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  margin: 2rem auto;
-  max-width: 1000px;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  position: relative;
-  overflow: hidden;
-}
 
-.area-chart-wrapper::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
-  border-radius: 20px 20px 0 0;
-}
-
-.chart-canvas {
-  width: 100%;
-  height: 500px;
-}
-
-@media (max-width: 768px) {
-  .area-chart-wrapper {
-    padding: 20px;
-    margin: 16px;
-  }
-
-  .chart-canvas {
-    height: 400px;
-  }
-}
-</style>
