@@ -15,7 +15,28 @@ import {
   faMagic,
   faRobot,
   faRefresh,
-  faTimes
+  faTimes,
+  faImage,
+  faCloudUploadAlt,
+  faMapMarkerAlt,
+  faFileImage,
+  faInfoCircle,
+  faWandMagicSparkles,
+  faSyncAlt,
+  faHandPointer,
+  faCheck,
+  faLightbulb,
+  faPhone,
+  faClock,
+  faQuestionCircle,
+  faExclamationTriangle,
+  faTimesCircle,
+  faBuilding,
+  faSpinner,
+  faStar,
+  faTag,
+  faList,
+  faKey
 } from '@fortawesome/free-solid-svg-icons';
 
 // Agregar los iconos a la librería
@@ -34,7 +55,28 @@ library.add(
   faMagic,
   faRobot,
   faRefresh,
-  faTimes
+  faTimes,
+  faImage,
+  faCloudUploadAlt,
+  faMapMarkerAlt,
+  faFileImage,
+  faInfoCircle,
+  faWandMagicSparkles,
+  faSyncAlt,
+  faHandPointer,
+  faCheck,
+  faLightbulb,
+  faPhone,
+  faClock,
+  faQuestionCircle,
+  faExclamationTriangle,
+  faTimesCircle,
+  faBuilding,
+  faSpinner,
+  faStar,
+  faTag,
+  faList,
+  faKey
 );
 
 export { FontAwesomeIcon };

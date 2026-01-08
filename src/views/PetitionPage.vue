@@ -948,9 +948,22 @@ export default {
           estado: "Sin revisar"
         };
 
-        // Solo enviar el nombre de la dependencia (de IA o manual)
+        // ✅ Enviar TODAS las sugerencias de IA para guardarlas
+        if (classification.value && Array.isArray(classification.value) && classification.value.length > 0) {
+          petitionData.sugerencias_ia = classification.value.map(sug => ({
+            dependencia: sug.dependencia,
+            puntuacion: sug.puntuacion,
+            palabras_encontradas: sug.palabras_encontradas || []
+          }));
+        }
+
+        // ✅ Marcar la clasificación seleccionada
         if (selectedClassification.value) {
-          petitionData.dependencia = selectedClassification.value.dependencia;
+          petitionData.clasificacion_seleccionada = {
+            dependencia: selectedClassification.value.dependencia,
+            puntuacion: selectedClassification.value.puntuacion || 1.0,
+            manual: selectedClassification.value.manual || false
+          };
         }
 
         console.log("📤 Enviando petición:", petitionData);
@@ -1060,7 +1073,7 @@ export default {
     // -----------------------
     const loadDependenciasData = async () => {
       try {
-        const response = await fetch('/src/assets/dependencias_yucatan.json');
+        const response = await fetch('/backend/dependecias_yucatan.json');
         const data = await response.json();
         dependenciasData.value = data.sistema_clasificacion_dependencias;
 
