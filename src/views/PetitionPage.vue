@@ -835,7 +835,7 @@ export default {
         isClassifying.value = true;
         errorMessage.value = "";
 
-        const response = await fetch(`${API_BASE}/api/clasificacion/clasificar`, {
+        const response = await fetch(`${API_BASE}/py/clasificacion/clasificar`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1119,7 +1119,7 @@ export default {
 
       // Checks opcionales de conectividad
       try {
-        await fetch(`${API_BASE}/api/clasificacion/categorias`);
+        await fetch(`${API_BASE}/py/clasificacion/categorias`);
       } catch {
         console.warn("API de clasificación no disponible");
       }
