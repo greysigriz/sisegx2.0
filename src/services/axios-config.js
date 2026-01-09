@@ -3,8 +3,8 @@ import axios from 'axios';
 
 // Configurar Axios para enviar cookies con todas las peticiones
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = 'http://localhost/SISEE/api/';
-axios.defaults.timeout = 30000; // 15 segundos de timeout
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost/SISEE/api/';
+axios.defaults.timeout = 30000; // 30 segundos de timeout
 
 // Variables para evitar múltiples redirects y requests
 let isRedirecting = false;

@@ -19,8 +19,8 @@ $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 if (in_array($origin, $allowed_origins)) {
     header("Access-Control-Allow-Origin: $origin");
 } else {
-    // For development, allow all origins - REMOVE in production
-    header("Access-Control-Allow-Origin: *");
+    // Default to localhost:5173 if no origin detected
+    header("Access-Control-Allow-Origin: http://localhost:5173");
 }
 
 // Essential CORS headers
