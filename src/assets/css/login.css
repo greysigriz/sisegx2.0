@@ -71,7 +71,7 @@ body {
   width: 100%;
   height: 100%;
   /* Mover la imagen más hacia la izquierda: usar background-position y una pequeña traslación */
-  background: url('src/assets/yucatan.jpg') left center/cover no-repeat;
+  background: url('../yucatan.jpg') left center/cover no-repeat;
   /* Opcional: ajustar con transform para desplazar aún más a la izquierda */
   transform: scale(1.05) translateX(-20%);
   z-index: -2;                   /* Detrás del overlay */
