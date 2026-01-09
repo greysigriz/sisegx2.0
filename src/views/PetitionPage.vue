@@ -692,9 +692,9 @@ export default {
     const dependenciasData = ref(null);
 
     // APIs
-    const API_BASE = "http://127.0.0.1:8000";
-    const PETITION_API = "http://127.0.0.1/SISEE/api/peticiones.php";
-    const DIVISION_API = "http://127.0.0.1/SISEE/api/division.php";
+    const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    const PETITION_API = `${import.meta.env.VITE_API_URL || '/api'}/peticiones.php`;
+    const DIVISION_API = `${import.meta.env.VITE_API_URL || '/api'}/division.php`;
 
     // -----------------------
     // ✅ NUEVO: Cargar municipios desde API
