@@ -21,7 +21,7 @@ app.add_middleware(
 # Incluye rutas
 
 app.include_router(peticiones_router, prefix="/api/peticiones")
-app.include_router(clasificacion_router, prefix="/api/clasificacion")
+app.include_router(clasificacion_router, prefix="/clasificacion")
 
 @app.get("/")
 def read_root():
