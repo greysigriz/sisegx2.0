@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_maxlifetime', 8 * 60 * 60);
     ini_set('session.cookie_lifetime', 8 * 60 * 60);
     ini_set('session.cookie_path', '/');
-    ini_set('session.cookie_domain', 'localhost');
+    ini_set('session.cookie_domain', '');
     ini_set('session.cookie_samesite', 'Lax');
     ini_set('session.cookie_httponly', '1');
     session_start();
