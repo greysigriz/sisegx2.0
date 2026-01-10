@@ -692,7 +692,7 @@ export default {
     const dependenciasData = ref(null);
 
     // APIs
-    const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin;
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
     const PETITION_API = `${import.meta.env.VITE_API_URL || '/api'}/peticiones.php`;
     const DIVISION_API = `${import.meta.env.VITE_API_URL || '/api'}/division.php`;
 
@@ -835,7 +835,7 @@ export default {
         isClassifying.value = true;
         errorMessage.value = "";
 
-        const response = await fetch(`${API_BASE}/py/clasificacion/clasificar`, {
+        const response = await fetch(`${BACKEND_URL}/clasificacion/clasificar`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1119,7 +1119,7 @@ export default {
 
       // Checks opcionales de conectividad
       try {
-        await fetch(`${API_BASE}/py/clasificacion/categorias`);
+        await fetch(`${BACKEND_URL}/clasificacion/categorias`);
       } catch {
         console.warn("API de clasificación no disponible");
       }
