@@ -1,12 +1,12 @@
-/* Variables CSS para consistencia - Colores de Yucatán */
+/* Variables CSS para consistencia - Colores Azules */
 :root {
-  /* Colores principales de Yucatán - Verde */
-  --primary-green: #008542;
-  --primary-green-hover: #006633;
-  --primary-green-light: #10a854;
-  --secondary-green: #e8f5e9;
-  --secondary-green-dark: #c8e6c9;
-  --accent-green: #00a550;
+  /* Colores principales - Azul */
+  --primary-blue: #1e40af;
+  --primary-blue-hover: #1e3a8a;
+  --primary-blue-light: #3b82f6;
+  --secondary-blue: #dbeafe;
+  --secondary-blue-dark: #bfdbfe;
+  --accent-blue: #2563eb;
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --background: #f8fafc;
@@ -41,12 +41,12 @@ body {
 /* Contenedor principal */
 .petition-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--secondary-green) 0%, var(--white) 100%);
+  background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--white) 100%);
 }
 
 /* Banner principal */
 .hero-banner {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
   color: white;
   padding: 4rem 2rem;
   text-align: center;
@@ -115,7 +115,7 @@ body {
 .form-container h2 {
   font-size: 1.75rem;
   font-weight: 600;
-  color: white;
+  color: var(--primary-blue);
   margin-bottom: 0.5rem;
 }
 
@@ -133,15 +133,15 @@ body {
 .user-info-section h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--primary-green);
+  color: var(--primary-blue);
   margin-bottom: 1rem;
 }
 
 .user-info-card {
-  background: var(--secondary-green);
+  background: var(--secondary-blue);
   padding: 1.5rem;
   border-radius: var(--border-radius-sm);
-  border: 1px solid var(--secondary-green-dark);
+  border: 1px solid var(--secondary-blue-dark);
 }
 
 .user-info-item {
@@ -163,7 +163,7 @@ body {
 
 .user-info-item span {
   font-weight: 600;
-  color: var(--primary-green);
+  color: var(--primary-blue);
 }
 
 /* Grupos de formulario */
@@ -212,8 +212,8 @@ body {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--primary-green);
-  box-shadow: 0 0 0 3px rgba(0, 133, 66, 0.1);
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .form-group input::placeholder,
@@ -267,12 +267,12 @@ body {
 }
 
 .primary-button {
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--primary-green-hover);
+  background: var(--primary-blue-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -296,7 +296,7 @@ body {
 
 .classify-button,
 .reclassify-btn {
-  background: var(--accent-green);
+  background: var(--accent-blue);
   color: white;
   margin-top: 1rem;
   margin-right: 15px;
@@ -304,17 +304,17 @@ body {
 
 .classify-button:hover:not(:disabled),
 .reclassify-btn:hover:not(:disabled) {
-  background: var(--primary-green-hover);
+  background: var(--primary-blue-hover);
 }
 
 .new-petition-btn {
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
   margin-right: 15px;
 }
 
 .new-petition-btn:hover {
-  background: var(--primary-green-hover);
+  background: var(--primary-blue-hover);
 }
 
 /* Acciones del formulario */
@@ -339,7 +339,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-weight: 600;
   margin-bottom: 1.5rem;
 }
@@ -353,7 +353,7 @@ body {
 }
 
 .classification-info h4 {
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-weight: 600;
   margin-bottom: 1rem;
 }
@@ -376,7 +376,7 @@ body {
 }
 
 .classification-value {
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-weight: 600;
 }
 
@@ -400,8 +400,8 @@ body {
 }
 
 .keyword-tag {
-  background: var(--secondary-green);
-  color: var(--primary-green);
+  background: var(--secondary-blue);
+  color: var(--primary-blue);
   padding: 0.25rem 0.5rem;
   border-radius: 20px;
   font-size: 0.875rem;
@@ -417,11 +417,11 @@ body {
 
 /* Mensajes */
 .success-message {
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
   color: white;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 133, 66, 0.3);
+  box-shadow: 0 10px 30px rgba(30, 64, 175, 0.3);
   text-align: center;
   margin: 20px 0;
   animation: successSlideIn 0.6s ease-out;
@@ -485,7 +485,7 @@ body {
 .info-icon {
   width: 3rem;
   height: 3rem;
-  background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -501,7 +501,7 @@ body {
 .info-card h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--primary-green);
+  color: var(--primary-blue);
   margin-bottom: 0.75rem;
 }
 
@@ -541,7 +541,7 @@ body {
 
 .classify-button {
   padding: 0.75rem 1.5rem;
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
   border: none;
   border-radius: var(--border-radius-sm);
@@ -556,7 +556,7 @@ body {
 }
 
 .classify-button:hover:not(:disabled) {
-  background: var(--primary-green-hover);
+  background: var(--primary-blue-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -584,7 +584,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-weight: 600;
   font-size: 1.25rem;
   margin-bottom: 1.5rem;
@@ -599,8 +599,8 @@ body {
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
   padding: 0.75rem 1rem;
-  background: var(--secondary-green);
-  border-left: 3px solid var(--primary-green);
+  background: var(--secondary-blue);
+  border-left: 3px solid var(--primary-blue);
   border-radius: var(--border-radius-sm);
 }
 
@@ -623,13 +623,13 @@ body {
   left: 0;
   width: 3px;
   height: 100%;
-  background: var(--primary-green);
+  background: var(--primary-blue);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
 
 .classification-card:hover {
-  border-color: var(--primary-green);
+  border-color: var(--primary-blue);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
@@ -639,8 +639,8 @@ body {
 }
 
 .classification-card.selected {
-  border-color: var(--primary-green);
-  background: var(--secondary-green);
+  border-color: var(--primary-blue);
+  background: var(--secondary-blue);
   box-shadow: var(--shadow-md);
 }
 
@@ -667,7 +667,7 @@ body {
 
 .classification-score {
   padding: 0.35rem 0.75rem;
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
@@ -694,7 +694,7 @@ body {
 }
 
 .classification-value {
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-weight: 600;
   font-size: 1rem;
   margin-top: 0.25rem;
@@ -709,8 +709,8 @@ body {
 }
 
 .keyword-tag {
-  background: var(--secondary-green);
-  color: var(--primary-green);
+  background: var(--secondary-blue);
+  color: var(--primary-blue);
   padding: 0.25rem 0.6rem;
   border-radius: var(--border-radius-sm);
   font-size: 0.8rem;
@@ -719,7 +719,7 @@ body {
 }
 
 .keyword-tag:hover {
-  background: var(--secondary-green-dark);
+  background: var(--secondary-blue-dark);
 }
 
 /* Indicador de selección */
@@ -770,12 +770,12 @@ body {
 
 .reclassify-btn {
   background: var(--white);
-  color: var(--primary-green);
-  border: 2px solid var(--primary-green);
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
 }
 
 .reclassify-btn:hover:not(:disabled) {
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -804,12 +804,12 @@ body {
 
 .manual-classify-btn {
   background: var(--white);
-  color: var(--primary-green);
-  border: 2px solid var(--primary-green);
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
 }
 
 .manual-classify-btn:hover {
-  background: var(--primary-green);
+  background: var(--primary-blue);
   color: white;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -825,7 +825,7 @@ body {
 }
 
 .manual-classification-section h3 {
-  color: var(--primary-green);
+  color: var(--primary-blue);
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -836,7 +836,7 @@ body {
 
 .manual-classification-section h3 svg {
   font-size: 1.25rem;
-  color: var(--primary-green);
+  color: var(--primary-blue);
 }
 
 .manual-classification-options {
@@ -858,12 +858,12 @@ body {
 
 .manual-select:focus {
   outline: none;
-  border-color: var(--primary-green);
-  box-shadow: 0 0 0 3px rgba(0, 133, 66, 0.1);
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .manual-select:hover {
-  border-color: var(--primary-green);
+  border-color: var(--primary-blue);
 }
 
 .manual-classification-actions {
@@ -1070,9 +1070,9 @@ body {
 }
 
 .image-upload-label:hover {
-  border-color: var(--primary-green);
-  background: var(--secondary-green);
-  color: var(--primary-green);
+  border-color: var(--primary-blue);
+  background: var(--secondary-blue);
+  color: var(--primary-blue);
 }
 
 .upload-icon {
@@ -1135,7 +1135,7 @@ body {
 }
 
 .image-info svg {
-  color: var(--primary-green);
+  color: var(--primary-blue);
 }
 
 @keyframes slideInUp {

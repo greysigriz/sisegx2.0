@@ -126,10 +126,10 @@
               </div>
 
               <div v-else v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
-                <div class="peticion-acciones">
+                <div class="peticion-acciones" :ref="el => { if (el) accionesRefs[peticion.id] = el }">
                   <button
                     :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
-                    @click.stop="toggleAccionesMenu(peticion)"
+                    @click.stop="toggleAccionesMenu(peticion, $event)"
                     :title="peticionActiva === peticion.id ? 'Cerrar menú' : 'Mostrar acciones'"
                   >
                     <i class="fas fa-ellipsis-v"></i>
@@ -145,6 +145,7 @@
                   <div
                     v-if="peticionActiva === peticion.id"
                     class="acciones-dropdown show"
+                    :style="dropdownStyle"
                   >
                     <!-- ✅ ACTUALIZADO: Botones condicionalmente deshabilitados -->
                     <button
@@ -850,6 +851,8 @@ export default {
     const peticionActiva = ref(null);
     const usuarioLogueado = ref(null);
     const municipioUsuario = ref(null);
+    const accionesRefs = ref({});
+    const dropdownStyle = ref({});
 
     // Estado para gestión de departamentos
     const departamentosAsignados = ref([]);
@@ -1827,16 +1830,42 @@ export default {
       return textos[nivel] || 'N/D';
     };
 
-    const toggleAccionesMenu = (peticion) => {
+    const toggleAccionesMenu = (peticion, event) => {
       if (peticionActiva.value === peticion.id) {
         peticionActiva.value = null;
+        dropdownStyle.value = {};
       } else {
         peticionActiva.value = peticion.id;
+        
+        // Calcular posición del dropdown con position fixed
+        const button = event.currentTarget;
+        const rect = button.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const dropdownHeight = 250; // Altura estimada
+        
+        // Determinar si va arriba o abajo
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        
+        if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
+          // Mostrar abajo
+          dropdownStyle.value = {
+            top: `${rect.bottom + 4}px`,
+            left: `${rect.left}px`,
+          };
+        } else {
+          // Mostrar arriba
+          dropdownStyle.value = {
+            bottom: `${viewportHeight - rect.top + 4}px`,
+            left: `${rect.left}px`,
+          };
+        }
       }
     };
 
     const cerrarMenuAcciones = () => {
       peticionActiva.value = null;
+      dropdownStyle.value = {};
     };
 
     const cerrarMenusAcciones = (event) => {
@@ -1846,6 +1875,7 @@ export default {
       }
 
       peticionActiva.value = null;
+      dropdownStyle.value = {};
     };
 
     const cancelarAccion = () => {
@@ -1903,10 +1933,20 @@ export default {
       ]);
 
       document.addEventListener('click', cerrarMenusAcciones);
+      
+      // Cerrar dropdown al hacer scroll
+      const scrollContainer = document.querySelector('.tabla-scroll-container');
+      if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', cerrarMenuAcciones);
+      }
     });
 
     onBeforeUnmount(() => {
       document.removeEventListener('click', cerrarMenusAcciones);
+      const scrollContainer = document.querySelector('.tabla-scroll-container');
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', cerrarMenuAcciones);
+      }
     });
 
     // Función para asignar desde sugerencia
@@ -2054,6 +2094,8 @@ export default {
       filtros,
       peticionActiva,
       usuarioLogueado,
+      accionesRefs,
+      dropdownStyle,
       departamentosAsignados,
       departamentosDisponibles,
       departamentosSeleccionados,
@@ -2165,8 +2207,11 @@ export default {
   position: sticky !important;
   top: 0 !important;
   z-index: 100 !important;
-  min-width: 1200px !important;
+  min-width: 1410px !important;
+  width: calc(100% + 8px) !important;
+  margin-right: -8px !important;
   box-sizing: border-box !important;
+  border-radius: 12px 12px 0 0 !important;
 }
 
 .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
@@ -2262,6 +2307,128 @@ export default {
 
   .municipio-indicator .municipio-label {
     display: none;
+  }
+}
+
+/* Estilos para sugerencias rápidas */
+.sugerencias-rapidas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #fff9e6, #fff3d9);
+  border-radius: 10px;
+  border: 1px solid #ffe0a3;
+}
+
+.sugerencias-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #b8860b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+}
+
+.sugerencias-label::before {
+  content: "💡";
+  font-size: 16px;
+}
+
+.btn-sugerencia-rapida {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border: 1px solid #daa520;
+  border-radius: 18px;
+  color: #8b6914;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
+}
+
+.btn-sugerencia-rapida:hover {
+  background: linear-gradient(135deg, #ffed4e, #ffd700);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
+  border-color: #b8860b;
+}
+
+.btn-sugerencia-rapida:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
+}
+
+.btn-sugerencia-rapida i {
+  font-size: 13px;
+  animation: pulse-light 2s ease-in-out infinite;
+}
+
+@keyframes pulse-light {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Contenedor de búsqueda */
+.busqueda-departamentos {
+  margin-bottom: 20px;
+}
+
+.busqueda-input-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.busqueda-input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.busqueda-input:focus {
+  outline: none;
+  border-color: #0074D9;
+  box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
+}
+
+.busqueda-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 16px;
+}
+
+/* Responsive para sugerencias */
+@media (max-width: 768px) {
+  .sugerencias-rapidas {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sugerencias-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  
+  .btn-sugerencia-rapida {
+    font-size: 11px;
+    padding: 5px 12px;
   }
 }
 </style>

@@ -48,21 +48,25 @@
   align-items: center !important;
   justify-content: center !important;
   min-width: 50px !important;
+  z-index: 1 !important;
+}
+
+/* Cuando el dropdown está activo, aumentar z-index del contenedor */
+.peticion-acciones:has(.acciones-dropdown.show) {
+  z-index: 10001 !important;
 }
 
 /* Dropdown de acciones - alta especificidad */
 .peticion-acciones .acciones-dropdown {
-  position: absolute !important;
-  top: 100% !important;
-  left: 0 !important;
+  position: fixed !important;
   background: white !important;
   border: 1px solid #dee2e6 !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  z-index: 1000 !important;
-  min-width: 200px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+  z-index: 10000 !important;
+  min-width: 220px !important;
+  max-width: 280px !important;
   padding: 8px 0 !important;
-  margin-top: 4px !important;
   display: none !important;
   /* Sin animaciones */
   transition: none !important;
@@ -70,8 +74,11 @@
   animation: none !important;
 }
 
-.peticion-acciones .acciones-dropdown.show {
+/* Mostrar dropdown cuando está activo */
+.peticiones-list .tabla-scroll-container .tabla-contenido .peticion-item .peticion-acciones .acciones-dropdown.show {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .peticion-acciones .dropdown-item {
@@ -291,6 +298,7 @@
             overflow-y: auto;
             position: relative;
             max-height: 70vh; /* Limitar altura para scroll vertical */
+            border-radius: 12px;
             /* Scrollbar personalizado */
             scrollbar-width: thin;
             scrollbar-color: #0074D9 #f1f3f4;
@@ -316,7 +324,7 @@
         }
 
         .tabla-contenido {
-            min-width: 1200px; /* Ancho mínimo para evitar compresión */
+            min-width: 1410px; /* Ancho mínimo para evitar compresión - coincide con suma de columnas */
             width: 100%;
         }
 
@@ -334,12 +342,15 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            /* ✅ SOLUCIÓN: El grid ya define el ancho total, no usar width */
-            min-width: 1200px !important;
+            /* ✅ SOLUCIÓN: min-width coincide con suma de columnas (1410px) */
+            min-width: 1410px !important;
+            width: calc(100% + 8px);
+            margin-right: -8px;
             /* Evitar que el header se vea transparente */
             background-clip: padding-box;
             box-sizing: border-box;
             text-align: center; /* ✅ Centrar texto del header */
+            border-radius: 12px 12px 0 0; /* Bordes redondeados superiores */
         }
 
         .list-header > div {
@@ -358,10 +369,19 @@
             position: relative;
             min-height: 70px;
             align-items: center;
+            overflow: visible !important;
+            z-index: 1;
         }
 
         .peticion-item:hover {
             background: linear-gradient(135deg, rgba(0, 116, 217, 0.03), rgba(0, 86, 179, 0.05));
+            z-index: 2;
+        }
+
+        /* Aumentar z-index cuando tiene dropdown activo */
+        .peticion-item:has(.acciones-dropdown.show) {
+            z-index: 10002 !important;
+            overflow: visible !important;
         }
 
         .peticion-item:last-child {
