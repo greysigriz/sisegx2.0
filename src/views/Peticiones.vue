@@ -1836,17 +1836,17 @@ export default {
         dropdownStyle.value = {};
       } else {
         peticionActiva.value = peticion.id;
-        
+
         // Calcular posición del dropdown con position fixed
         const button = event.currentTarget;
         const rect = button.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const dropdownHeight = 250; // Altura estimada
-        
+
         // Determinar si va arriba o abajo
         const spaceBelow = viewportHeight - rect.bottom;
         const spaceAbove = rect.top;
-        
+
         if (spaceBelow >= dropdownHeight || spaceBelow > spaceAbove) {
           // Mostrar abajo
           dropdownStyle.value = {
@@ -1933,7 +1933,7 @@ export default {
       ]);
 
       document.addEventListener('click', cerrarMenusAcciones);
-      
+
       // Cerrar dropdown al hacer scroll
       const scrollContainer = document.querySelector('.tabla-scroll-container');
       if (scrollContainer) {
@@ -2420,12 +2420,12 @@ export default {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .sugerencias-label {
     width: 100%;
     margin-bottom: 4px;
   }
-  
+
   .btn-sugerencia-rapida {
     font-size: 11px;
     padding: 5px 12px;
