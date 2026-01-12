@@ -1,10 +1,18 @@
 <template>
   <div class="chart-wrapper pie-chart-wrapper">
-    <div ref="pieChart" class="chart1-derecha pie-chart"></div>
+    <div class="chart-header">
+      <div class="chart-header-left">
+        <h3 class="chart-title">Reportes Ciudadanos</h3>
+        <p class="chart-description">Distribución por categoría de reportes</p>
+      </div>
+    </div>
+
+    <div ref="pieChart" class="pie-chart"></div>
   </div>
 </template>
 
 <script setup>
+import '@/assets/css/pie_dashboard.css'
 import * as echarts from 'echarts'
 import { ref, onMounted, onUnmounted } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
@@ -26,18 +34,7 @@ const initPieChart = () => {
 
 
   const option = {
-  color: colorVariants,
-    title: {
-          text: 'Reportes Ciudadanos',
-          left: 'center',
-          top: 20,
-          textStyle: {
-            fontSize: 29,
-            fontWeight: '700',
-            color: '#1E40AF',
-            fontFamily: '"Inter", "Segoe UI", sans-serif'
-          }
-        },
+    color: colorVariants,
     tooltip: {
       trigger: 'item',
       backgroundColor: '#fff',
@@ -54,22 +51,36 @@ const initPieChart = () => {
           <div>Porcentaje: <strong>${params.percent}%</strong></div>
         </div>`
     },
+    legend: {
+      top: '5%',
+      left: 'center'
+    },
     series: [
       {
+        name: 'Reportes Ciudadanos',
         type: 'pie',
-        radius: ['45%', '75%'],
+        radius: ['40%', '70%'],
         center: ['50%', '60%'],
+        avoidLabelOverlap: false,
+        padAngle: 5,
         itemStyle: {
-          borderRadius: 8,
+          borderRadius: 10,
           borderColor: '#fff',
           borderWidth: 3
+        },
+        label: {
+          show: false,
+          position: 'center'
         },
         emphasis: {
           label: {
             show: true,
-            fontSize: 28,
-            fontWeight: '700'
+            fontSize: 40,
+            fontWeight: 'bold'
           }
+        },
+        labelLine: {
+          show: false
         },
         data: [
           { value: 123, name: 'Robos' },

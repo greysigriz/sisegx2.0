@@ -50,9 +50,12 @@ const topFilter = ref('10')
 
 const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
 
+// Fuente usada por el chart
+const chartFont = '"Inter", "Segoe UI", sans-serif'
+
 const filteredData = computed(() => {
   const sorted = [...allReports.value].sort((a, b) => b.count - a.count)
-  
+
   if (topFilter.value === '10') return sorted.slice(0, 10)
   if (topFilter.value === '15') return sorted.slice(0, 15)
   return sorted
@@ -63,8 +66,16 @@ const renderBarChart = () => {
 
   const data = filteredData.value
 
+  const maxValue = Math.max(...data.map(d => d.count), 1)
+
   const option = {
-             
+    // aplica la fuente por defecto a todo el chart
+    textStyle: {
+      fontFamily: chartFont,
+      color: '#1F2937',
+      fontSize: 13
+    },
+
     tooltip: {
       trigger: 'axis',
       backgroundColor: '#ffffff',
@@ -74,7 +85,7 @@ const renderBarChart = () => {
       textStyle: {
         color: '#1F2937',
         fontSize: 13,
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
+        fontFamily: chartFont
       },
       axisPointer: {
         type: 'shadow',
@@ -84,9 +95,11 @@ const renderBarChart = () => {
       },
       formatter: (params) => {
         const param = params[0]
-        return `<div style="padding: 8px;">
-          <strong style="color: #1e293b; font-weight: 600;">${param.name}</strong><br/>
-          <span style="color: #64748b;">Total: ${param.value} seguimientos</span>
+        const percent = Math.round((param.value / maxValue) * 100)
+        return `<div class="echarts-tooltip" style="--count:${param.value}; --percent:${percent}%">
+          <strong class="echarts-tooltip-title">${param.name}</strong><br/>
+          <span class="echarts-tooltip-value">Total: ${param.value} seguimientos</span>
+          <div class="echarts-tooltip-bar" aria-hidden></div>
         </div>`
       }
     },
@@ -97,15 +110,16 @@ const renderBarChart = () => {
       top: '22%',
       containLabel: true
     },
-    xAxis: {
+      xAxis: {
       type: 'category',
       data: data.map(d => d.category),
       position: 'top',
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { 
-        color: '#1e293b', 
-        fontSize: 10,
+      axisLabel: {
+        color: '#1e293b',
+        fontSize: 15,
+        fontFamily: chartFont,
         fontWeight: 500,
         interval: 0,
         rotate: 45,
@@ -135,7 +149,8 @@ const renderBarChart = () => {
           position: 'bottom',
           formatter: '{c}',
           color: '#304758',
-          fontSize: 11,
+          fontSize: 15,
+          fontFamily: chartFont,
           fontWeight: 600,
           distance: 10
         }

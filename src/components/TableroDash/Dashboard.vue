@@ -183,33 +183,15 @@ export default {
             }
           },
           formatter: function(params) {
-            let result = `<div style="padding: 12px;">
-              <div style="font-weight: 600;
-              color: #1F2937;
-              margin-bottom: 12px;
-              font-size: 15px;">
-                📅 ${params[0].axisValue}
-              </div>`
+            let result = `<div class="dashboard-tooltip">
+              <div class="dashboard-tooltip-title">📅 ${params[0].axisValue}</div>`
 
             params.reverse().forEach(item => {
               result += `
-                <div style="display: flex;
-                align-items: center;
-                margin-bottom: 6px;
-                color: #6B7280;
-                font-size: 13px;">
-
-                <div style="
-                width: 10px;
-                height: 10px;
-                background: ${item.color};
-                border-radius: 50%;
-                margin-right: 10px;"></div>
-                  <span style="flex: 1;">${item.seriesName}:</span>
-
-                <strong style="
-                color: #1F2937;
-                margin-left: 8px;">${item.value}</strong>
+                <div class="dashboard-tooltip-item">
+                  <div class="dashboard-tooltip-dot" style="background: ${item.color};"></div>
+                  <span class="dashboard-tooltip-series">${item.seriesName}:</span>
+                  <strong class="dashboard-tooltip-value">${item.value}</strong>
                 </div>`
             })
 
@@ -435,14 +417,14 @@ export default {
             const cantidad = params.value[1]
             const porcentaje = params.value[0]
             return `
-              <div style="padding: 16px;">
-                <div style="display: flex; align-items: center; margin-bottom: 12px;">
-                  <div style="width: 10px; height: 10px; background: ${params.color}; border-radius: 50%; margin-right: 10px;"></div>
-                  <strong style="color: #1F2937; font-size: 16px; font-weight: 600;">${estatus}</strong>
+              <div class="dashboard-tooltip dashboard-tooltip-padded">
+                <div class="dashboard-tooltip-header">
+                  <div class="dashboard-tooltip-dot" style="background: ${params.color};"></div>
+                  <strong class="dashboard-tooltip-header-title">${estatus}</strong>
                 </div>
-                <div style="color: #6B7280; font-size: 14px; line-height: 1.6;">
-                  <div style="margin-bottom: 4px;">Reportes: <strong style="color: #1F2937;">${cantidad.toLocaleString()}</strong></div>
-                  <div>Porcentaje: <strong style="color: #1F2937;">${porcentaje}%</strong></div>
+                <div class="dashboard-tooltip-desc">
+                  <div class="dashboard-tooltip-line">Reportes: <strong class="dashboard-tooltip-strong">${cantidad.toLocaleString()}</strong></div>
+                  <div class="dashboard-tooltip-line">Porcentaje: <strong class="dashboard-tooltip-strong">${porcentaje}%</strong></div>
                 </div>
               </div>
             `
@@ -612,14 +594,14 @@ export default {
             const value = params.value
             const name = params.name
             return `
-              <div style="padding: 16px;">
-                <div style="display: flex; align-items: center; margin-bottom: 12px;">
-                  <div style="width: 12px; height: 12px; background: ${params.color}; border-radius: 50%; margin-right: 10px;"></div>
-                  <strong style="color: #1F2937; font-size: 16px; font-weight: 600;">${name}</strong>
+              <div class="dashboard-tooltip dashboard-tooltip-padded">
+                <div class="dashboard-tooltip-header">
+                  <div class="dashboard-tooltip-dot" style="background: ${params.color};"></div>
+                  <strong class="dashboard-tooltip-header-title">${name}</strong>
                 </div>
-                <div style="color: #6B7280; font-size: 14px; line-height: 1.6;">
-                  <div style="margin-bottom: 4px;">Reportes: <strong style="color: #1F2937;">${value}</strong></div>
-                  <div>Porcentaje: <strong style="color: #1F2937;">${percentage}%</strong></div>
+                <div class="dashboard-tooltip-desc">
+                  <div class="dashboard-tooltip-line">Reportes: <strong class="dashboard-tooltip-strong">${value}</strong></div>
+                  <div class="dashboard-tooltip-line">Porcentaje: <strong class="dashboard-tooltip-strong">${percentage}%</strong></div>
                 </div>
               </div>
             `
@@ -776,13 +758,11 @@ export default {
               5: '🔵 Muy Bajo'
             }
             return `
-              <div style="padding: 16px;">
-                <div style="font-weight: 600; color: #1F2937; margin-bottom: 12px; font-size: 15px;">
-                  📅 ${punto[0]}
-                </div>
-                <div style="color: #6B7280; font-size: 14px; line-height: 1.6;">
-                  <div style="margin-bottom: 6px;">📈 Reportes: <strong style="color: #1F2937;">${punto[1]}</strong></div>
-                  <div>🧭 Nivel: <strong style="color: #1F2937;">${etiquetas[punto[2]]} (${punto[2]})</strong></div>
+              <div class="dashboard-tooltip dashboard-tooltip-padded">
+                <div class="dashboard-tooltip-title">📅 ${punto[0]}</div>
+                <div class="dashboard-tooltip-desc">
+                  <div class="dashboard-tooltip-line">📈 Reportes: <strong class="dashboard-tooltip-strong">${punto[1]}</strong></div>
+                  <div class="dashboard-tooltip-line">🧭 Nivel: <strong class="dashboard-tooltip-strong">${etiquetas[punto[2]]} (${punto[2]})</strong></div>
                 </div>
               </div>
             `
@@ -1036,5 +1016,6 @@ export default {
   }
 }
 import '@/assets/css/Dashboard.css'
+import '@/assets/css/pie_dashboard.css'
 </script>
 

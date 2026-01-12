@@ -7,45 +7,46 @@
 </template>
 
 <script setup>
+defineOptions({ name: 'ReportesChart' })
 import * as echarts from 'echarts';
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 const chart = ref(null);
 
-// Simula 60 días de datos: [fecha, cantidadReportes, nivel]
-function generarDatos() {
-  const data = [];
-  const inicio = new Date('2025-05-01');
+// Genera 60 días de datos agregados por estado: Pendiente, En Proceso, Atendido
+function generarTimelineDias(days = 60) {
+  const result = [];
+  const inicio = new Date();
+  inicio.setDate(inicio.getDate() - (days - 1));
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < days; i++) {
     const fecha = new Date(inicio);
     fecha.setDate(fecha.getDate() + i);
     const fechaStr = fecha.toISOString().split('T')[0];
 
-    const cantidad = Math.floor(Math.random() * 300) + 10; // entre 10 y 310 reportes
-    const nivel = Math.floor(Math.random() * 5) + 1;        // nivel 1 a 5
+    // valores aleatorios por estado (puedes reemplazar con datos reales)
+    const pendiente = Math.floor(Math.random() * 120) + 10;
+    const enProceso = Math.floor(Math.random() * 140) + 5;
+    const atendido = Math.floor(Math.random() * 180) + 2;
 
-    data.push([fechaStr, cantidad, nivel]);
+    result.push({ date: fechaStr, Pendiente: pendiente, 'En Proceso': enProceso, Atendido: atendido });
   }
 
-  return data;
+  return result;
 }
 
+let myChart = null
+
 onMounted(() => {
-  const myChart = echarts.init(chart.value);
-  const data = generarDatos();
+  myChart = echarts.init(chart.value);
+  const timelineData = generarTimelineDias(60).slice(-30); // últimos 30 días
 
   const option = {
     title: {
-      text: 'Cantidad de Reportes Ciudadanos por Día (Coloreado por Nivel)',
+      text: 'Tendencia Temporal de Reportes',
       left: 'center',
       top: 20,
-      textStyle: {
-        fontSize: 29,
-        fontWeight: '700',
-        color: '#1E40AF',
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
-      }
+      textStyle: { fontSize: 20, fontWeight: 700, color: '#1E40AF' }
     },
     tooltip: {
       trigger: 'axis',
@@ -53,215 +54,59 @@ onMounted(() => {
       borderColor: '#E5E7EB',
       borderWidth: 1,
       borderRadius: 12,
-      textStyle: {
-        color: '#1F2937',
-        fontSize: 14,
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
-      },
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+      textStyle: { color: '#1F2937' },
+      axisPointer: { type: 'cross' },
       formatter: function (params) {
-        const punto = params[0].data;
-        const etiquetas = {
-          1: '🔴 Crítico',
-          2: '🟠 Alto',
-          3: '🟡 Medio',
-          4: '🟢 Bajo',
-          5: '🔵 Muy Bajo'
-        };
-        return `
-          <div style="padding: 16px;">
-            <div style="font-weight: 600; color: #1F2937; margin-bottom: 12px; font-size: 15px;">
-              📅 ${punto[0]}
-            </div>
-            <div style="color: #6B7280; font-size: 14px; line-height: 1.6;">
-              <div style="margin-bottom: 6px;">📈 Reportes: <strong style="color: #1F2937;">${punto[1]}</strong></div>
-              <div>🧭 Nivel: <strong style="color: #1F2937;">${etiquetas[punto[2]]} (${punto[2]})</strong></div>
-            </div>
-          </div>
-        `;
+        const date = params[0]?.axisValue || '';
+        let html = `<div style="padding:12px"><strong style="color:#1F2937">📅 ${date}</strong><br/>`;
+        params.forEach(p => {
+          html += `<div style="color:#6B7280;margin-top:6px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${p.color};margin-right:8px;"></span>${p.seriesName}: <strong style="color:#111">${p.value}</strong></div>`;
+        });
+        html += '</div>';
+        return html;
       }
     },
-    grid: {
-      left: '6%',
-      right: '18%',
-      bottom: '15%',
-      top: '20%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: data.map(item => item[0]),
-      axisLine: {
-        lineStyle: {
-          color: '#E5E7EB',
-          width: 2
-        }
-      },
-      axisLabel: {
-        color: '#6B7280',
-        fontSize: 12,
-        fontFamily: '"Inter", "Segoe UI", sans-serif',
-        rotate: 45
-      },
-      axisTick: {
-        show: false
-      }
-    },
-    yAxis: {
-      type: 'value',
-      name: 'Cantidad de Reportes',
-      nameTextStyle: {
-        color: '#374151',
-        fontSize: 14,
-        fontFamily: '"Inter", "Segoe UI", sans-serif',
-        fontWeight: 500
-      },
-      axisLine: {
-        lineStyle: {
-          color: '#E5E7EB',
-          width: 2
-        }
-      },
-      axisLabel: {
-        color: '#6B7280',
-        fontSize: 12,
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
-      },
-      splitLine: {
-        lineStyle: {
-          color: '#F3F4F6',
-          width: 1,
-          type: 'dashed'
-        }
-      }
-    },
-    toolbox: {
-      right: 20,
-      top: 20,
-      feature: {
-        saveAsImage: {
-          pixelRatio: 2,
-          backgroundColor: '#ffffff'
-        }
-      },
-      iconStyle: {
-        borderColor: '#3B82F6',
-        borderWidth: 2
-      },
-      emphasis: {
-        iconStyle: {
-          borderColor: '#1E40AF'
-        }
-      }
-    },
-    dataZoom: [
+    legend: { top: 60, left: 'center' },
+    grid: { left: '6%', right: '8%', bottom: '12%', top: 110, containLabel: true },
+    xAxis: { type: 'category', data: timelineData.map(d => d.date), axisLabel: { rotate: 45 } },
+    yAxis: { type: 'value' },
+    toolbox: { feature: { saveAsImage: {} }, right: 20, top: 20 },
+    series: [
       {
-        startValue: data[0][0],
-        backgroundColor: '#F8FAFC',
-        fillerColor: 'rgba(59, 130, 246, 0.2)',
-        borderColor: '#3B82F6',
-        handleStyle: {
-          color: '#3B82F6',
-          borderColor: '#1E40AF'
-        },
-        textStyle: {
-          color: '#374151',
-          fontFamily: '"Inter", "Segoe UI", sans-serif'
-        }
+        name: 'Pendiente',
+        type: 'line',
+        data: timelineData.map(d => d.Pendiente),
+        smooth: true,
+        lineStyle: { width: 2, type: 'dashed' },
+        itemStyle: { color: '#93c5fd' }
       },
       {
-        type: 'inside'
+        name: 'En Proceso',
+        type: 'line',
+        data: timelineData.map(d => d['En Proceso']),
+        smooth: true,
+        lineStyle: { width: 2 },
+        itemStyle: { color: '#3b82f6' }
+      },
+      {
+        name: 'Atendido',
+        type: 'line',
+        data: timelineData.map(d => d.Atendido),
+        smooth: true,
+        lineStyle: { width: 3 },
+        itemStyle: { color: '#1e40af' }
       }
-    ],
-    visualMap: {
-      top: 80,
-      right: 15,
-      dimension: 2, // usamos el índice del nivel para colorear
-      pieces: [
-        { value: 1, color: '#DC2626', label: '🔴 Crítico' },
-        { value: 2, color: '#EA580C', label: '🟠 Alto' },
-        { value: 3, color: '#D97706', label: '🟡 Medio' },
-        { value: 4, color: '#059669', label: '🟢 Bajo' },
-        { value: 5, color: '#2563EB', label: '🔵 Muy Bajo' }
-      ],
-      outOfRange: {
-        color: '#9CA3AF'
-      },
-      textStyle: {
-        color: '#374151',
-        fontSize: 12,
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
-      },
-      itemWidth: 14,
-      itemHeight: 14,
-      itemGap: 8,
-      backgroundColor: '#F8FAFC',
-      borderColor: '#E5E7EB',
-      borderWidth: 1,
-      borderRadius: 8,
-      padding: 12
-    },
-    series: {
-      name: 'Cantidad de Reportes',
-      type: 'line',
-      showSymbol: true,
-      symbolSize: 6,
-      data: data.map(item => [item[0], item[1], item[2]]),
-      lineStyle: {
-        width: 3,
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
-        shadowBlur: 4,
-        shadowOffsetY: 2
-      },
-      itemStyle: {
-        borderWidth: 2,
-        borderColor: '#ffffff',
-        shadowColor: 'rgba(0, 0, 0, 0.1)',
-        shadowBlur: 4,
-        shadowOffsetY: 2
-      },
-      emphasis: {
-        symbolSize: 10,
-        itemStyle: {
-          borderWidth: 3,
-          shadowBlur: 8,
-          shadowOffsetY: 4
-        }
-      },
-      encode: {
-        x: 0, // fecha
-        y: 1  // cantidad
-      },
-      smooth: 0.3,
-      animationDuration: 1200,
-      animationEasing: 'cubicOut',
-      markLine: {
-        silent: true,
-        lineStyle: {
-          color: '#D1D5DB',
-          width: 1,
-          type: 'dashed',
-          opacity: 0.6
-        },
-        label: {
-          color: '#9CA3AF',
-          fontSize: 11,
-          fontFamily: '"Inter", "Segoe UI", sans-serif'
-        },
-        data: [
-          { yAxis: 50, name: '50' },
-          { yAxis: 100, name: '100' },
-          { yAxis: 200, name: '200' },
-          { yAxis: 300, name: '300' }
-        ]
-      }
-    }
+    ]
   };
 
   myChart.setOption(option);
-  window.addEventListener('resize', () => {
-    myChart.resize();
-  });
+  const resizeHandler = () => myChart && myChart.resize()
+  window.addEventListener('resize', resizeHandler)
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', resizeHandler)
+    if (myChart) myChart.dispose()
+  })
 });
 </script>
 

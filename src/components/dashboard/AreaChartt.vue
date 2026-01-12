@@ -1,33 +1,39 @@
-<!-- src/components/GradientAreaChart.vue -->
+<!-- AreaChartt component removed -->
 <template>
   <div class="area-chart-wrapper">
+    <div class="area-chart-header">
+      <h2 class="area-chart-title">Gráfico de Estado de peticiones</h2>
+      <div class="area-chart-legend">
+        <template v-for="(item, idx) in legendItems" :key="idx">
+          <div class="legend-item" :class="{ active: item.active }" @click="toggleSeries(idx)">
+            <span class="legend-dot" :style="{ '--legend-color': item.color }"></span>
+            <span class="legend-label">{{ item.name }}</span>
+          </div>
+        </template>
+      </div>
+    </div>
     <div ref="chart" class="chart-canvas"></div>
   </div>
 </template>
 
 <script setup>
-  import '@/assets/css/areachartt_dashboard.css'
-import { onMounted, ref } from 'vue'
+import '@/assets/css/areachartt_dashboard.css'
+import { onMounted, onUnmounted, ref } from 'vue'
 import * as echarts from 'echarts'
 
 const chart = ref(null)
+const legendItems = ref([])
+const myChartRef = ref(null)
+const originalSeries = ref([])
+
+// legend DOM removed — ECharts internal legend or other components can be used instead
 
 onMounted(() => {
   const myChart = echarts.init(chart.value)
+  myChartRef.value = myChart
 
   const option = {
     color: ['#059669', '#2563EB', '#DC2626', '#EA580C', '#B91C1C'],
-    title: {
-      text: 'Gráfico de Estado de peticiones',
-      left: 'center',
-      top: 20,
-      textStyle: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#1E40AF',
-        fontFamily: '"Inter", "Segoe UI", sans-serif'
-      }
-    },
     tooltip: {
       trigger: 'axis',
       backgroundColor: '#ffffff',
@@ -68,7 +74,7 @@ onMounted(() => {
         params.reverse().forEach(item => {
           result += `
             <div class="tooltip-item">
-              <div class="tooltip-color-dot" style="background: ${item.color};"></div>
+              <div class="tooltip-color-dot" style="--dot: ${item.color};"></div>
               <span class="tooltip-label">${item.seriesName}:</span>
               <strong class="tooltip-value">${item.value}</strong>
             </div>`;
@@ -78,21 +84,7 @@ onMounted(() => {
         return result;
       }
     },
-    legend: {
-      data: ['Completado', 'Sin revisar', 'Esperando revision', 'Rechazado por el departamento', 'No completado'],
-      top: '12%',
-      left: 'center',
-      textStyle: {
-        color: '#374151',
-        fontSize: 13,
-        fontFamily: '"Inter", "Segoe UI", sans-serif',
-        fontWeight: 500
-      },
-      itemGap: 24,
-      itemWidth: 12,
-      itemHeight: 12,
-      icon: 'circle'
-    },
+    // legend moved to DOM header; keep no legend in option
     toolbox: {
       right: 20,
       top: 20,
@@ -123,7 +115,7 @@ onMounted(() => {
       {
         type: 'category',
         boundaryGap: false,
-        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
         axisLine: {
           lineStyle: {
             color: '#E5E7EB',
@@ -263,10 +255,45 @@ onMounted(() => {
 
   myChart.setOption(option)
 
-  window.addEventListener('resize', () => {
-    myChart.resize()
+  // store original series (keep references to gradients/data)
+  originalSeries.value = option.series.map(s => ({ ...s }))
+
+  // populate legend items for DOM legend (use option.color palette)
+  legendItems.value = originalSeries.value.map((s, i) => ({
+    name: s.name,
+    color: (option.color && option.color[i]) || '#9CA3AF',
+    active: true
+  }))
+
+  // (legend DOM removed) — keep series as-is
+
+  const onResize = () => myChart.resize()
+  window.addEventListener('resize', onResize)
+
+  onUnmounted(() => {
+    window.removeEventListener('resize', onResize)
+    myChart.dispose()
   })
 })
+
+function toggleSeries(idx) {
+  const item = legendItems.value[idx]
+  if (!item) return
+  item.active = !item.active
+
+  // build series array preserving original data; only modify visual props
+  const seriesUpdates = originalSeries.value.map((s, i) => {
+    const active = legendItems.value[i].active
+    if (active) return s
+
+    const clone = { ...s }
+    clone.areaStyle = { ...(s.areaStyle || {}), opacity: 0 }
+    clone.lineStyle = { ...(s.lineStyle || {}), opacity: 0 }
+    clone.label = { ...((s.label) || {}), show: false }
+    clone.showSymbol = false
+    return clone
+  })
+
+  if (myChartRef.value) myChartRef.value.setOption({ series: seriesUpdates })
+}
 </script>
-
-

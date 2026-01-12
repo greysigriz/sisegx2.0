@@ -7,7 +7,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    }
+        font-family: "Inter", "Segoe UI", sans-serif;
+        }
 
     .chart-header {
     display: flex;
@@ -77,16 +78,44 @@
     align-self: flex-start;
     }
 
+    /* ECharts tooltip styles extracted from BarChart.vue inline styles */
+    .echarts-tooltip {
+        padding: 8px;
+    }
+    .echarts-tooltip-title {
+        color: #1e293b;
+        font-weight: 600;
+    }
+    .echarts-tooltip-value {
+        color: #64748b;
+    }
+
+    /* Visual progress bar and usage of CSS variables set by the tooltip formatter */
+    .echarts-tooltip {
+        --count: 0;
+        --percent: 0%;
+    }
+    .echarts-tooltip-bar {
+        width: var(--percent);
+        height: 8px;
+        background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+        border-radius: 6px;
+        margin-top: 8px;
+    }
+    .echarts-tooltip .echarts-tooltip-value::before {
+        content: " ";
+    }
+
     @media (max-width: 768px) {
     .chart-header {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .top-filter-select {
         width: 100%;
     }
-    
+
     .bar-chart {
         height: 350px;
     }

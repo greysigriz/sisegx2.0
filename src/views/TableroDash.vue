@@ -23,29 +23,29 @@
 
 <script>
 import YucatanHeader from "@/components/dashboard/YucatanHeader.vue"
-import MunicipiosYucatan from "@/components/dashboard/MunicipiosYucatan.vue"
+// import MunicipiosYucatan from "@/components/dashboard/MunicipiosYucatan.vue"
 import DashboardCards from "@/components/dashboard/DashboardCards.vue"
 import AreaChart from "@/components/dashboard/AreaChartt.vue"
 import BarChart from "@/components/dashboard/BarChart.vue"
 import PieChart from "@/components/dashboard/PieChart.vue"
 import '@/assets/css/Dashboard.css'
 
-import Reportes from "@/components/Reportes.vue"
+import Reportes from "@/components/ReportsTable.vue"
 import MapaProblemas from "@/components/MapaProblemas.vue"
-import TablaDeps from "@/components/TablaDeps.vue"
+// import TablaDeps from "@/components/TableroDash/TablaDeps.vue"
 
 export default {
   name: "DashboardReportes",
   components: {
     YucatanHeader,
-    MunicipiosYucatan,
+    //MunicipiosYucatan,
     DashboardCards,
     AreaChart,
     BarChart,
     PieChart,
     Reportes,
     MapaProblemas,
-    TablaDeps
+    //TablaDeps
   }
 }
 </script>

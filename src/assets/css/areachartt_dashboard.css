@@ -29,6 +29,50 @@
     height: 500px;
 }
 
+/* Title + Legend DOM styles */
+.area-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 12px;
+}
+.area-chart-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1E40AF;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    margin: 0;
+}
+.area-chart-legend {
+    list-style: none;
+    display: flex;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+    align-items: center;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.legend-item:hover { background: rgba(59,130,246,0.06); }
+.legend-item.active { background: var(--legend-color, #b5d5ff); color: #000000; border-color: transparent; }
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--legend-color, #4465fa);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.legend-label { font-size: 13px; font-weight: 600; color: inherit; }
+
 /* Tooltip styles */
 .tooltip-container {
     padding: 12px;
@@ -54,6 +98,7 @@
     height: 10px;
     border-radius: 50%;
     margin-right: 10px;
+    background: var(--dot, #cbd5e1);
 }
 
 .tooltip-label {
