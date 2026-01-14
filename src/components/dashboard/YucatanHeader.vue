@@ -64,7 +64,6 @@
 </template>
 
 <script>
-import '@/assets/css/header_dashboard.css'
 import HeaderFuncionalidad from '@/components/TableroDash/header_funcionalidad.vue'
 
 export default {
@@ -73,3 +72,4 @@ export default {
 };
 </script>
 
+<style src="@/assets/css/header_dashboard.css"></style>

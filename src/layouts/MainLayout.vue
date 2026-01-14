@@ -17,7 +17,6 @@
         </div> -->
       </header>
 
-
       <router-view />
     </main>
   </div>
@@ -124,6 +123,7 @@ export default {
   font-size: 22px;
   font-weight: 600;
   color: #1630b1; /* Cambia este valor al color que desees */
+
 }
 
 .header-actions {

@@ -194,7 +194,17 @@
               <p>{{ usuario.Nombre }} {{ usuario.ApellidoP }} {{ usuario.ApellidoM }}</p>
             </div>
             <div class="usuario-info">
-              <span class="badge-rol">{{ usuario.NombreRol || 'Sin rol' }}</span>
+              <div class="usuario-roles" v-if="usuario.Roles && usuario.Roles.length > 0">
+                <span
+                  v-for="rol in usuario.Roles"
+                  :key="rol.Id"
+                  class="badge-rol"
+                  :title="rol.Descripcion"
+                >
+                  {{ rol.Nombre }}
+                </span>
+              </div>
+              <span v-else class="badge-rol badge-sin-rol">Sin rol</span>
             </div>
             <div class="usuario-info">
               <span
@@ -400,13 +410,28 @@
             </div>
 
             <div class="form-group">
-              <label for="rol">Rol del Sistema: *</label>
-              <select id="rol" v-model="usuarioForm.IdRolSistema" required>
-                <option value="">Seleccione un rol</option>
-                <option v-for="rol in roles" :key="rol.Id" :value="rol.Id">
-                  {{ rol.Nombre }}
-                </option>
-              </select>
+              <label>Roles del Sistema: *</label>
+              <div class="roles-selection">
+                <div
+                  v-for="rol in roles"
+                  :key="rol.Id"
+                  class="role-checkbox-item"
+                >
+                  <input
+                    type="checkbox"
+                    :id="'rol-' + rol.Id"
+                    :value="rol.Id"
+                    v-model="usuarioForm.RolesSeleccionados"
+                  />
+                  <label :for="'rol-' + rol.Id">
+                    <span class="rol-nombre">{{ rol.Nombre }}</span>
+                    <span v-if="rol.Descripcion" class="rol-descripcion">{{ rol.Descripcion }}</span>
+                  </label>
+                </div>
+              </div>
+              <small v-if="usuarioForm.RolesSeleccionados.length === 0" class="error-text">
+                Debe seleccionar al menos un rol
+              </small>
             </div>
 
             <div class="form-actions">
@@ -447,8 +472,18 @@
               <p>{{ usuarioDetalle.Puesto || 'No especificado' }}</p>
             </div>
             <div class="detalle-item">
-              <label>Rol:</label>
-              <p><span class="badge-rol">{{ usuarioDetalle.NombreRol || 'Sin rol' }}</span></p>
+              <label>Roles:</label>
+              <div class="usuario-roles" v-if="usuarioDetalle.Roles && usuarioDetalle.Roles.length > 0">
+                <span
+                  v-for="rol in usuarioDetalle.Roles"
+                  :key="rol.Id"
+                  class="badge-rol"
+                  :title="rol.Descripcion"
+                >
+                  {{ rol.Nombre }}
+                </span>
+              </div>
+              <p v-else><span class="badge-rol badge-sin-rol">Sin roles</span></p>
             </div>
             <div class="detalle-item">
               <label>Estatus:</label>
@@ -685,7 +720,8 @@ export default {
         Estatus: 'ACTIVO',
         IdDivisionAdm: null,
         IdUnidad: null,
-        IdRolSistema: null,
+        IdRolSistema: null, // Mantener por compatibilidad
+        RolesSeleccionados: [], // NUEVO: Array de IDs de roles
         Password: ''
       },
       usuarioEliminar: null,
@@ -881,23 +917,50 @@ export default {
         IdDivisionAdm: null,
         IdUnidad: null,
         IdRolSistema: null,
+        RolesSeleccionados: [],
         Password: ''
       };
       this.showModal = true;
     },
-    editarUsuario(usuario) {
+    async editarUsuario(usuario) {
       this.modoEdicion = true;
       // Asegurarse de que los valores nulos se preserven como nulos
       this.usuarioForm = {
         ...usuario,
         Password: '',
         IdDivisionAdm: usuario.IdDivisionAdm || null,
-        IdUnidad: usuario.IdUnidad || null
+        IdUnidad: usuario.IdUnidad || null,
+        RolesSeleccionados: []
       };
+
+      // Cargar los roles del usuario
+      try {
+        const response = await axios.get(
+          `${this.backendUrl}/usuario-roles.php?idUsuario=${usuario.Id}`
+        );
+        this.usuarioForm.RolesSeleccionados = response.data.records.map(r => r.IdRolSistema);
+      } catch (error) {
+        console.error('Error al cargar roles del usuario:', error);
+        // Si hay error, usar el rol antiguo como fallback
+        if (usuario.IdRolSistema) {
+          this.usuarioForm.RolesSeleccionados = [usuario.IdRolSistema];
+        }
+      }
+
       this.showModal = true;
     },
     async guardarUsuario() {
       try {
+        // Validar que tenga al menos un rol
+        if (!this.usuarioForm.RolesSeleccionados || this.usuarioForm.RolesSeleccionados.length === 0) {
+          if (this.$toast) {
+            this.$toast.error('Debe seleccionar al menos un rol');
+          } else {
+            alert('Debe seleccionar al menos un rol');
+          }
+          return;
+        }
+
         // Crear una copia del formulario para enviar
         const formData = {...this.usuarioForm};
 
@@ -905,10 +968,15 @@ export default {
         if (formData.IdDivisionAdm === "null") formData.IdDivisionAdm = null;
         if (formData.IdUnidad === "null") formData.IdUnidad = null;
 
+        // Mantener el primer rol seleccionado como IdRolSistema por compatibilidad
+        formData.IdRolSistema = this.usuarioForm.RolesSeleccionados[0];
+
+        let userId;
         // Verificar si es una actualización o creación
         if (this.modoEdicion) {
           // Actualizar usuario existente
           await axios.put(`${this.backendUrl}/usuarios.php`, formData);
+          userId = formData.Id;
           if (this.$toast) {
             this.$toast.success('Usuario actualizado correctamente');
           } else {
@@ -916,12 +984,21 @@ export default {
           }
         } else {
           // Crear nuevo usuario
-          await axios.post(`${this.backendUrl}/usuarios.php`, formData);
+          const response = await axios.post(`${this.backendUrl}/usuarios.php`, formData);
+          userId = response.data.userId || response.data.id;
           if (this.$toast) {
             this.$toast.success('Usuario creado correctamente');
           } else {
             alert('Usuario creado correctamente');
           }
+        }
+
+        // Guardar los roles del usuario en la tabla intermedia
+        if (userId) {
+          await axios.post(`${this.backendUrl}/usuario-roles.php`, {
+            idUsuario: userId,
+            roles: this.usuarioForm.RolesSeleccionados
+          });
         }
 
         // Recargar usuarios y cerrar modal
@@ -1331,19 +1408,21 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+/* Sin scoped - usando namespace .usuarios-container para evitar conflictos */
+
 .usuarios-container {
   padding: 20px;
 }
 
-.card {
+.usuarios-container .card {
   background-color: var(--white-color);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-.card-header {
+.usuarios-container .card-header {
   padding: 20px;
   background-color: var(--white-color);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
@@ -1352,25 +1431,25 @@ export default {
   align-items: center;
 }
 
-.card-header h3 {
+.usuarios-container .card-header h3 {
   margin: 0;
   color: white;
   font-size: 18px;
 }
 
-.card-body {
+.usuarios-container .card-body {
   padding: 20px;
 }
 
 /* Estadísticas */
-.stats-grid {
+.usuarios-container .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.stat-card {
+.usuarios-container .stat-card {
   background: white;
   border-radius: 8px;
   padding: 20px;
@@ -1381,12 +1460,12 @@ export default {
   transition: transform 0.2s;
 }
 
-.stat-card:hover {
+.usuarios-container .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.stat-icon {
+.usuarios-container .stat-icon {
   width: 50px;
   height: 50px;
   border-radius: 8px;
@@ -1397,35 +1476,46 @@ export default {
   color: white;
 }
 
-.stat-icon.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.stat-icon.active { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
-.stat-icon.inactive { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.stat-icon.roles { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+.usuarios-container .stat-icon.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
 
-.stat-info {
+.usuarios-container .stat-icon.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.usuarios-container .stat-icon.inactive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.usuarios-container .stat-icon.roles {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.usuarios-container .stat-info {
   flex: 1;
 }
 
-.stat-value {
+.usuarios-container .stat-value {
   font-size: 28px;
   font-weight: 700;
   color: var(--secondary-color);
   margin: 0;
 }
 
-.stat-label {
+.usuarios-container .stat-label {
   font-size: 14px;
   color: #666;
   margin: 5px 0 0 0;
 }
 
 /* Header actions */
-.header-actions {
+.usuarios-container .header-actions {
   display: flex;
   gap: 10px;
 }
 
-.btn-export {
+.usuarios-container .btn-export {
   background: #10b981;
   color: white;
   border: none;
@@ -1439,11 +1529,11 @@ export default {
   font-size: 14px;
 }
 
-.btn-export:hover {
+.usuarios-container .btn-export:hover {
   background: #059669;
 }
 
-.btn-primary {
+.usuarios-container .btn-primary {
   background-color: var(--primary-color);
   color: white;
   border: none;
@@ -1457,31 +1547,31 @@ export default {
   font-size: 14px;
 }
 
-.btn-primary:hover {
+.usuarios-container .btn-primary:hover {
   background-color: var(--secondary-color);
 }
 
 /* Búsqueda y filtros */
-.search-filter-container {
+.usuarios-container .search-filter-container {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-.search-box {
+.usuarios-container .search-box {
   flex: 1;
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-box i {
+.usuarios-container .search-box i {
   position: absolute;
   left: 15px;
   color: #999;
 }
 
-.search-box input {
+.usuarios-container .search-box input {
   width: 100%;
   padding: 12px 45px 12px 45px;
   border: 2px solid #e5e7eb;
@@ -1490,13 +1580,13 @@ export default {
   transition: all 0.3s;
 }
 
-.search-box input:focus {
+.usuarios-container .search-box input:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.clear-search {
+.usuarios-container .clear-search {
   position: absolute;
   right: 10px;
   background: none;
@@ -1506,7 +1596,7 @@ export default {
   padding: 5px;
 }
 
-.btn-filter {
+.usuarios-container .btn-filter {
   background: white;
   border: 2px solid #e5e7eb;
   padding: 10px 20px;
@@ -1522,12 +1612,12 @@ export default {
   color: rgb(151, 148, 148);
 }
 
-.btn-filter:hover {
+.usuarios-container .btn-filter:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.filter-badge {
+.usuarios-container .filter-badge {
   background: var(--primary-color);
   color: white;
   border-radius: 50%;
@@ -1540,7 +1630,7 @@ export default {
   font-weight: 700;
 }
 
-.btn-refresh {
+.usuarios-container .btn-refresh {
   background: white;
   border: 2px solid #e5e7eb;
   padding: 10px 15px;
@@ -1549,21 +1639,23 @@ export default {
   transition: all 0.3s;
 }
 
-.btn-refresh:hover {
+.usuarios-container .btn-refresh:hover {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.spinning {
+.usuarios-container .spinning {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Panel de filtros */
-.filtros-panel {
+.usuarios-container .filtros-panel {
   background: #f9fafb;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
@@ -1571,14 +1663,14 @@ export default {
   margin-bottom: 20px;
 }
 
-.filtros-grid {
+.usuarios-container .filtros-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   margin-bottom: 15px;
 }
 
-.filter-group label {
+.usuarios-container .filter-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
@@ -1586,7 +1678,7 @@ export default {
   color: var(--secondary-color);
 }
 
-.filter-group select {
+.usuarios-container .filter-group select {
   width: 100%;
   padding: 10px;
   border: 1px solid #e5e7eb;
@@ -1594,12 +1686,12 @@ export default {
   font-size: 14px;
 }
 
-.filtros-actions {
+.usuarios-container .filtros-actions {
   display: flex;
   justify-content: flex-end;
 }
 
-.btn-clear-filters {
+.usuarios-container .btn-clear-filters {
   background: #ef4444;
   color: white;
   border: none;
@@ -1613,24 +1705,24 @@ export default {
   transition: all 0.3s;
 }
 
-.btn-clear-filters:hover {
+.usuarios-container .btn-clear-filters:hover {
   background: #dc2626;
 }
 
 /* Resultados */
-.results-info {
+.usuarios-container .results-info {
   margin-bottom: 15px;
   font-size: 14px;
   color: #666;
 }
 
-.results-info span {
+.usuarios-container .results-info span {
   color: var(--primary-color);
   font-weight: 500;
 }
 
 /* Lista */
-.usuarios-list {
+.usuarios-container .usuarios-list {
   margin-top: 20px;
   border-radius: 8px;
   overflow: hidden;
@@ -1638,7 +1730,7 @@ export default {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.list-header {
+.usuarios-container .list-header {
   display: grid;
   grid-template-columns: 40px 1fr 1.5fr 1fr 0.8fr 1fr 0.8fr;
   background-color: rgba(39, 135, 245, 0.926);
@@ -1647,13 +1739,13 @@ export default {
   color: white;
 }
 
-.header-check {
+.usuarios-container .header-check {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sortable {
+.usuarios-container .sortable {
   cursor: pointer;
   user-select: none;
   display: flex;
@@ -1661,11 +1753,11 @@ export default {
   gap: 5px;
 }
 
-.sortable:hover {
+.usuarios-container .sortable:hover {
   opacity: 0.7;
 }
 
-.usuario-item {
+.usuarios-container .usuario-item {
   display: grid;
   grid-template-columns: 40px 1fr 1.5fr 1fr 0.8fr 1fr 0.8fr;
   padding: 15px;
@@ -1673,32 +1765,32 @@ export default {
   transition: var(--transition);
 }
 
-.usuario-item:hover {
+.usuarios-container .usuario-item:hover {
   background-color: rgba(22, 84, 177, 0.05);
 }
 
-.usuario-check {
+.usuarios-container .usuario-check {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.usuario-info {
+.usuarios-container .usuario-info {
   display: flex;
   align-items: center;
 }
 
-.usuario-info p {
+.usuarios-container .usuario-info p {
   margin: 0;
   color: var(--secondary-color);
 }
 
-.usuario-nombre {
+.usuarios-container .usuario-nombre {
   font-weight: 600;
   color: var(--primary-color);
 }
 
-.badge-rol {
+.usuarios-container .badge-rol {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 4px 12px;
@@ -1708,7 +1800,7 @@ export default {
   display: inline-block;
 }
 
-.badge-status {
+.usuarios-container .badge-status {
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 12px;
@@ -1717,17 +1809,17 @@ export default {
   display: inline-block;
 }
 
-.badge-status.active {
+.usuarios-container .badge-status.active {
   background: #d1fae5;
   color: #065f46;
 }
 
-.badge-status.inactive {
+.usuarios-container .badge-status.inactive {
   background: #fee2e2;
   color: #991b1b;
 }
 
-.badge-subordinados {
+.usuarios-container .badge-subordinados {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 4px 12px;
@@ -1741,13 +1833,13 @@ export default {
   white-space: nowrap;
 }
 
-.usuario-actions {
+.usuarios-container .usuario-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
 }
 
-.action-btn {
+.usuarios-container .action-btn {
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1759,49 +1851,50 @@ export default {
   transition: var(--transition);
 }
 
-.action-btn.view {
+.usuarios-container .action-btn.view {
   background-color: #8b5cf6;
   color: white;
 }
 
-.action-btn.edit {
+.usuarios-container .action-btn.edit {
   background-color: #f0ad4e;
   color: white;
 }
 
-.action-btn.toggle {
+.usuarios-container .action-btn.toggle {
   background-color: #06b6d4;
   color: white;
 }
 
-.action-btn.hierarchy {
+.usuarios-container .action-btn.hierarchy {
   background-color: #5bc0de;
   color: white;
 }
 
-.action-btn.delete {
+.usuarios-container .action-btn.delete {
   background-color: #d9534f;
   color: white;
 }
 
-.action-btn:hover {
+.usuarios-container .action-btn:hover {
   opacity: 0.8;
 }
 
-.loading-message, .empty-message {
+.usuarios-container .loading-message,
+.usuarios-container .empty-message {
   padding: 40px 20px;
   text-align: center;
   color: var(--secondary-color);
 }
 
-.empty-message i {
+.usuarios-container .empty-message i {
   font-size: 48px;
   color: #ccc;
   margin-bottom: 10px;
 }
 
 /* Acciones masivas - Versión más delgada */
-.acciones-masivas {
+.usuarios-container .acciones-masivas {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -1817,7 +1910,7 @@ export default {
   border: 1px solid rgba(0,0,0,0.08);
 }
 
-.acciones-info {
+.usuarios-container .acciones-info {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1828,21 +1921,21 @@ export default {
   border-right: 1px solid rgba(0,0,0,0.1);
 }
 
-.acciones-info i {
+.usuarios-container .acciones-info i {
   color: var(--primary-color);
   font-size: 14px;
 }
 
-.acciones-info span {
+.usuarios-container .acciones-info span {
   white-space: nowrap;
 }
 
-.acciones-buttons {
+.usuarios-container .acciones-buttons {
   display: flex;
   gap: 6px;
 }
 
-.btn-mass-action {
+.usuarios-container .btn-mass-action {
   width: 36px;
   height: 36px;
   border: none;
@@ -1856,7 +1949,7 @@ export default {
   position: relative;
 }
 
-.btn-mass-action::before {
+.usuarios-container .btn-mass-action::before {
   content: attr(title);
   position: absolute;
   bottom: calc(100% + 8px);
@@ -1874,53 +1967,53 @@ export default {
   font-weight: 500;
 }
 
-.btn-mass-action:hover::before {
+.usuarios-container .btn-mass-action:hover::before {
   transform: translateX(-50%) scale(1);
   opacity: 1;
 }
 
-.btn-mass-action i {
+.usuarios-container .btn-mass-action i {
   color: white;
 }
 
-.btn-mass-action.cancel {
+.usuarios-container .btn-mass-action.cancel {
   background: #6b7280;
 }
 
-.btn-mass-action.cancel:hover {
+.usuarios-container .btn-mass-action.cancel:hover {
   background: #4b5563;
   transform: scale(1.1);
 }
 
-.btn-mass-action.success {
+.usuarios-container .btn-mass-action.success {
   background: #10b981;
 }
 
-.btn-mass-action.success:hover {
+.usuarios-container .btn-mass-action.success:hover {
   background: #059669;
   transform: scale(1.1);
 }
 
-.btn-mass-action.warning {
+.usuarios-container .btn-mass-action.warning {
   background: #f59e0b;
 }
 
-.btn-mass-action.warning:hover {
+.usuarios-container .btn-mass-action.warning:hover {
   background: #d97706;
   transform: scale(1.1);
 }
 
-.btn-mass-action.danger {
+.usuarios-container .btn-mass-action.danger {
   background: #ef4444;
 }
 
-.btn-mass-action.danger:hover {
+.usuarios-container .btn-mass-action.danger:hover {
   background: #dc2626;
   transform: scale(1.1);
 }
 
 /* Paginación */
-.pagination {
+.usuarios-container .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1928,7 +2021,7 @@ export default {
   margin-top: 30px;
 }
 
-.pagination-btn {
+.usuarios-container .pagination-btn {
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
   background: white;
@@ -1939,23 +2032,23 @@ export default {
   min-width: 40px;
 }
 
-.pagination-btn:hover:not(:disabled) {
+.usuarios-container .pagination-btn:hover:not(:disabled) {
   border-color: var(--primary-color);
   color: var(--primary-color);
 }
 
-.pagination-btn.active {
+.usuarios-container .pagination-btn.active {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
 }
 
-.pagination-btn:disabled {
+.usuarios-container .pagination-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.items-per-page {
+.usuarios-container .items-per-page {
   margin-left: 20px;
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
@@ -1964,7 +2057,7 @@ export default {
 }
 
 /* Modales */
-.modal-overlay {
+.usuarios-container .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1977,7 +2070,7 @@ export default {
   z-index: 1000;
 }
 
-.modal-content {
+.usuarios-container .modal-content {
   background-color: var(--white-color);
   border-radius: 8px;
   width: 90%;
@@ -1986,15 +2079,15 @@ export default {
   overflow-y: auto;
 }
 
-.modal-detalles {
+.usuarios-container .modal-detalles {
   max-width: 700px;
 }
 
-.confirm-modal {
+.usuarios-container .confirm-modal {
   max-width: 500px;
 }
 
-.modal-header {
+.usuarios-container .modal-header {
   padding: 15px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
@@ -2002,12 +2095,12 @@ export default {
   align-items: center;
 }
 
-.modal-header h3 {
+.usuarios-container .modal-header h3 {
   margin: 0;
   color: var(--secondary-color);
 }
 
-.close-btn {
+.usuarios-container .close-btn {
   background: none;
   border: none;
   font-size: 18px;
@@ -2015,22 +2108,24 @@ export default {
   color: var(--secondary-color);
 }
 
-.modal-body {
+.usuarios-container .modal-body {
   padding: 20px;
 }
 
-.form-group {
+.usuarios-container .form-group {
   margin-bottom: 15px;
 }
 
-.form-group label {
+.usuarios-container .form-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
   color: var(--secondary-color);
 }
 
-.form-group input, .form-group select, .form-group textarea {
+.usuarios-container .form-group input,
+.usuarios-container .form-group select,
+.usuarios-container .form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -2038,21 +2133,21 @@ export default {
   font-size: 14px;
 }
 
-.form-row {
+.usuarios-container .form-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   margin-bottom: 15px;
 }
 
-.form-actions {
+.usuarios-container .form-actions {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.btn-secondary {
+.usuarios-container .btn-secondary {
   background-color: #f8f9fa;
   color: var(--secondary-color);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -2062,7 +2157,7 @@ export default {
   transition: var(--transition);
 }
 
-.btn-danger {
+.usuarios-container .btn-danger {
   background-color: #d9534f;
   color: white;
   border: none;
@@ -2072,23 +2167,23 @@ export default {
   transition: var(--transition);
 }
 
-.detalles-grid {
+.usuarios-container .detalles-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.detalle-item {
+.usuarios-container .detalle-item {
   padding: 15px;
   background: #f9fafb;
   border-radius: 8px;
 }
 
-.detalle-item.full-width {
+.usuarios-container .detalle-item.full-width {
   grid-column: 1 / -1;
 }
 
-.detalle-item label {
+.usuarios-container .detalle-item label {
   display: block;
   font-size: 12px;
   color: #666;
@@ -2098,14 +2193,14 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.detalle-item p {
+.usuarios-container .detalle-item p {
   margin: 0;
   font-size: 16px;
   color: var(--secondary-color);
   font-weight: 500;
 }
 
-.warning-text {
+.usuarios-container .warning-text {
   background: #fef3c7;
   border-left: 4px solid #f59e0b;
   padding: 12px;
@@ -2118,17 +2213,17 @@ export default {
   font-size: 14px;
 }
 
-.warning-text i {
+.usuarios-container .warning-text i {
   color: #f59e0b;
   font-size: 18px;
 }
 
 /* Modal de confirmación mejorado */
-.confirm-modal {
+.usuarios-container .confirm-modal {
   max-width: 500px;
 }
 
-.usuarios-preview {
+.usuarios-container .usuarios-preview {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 15px;
@@ -2136,14 +2231,14 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
-.preview-title {
+.usuarios-container .preview-title {
   font-weight: 600;
   color: var(--secondary-color);
   margin: 0 0 10px 0;
   font-size: 14px;
 }
 
-.usuarios-list-preview {
+.usuarios-container .usuarios-list-preview {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -2151,7 +2246,7 @@ export default {
   overflow-y: auto;
 }
 
-.usuarios-list-preview li {
+.usuarios-container .usuarios-list-preview li {
   padding: 8px 12px;
   margin: 4px 0;
   background: white;
@@ -2161,7 +2256,7 @@ export default {
   color: var(--secondary-color);
 }
 
-.usuarios-list-preview li.more-items {
+.usuarios-container .usuarios-list-preview li.more-items {
   background: #e5e7eb;
   border-left-color: #6b7280;
   font-style: italic;
@@ -2169,7 +2264,7 @@ export default {
   text-align: center;
 }
 
-.info-text {
+.usuarios-container .info-text {
   background: #dbeafe;
   border-left: 4px solid #3b82f6;
   padding: 12px;
@@ -2182,45 +2277,50 @@ export default {
   font-size: 14px;
 }
 
-.info-text i {
+.usuarios-container .info-text i {
   color: #3b82f6;
   font-size: 18px;
 }
 
 .btn-primary i,
 .btn-danger i,
-.btn-secondary i {
+.usuarios-container .btn-secondary i {
   margin-right: 5px;
 }
 
 /* Animaciones */
-.slide-enter-active, .slide-leave-active {
+.usuarios-container .slide-enter-active,
+.usuarios-container .slide-leave-active {
   transition: all 0.3s ease;
   max-height: 500px;
   overflow: hidden;
 }
 
-.slide-enter-from, .slide-leave-to {
+.usuarios-container .slide-enter-from,
+.usuarios-container .slide-leave-to {
   max-height: 0;
   opacity: 0;
 }
 
-.fade-enter-active, .fade-leave-active {
+.usuarios-container .fade-enter-active,
+.usuarios-container .fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.usuarios-container .fade-enter-from,
+.usuarios-container .fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .stats-grid {
+  .usuarios-container .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .list-header, .usuario-item {
+  .usuarios-container .list-header,
+  .usuarios-container .usuario-item {
     grid-template-columns: 40px 1fr 1fr 100px;
   }
 
@@ -2229,66 +2329,66 @@ export default {
   .list-header div:nth-child(4),
   .usuario-item > div:nth-child(4),
   .list-header div:nth-child(6),
-  .usuario-item > div:nth-child(6) {
+  .usuarios-container .usuario-item > div:nth-child(6) {
     display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .stats-grid {
+  .usuarios-container .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .search-filter-container {
+  .usuarios-container .search-filter-container {
     flex-direction: column;
   }
 
-  .header-actions {
+  .usuarios-container .header-actions {
     flex-direction: column;
   }
 
-  .filtros-grid {
+  .usuarios-container .filtros-grid {
     grid-template-columns: 1fr;
   }
 
   /* Responsive para acciones masivas */
-  .acciones-masivas {
+  .usuarios-container .acciones-masivas {
     bottom: 20px;
     padding: 6px 12px;
     border-radius: 40px;
   }
 
-  .acciones-info {
+  .usuarios-container .acciones-info {
     font-size: 12px;
     padding: 0 6px;
   }
 
-  .acciones-info i {
+  .usuarios-container .acciones-info i {
     font-size: 13px;
   }
 
-  .btn-mass-action {
+  .usuarios-container .btn-mass-action {
     width: 32px;
     height: 32px;
     font-size: 14px;
   }
 
-  .acciones-buttons {
+  .usuarios-container .acciones-buttons {
     gap: 4px;
   }
 }
 
 @media (max-width: 480px) {
-  .acciones-masivas {
+  .usuarios-container .acciones-masivas {
     width: calc(100% - 32px);
     max-width: 400px;
   }
 
-  .acciones-info span {
+  .usuarios-container .acciones-info span {
     display: none;
   }
 
-  .btn-mass-action {
+  .usuarios-container .btn-mass-action {
     width: 28px;
     height: 28px;
     font-size: 12px;
@@ -2296,18 +2396,18 @@ export default {
 }
 
 /* Jerarquía */
-.hierarchy-type-selector {
+.usuarios-container .hierarchy-type-selector {
   margin-bottom: 20px;
 }
 
-.hierarchy-selector {
+.usuarios-container .hierarchy-selector {
   display: flex;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.hierarchy-btn {
+.usuarios-container .hierarchy-btn {
   flex: 1;
   padding: 10px;
   background-color: #f8f9fa;
@@ -2316,22 +2416,22 @@ export default {
   transition: var(--transition);
 }
 
-.hierarchy-btn.active {
+.usuarios-container .hierarchy-btn.active {
   background-color: var(--primary-color);
   color: white;
 }
 
-.hierarchy-container {
+.usuarios-container .hierarchy-container {
   margin-top: 15px;
 }
 
-.hierarchy-container h4 {
+.usuarios-container .hierarchy-container h4 {
   margin-top: 0;
   margin-bottom: 15px;
   color: var(--secondary-color);
 }
 
-.role-selection {
+.usuarios-container .role-selection {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid rgba(0,  0, 0, 0.1);
@@ -2339,25 +2439,101 @@ export default {
   padding: 10px;
 }
 
-.role-item {
+.usuarios-container .role-item {
   display: flex;
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.role-item:last-child {
+.usuarios-container .role-item:last-child {
   border-bottom: none;
 }
 
-.role-item input[type="checkbox"] {
+.usuarios-container .role-item input[type="checkbox"] {
   margin-right: 10px;
 }
 
-.empty-roles {
+.usuarios-container .empty-roles {
   padding: 15px;
   text-align: center;
   color: var(--secondary-color);
   font-style: italic;
 }
+
+/* Estilos para múltiples roles */
+.usuarios-container .usuario-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.usuarios-container .badge-sin-rol {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* Selección de roles con checkboxes */
+.usuarios-container .roles-selection {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  background: #f9fafb;
+}
+
+.usuarios-container .role-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s;
+}
+
+.usuarios-container .role-checkbox-item:last-child {
+  border-bottom: none;
+}
+
+.usuarios-container .role-checkbox-item:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.usuarios-container .role-checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+  margin-top: 3px;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.usuarios-container .role-checkbox-item label {
+  flex: 1;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.usuarios-container .rol-nombre {
+  font-weight: 600;
+  color: var(--secondary-color);
+  font-size: 14px;
+}
+
+.usuarios-container .rol-descripcion {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.usuarios-container .error-text {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
 </style>
+

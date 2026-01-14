@@ -20,7 +20,7 @@ if($method === 'GET') {
         $stmt->bindParam(1, $rolId);
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         $response = array("usedByUsers" => ($row['total'] > 0));
         http_response_code(200);
         echo json_encode($response);
@@ -54,25 +54,25 @@ if($method === 'GET') {
             echo json_encode(array("records" => array()));
         }
     }
-} 
+}
 elseif($method === 'POST') {
     // Recibir los datos enviados
     $data = json_decode(file_get_contents("php://input"));
-    
+
     if(!empty($data->Nombre)) {
         try {
             // Consulta SQL para insertar rol
             $query = "INSERT INTO RolSistema (Nombre, Descripcion) VALUES (:nombre, :descripcion)";
             $stmt = $db->prepare($query);
-            
+
             // Sanitizar datos
-            $nombre = htmlspecialchars(strip_tags($data->Nombre));
-            $descripcion = isset($data->Descripcion) ? htmlspecialchars(strip_tags($data->Descripcion)) : "";
-            
+            $nombre = strip_tags($data->Nombre);
+            $descripcion = isset($data->Descripcion) ? strip_tags($data->Descripcion) : "";
+
             // Vincular valores
             $stmt->bindParam(':nombre', $nombre);
             $stmt->bindParam(':descripcion', $descripcion);
-            
+
             // Ejecutar la consulta
             if($stmt->execute()) {
                 http_response_code(201);
@@ -93,23 +93,23 @@ elseif($method === 'POST') {
 elseif($method === 'PUT') {
     // Recibir los datos enviados
     $data = json_decode(file_get_contents("php://input"));
-    
+
     if(!empty($data->Id) && !empty($data->Nombre)) {
         try {
             // Consulta SQL para actualizar rol
             $query = "UPDATE RolSistema SET Nombre = :nombre, Descripcion = :descripcion WHERE Id = :id";
             $stmt = $db->prepare($query);
-            
+
             // Sanitizar datos
-            $id = htmlspecialchars(strip_tags($data->Id));
-            $nombre = htmlspecialchars(strip_tags($data->Nombre));
-            $descripcion = isset($data->Descripcion) ? htmlspecialchars(strip_tags($data->Descripcion)) : "";
-            
+            $id = strip_tags($data->Id);
+            $nombre = strip_tags($data->Nombre);
+            $descripcion = isset($data->Descripcion) ? strip_tags($data->Descripcion) : "";
+
             // Vincular valores
             $stmt->bindParam(':id', $id);
             $stmt->bindParam(':nombre', $nombre);
             $stmt->bindParam(':descripcion', $descripcion);
-            
+
             // Ejecutar la consulta
             if($stmt->execute()) {
                 http_response_code(200);
@@ -130,41 +130,41 @@ elseif($method === 'PUT') {
 elseif($method === 'DELETE') {
     // Recibir los datos enviados
     $data = json_decode(file_get_contents("php://input"));
-    
+
     if(!empty($data->Id)) {
         try {
             // Comenzar transacción
             $db->beginTransaction();
-            
+
             // 1. Eliminar todas las relaciones de jerarquía donde el rol participa
             $query = "DELETE FROM JerarquiaRol WHERE IdRolSuperior = :id OR IdRolSubordinado = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':id', $data->Id);
             $stmt->execute();
-            
+
             // 2. Eliminar el rol
             $query = "DELETE FROM RolSistema WHERE Id = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(':id', $data->Id);
-            
+
             // Ejecutar la consulta
             if($stmt->execute()) {
                 // Confirmar transacción
                 $db->commit();
-                
+
                 http_response_code(200);
                 echo json_encode(array("message" => "Rol eliminado con éxito."));
             } else {
                 // Revertir en caso de error
                 $db->rollBack();
-                
+
                 http_response_code(503);
                 echo json_encode(array("message" => "No se pudo eliminar el rol."));
             }
         } catch(Exception $e) {
             // Revertir en caso de error
             $db->rollBack();
-            
+
             http_response_code(500);
             echo json_encode(array("message" => "Error: " . $e->getMessage()));
         }
@@ -172,7 +172,7 @@ elseif($method === 'DELETE') {
         http_response_code(400);
         echo json_encode(array("message" => "No se puede eliminar el rol. Datos incompletos."));
     }
-} 
+}
 else {
     http_response_code(405);
     echo json_encode(array("message" => "Método no permitido."));

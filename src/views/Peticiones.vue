@@ -117,15 +117,28 @@
                 <div>Fecha Registro</div>
               </div>
 
-              <div v-if="loading" class="loading-message">
-                <i class="fas fa-spinner fa-spin"></i> Cargando peticiones...
+              <!-- ✅ OPTIMIZADO: Usar v-show para loading que cambia frecuentemente -->
+              <div v-show="loading" class="loading-container">
+                <!-- Skeleton loader para mejor UX -->
+                <div class="skeleton-item" v-for="n in 5" :key="n">
+                  <div class="skeleton skeleton-acciones"></div>
+                  <div class="skeleton skeleton-folio"></div>
+                  <div class="skeleton skeleton-nombre"></div>
+                  <div class="skeleton skeleton-telefono"></div>
+                  <div class="skeleton skeleton-localidad"></div>
+                  <div class="skeleton skeleton-estado"></div>
+                  <div class="skeleton skeleton-depts"></div>
+                  <div class="skeleton skeleton-prioridad"></div>
+                  <div class="skeleton skeleton-fecha"></div>
+                </div>
               </div>
 
-              <div v-else-if="peticionesFiltradas.length === 0" class="empty-message">
+              <div v-show="!loading && peticionesFiltradas.length === 0" class="empty-message">
                 <i class="fas fa-inbox"></i> No se encontraron peticiones con los filtros aplicados
               </div>
 
-              <div v-else v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
+              <!-- ✅ OPTIMIZADO: Usar v-show en lugar de v-else para mejor rendimiento -->
+              <div v-show="!loading && peticionesFiltradas.length > 0" v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
                 <div class="peticion-acciones" :ref="el => { if (el) accionesRefs[peticion.id] = el }">
                   <button
                     :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
@@ -242,7 +255,8 @@
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
                       {{ obtenerTextoNivelImportancia(peticion.NivelImportancia) }}
                     </div>
-                    <div class="semaforo" :class="obtenerColorSemaforo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
+                    <!-- ✅ OPTIMIZADO: Usar función memoizada para semáforo -->
+                    <div class="semaforo" :class="obtenerColorSemaforoMemo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
                     <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
                       <i :class="obtenerIconoSeguimiento(peticion)"></i>
                     </div>
@@ -1057,6 +1071,9 @@ export default {
 
         console.log('✅ Peticiones procesadas:', peticiones.value.length);
 
+        // Limpiar cache de semáforo
+        limpiarCacheSemaforo();
+
         // Ordenamos las peticiones por prioridad
         peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
 
@@ -1076,7 +1093,15 @@ export default {
       }
     };
 
-    const cargarDepartamentos = async () => {
+    // ✅ OPTIMIZADO: Cachear departamentos para evitar cargas múltiples
+    let departamentosCargados = false;
+    const cargarDepartamentos = async (forzarRecarga = false) => {
+      // Si ya están cargados y no se fuerza recarga, salir
+      if (departamentosCargados && !forzarRecarga && departamentos.value.length > 0) {
+        console.log('📦 Usando departamentos en cache');
+        return;
+      }
+
       try {
         loadingDepartamentos.value = true;
         console.log('🔄 Cargando unidades desde API...');
@@ -1086,6 +1111,7 @@ export default {
 
         if (response.data && response.data.records) {
           departamentos.value = response.data.records;
+          departamentosCargados = true;
           console.log('✅ Unidades cargadas:', departamentos.value.length);
         } else {
           console.warn('⚠️ No se encontraron unidades');
@@ -1275,6 +1301,23 @@ export default {
       return peticiones.value.filter(p => !tieneUsuarioAsignado(p)).length;
     });
 
+    // ✅ NUEVO: Cache de cálculos de semáforo para mejorar rendimiento
+    const cacheSemaforo = new Map();
+    const obtenerColorSemaforoMemo = (peticion) => {
+      const key = `${peticion.id}-${peticion.estado}-${peticion.fecha_registro}`;
+      if (cacheSemaforo.has(key)) {
+        return cacheSemaforo.get(key);
+      }
+      const color = obtenerColorSemaforo(peticion);
+      cacheSemaforo.set(key, color);
+      return color;
+    };
+
+    // ✅ NUEVO: Limpiar cache cuando se recargan peticiones
+    const limpiarCacheSemaforo = () => {
+      cacheSemaforo.clear();
+    };
+
     // Función para actualizar paginación cuando cambian los filtros
     const actualizarPaginacion = () => {
       paginacion.totalRegistros = peticionesFiltradas.value.length;
@@ -1356,11 +1399,21 @@ export default {
       return pages;
     });
 
-    // Modificar la función aplicarFiltros para actualizar paginación
+    // ✅ OPTIMIZADO: Función aplicarFiltros mejorada con debounce implícito
     const aplicarFiltros = () => {
       try {
         console.log('🔍 APLICANDO FILTROS:', filtros);
         console.log('📊 Total peticiones antes de filtrar:', peticiones.value.length);
+
+        // Si no hay filtros activos, retornar todas las peticiones
+        const hayFiltros = filtros.estado || filtros.departamento || filtros.folio || 
+                          filtros.nombre || filtros.nivelImportancia || filtros.usuario_seguimiento;
+        
+        if (!hayFiltros) {
+          peticionesFiltradas.value = ordenarPeticionesPorPrioridad([...peticiones.value]);
+          actualizarPaginacion();
+          return;
+        }
 
         let peticionesFiltradas_temp = [...peticiones.value];
 
@@ -1476,13 +1529,24 @@ export default {
       }
     };
 
-    // Watchers para los filtros
+    // ✅ OPTIMIZADO: Watchers con debounce para filtros de texto
+    let debounceTimeout = null;
     watch(
-      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.folio, filtros.nombre],
+      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento],
       () => {
         aplicarFiltros();
-      },
-      { deep: true }
+      }
+    );
+
+    // Debounce para filtros de texto (300ms)
+    watch(
+      () => [filtros.folio, filtros.nombre],
+      () => {
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          aplicarFiltros();
+        }, 300);
+      }
     );
 
     // ✅ AGREGAR: Watcher para filtro de departamento
@@ -1498,6 +1562,18 @@ export default {
         .filter(s => s.departamento_nombre && s.departamento_nombre.trim() !== '')
         .map(s => s.departamento_nombre)
         .filter((nombre, index, arr) => arr.indexOf(nombre) === index); // Eliminar duplicados
+    });
+
+    // ✅ NUEVO: Computed para usuarios únicos (optimiza el filtro de usuario)
+    const usuariosUnicos = computed(() => {
+      const usuarios = new Map();
+      peticiones.value.forEach(p => {
+        if (tieneUsuarioAsignado(p) && p.usuario_id) {
+          const nombre = p.nombre_completo_usuario || p.nombre_usuario_seguimiento || 'Usuario';
+          usuarios.set(p.usuario_id, nombre);
+        }
+      });
+      return Array.from(usuarios, ([id, nombre]) => ({ id, nombre }));
     });
 
     // ✅ NUEVA: Función para filtrar departamentos
@@ -2112,8 +2188,10 @@ export default {
       formatearFecha,
       obtenerNombreDepartamento,
       obtenerColorSemaforo,
+      obtenerColorSemaforoMemo,
       obtenerTituloSemaforo,
       aplicarFiltros,
+      usuariosUnicos,
       editarPeticion,
       cambiarEstado,
       cambiarImportancia,
@@ -2192,9 +2270,84 @@ export default {
 </script>
 
 <style src="@/assets/css/Petition.css"></style>
-<style scoped>
+<style>
+/* Sin scoped - usando namespace .peticiones-container para evitar conflictos */
+
+/* ✅ NUEVO: Estilos para Skeleton Loader */
+.peticiones-container .loading-container {
+  padding: 1rem;
+}
+
+.peticiones-container .skeleton-item {
+  display: grid;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+}
+
+.peticiones-container .skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+  height: 20px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.peticiones-container .skeleton-acciones {
+  width: 80%;
+  height: 36px;
+}
+
+.peticiones-container .skeleton-folio {
+  width: 90%;
+  height: 24px;
+}
+
+.peticiones-container .skeleton-nombre {
+  width: 95%;
+}
+
+.peticiones-container .skeleton-telefono {
+  width: 85%;
+}
+
+.peticiones-container .skeleton-localidad {
+  width: 90%;
+}
+
+.peticiones-container .skeleton-estado {
+  width: 80%;
+  height: 28px;
+}
+
+.peticiones-container .skeleton-depts {
+  width: 90%;
+}
+
+.peticiones-container .skeleton-prioridad {
+  width: 85%;
+  height: 32px;
+}
+
+.peticiones-container .skeleton-fecha {
+  width: 90%;
+}
+
 /* Estilos con máxima especificidad para forzar el header */
-.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
+.peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
   display: grid !important;
   grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
   background: linear-gradient(135deg, #0074D9, #0056b3) !important;
@@ -2214,24 +2367,24 @@ export default {
   border-radius: 12px 12px 0 0 !important;
 }
 
-.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
+.peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
   color: white !important;
   background: transparent !important;
 }
 
 /* Estilos para el header con título y municipio */
-.header-title-section {
+.peticiones-container .header-title-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.header-title-section h3 {
+.peticiones-container .header-title-section h3 {
   margin: 0;
 }
 
 /* Estilos para el indicador de municipio */
-.municipio-indicator {
+.peticiones-container .municipio-indicator {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2244,51 +2397,51 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.municipio-indicator i {
+.peticiones-container .municipio-indicator i {
   font-size: 14px;
   color: #43a047;
 }
 
-.municipio-indicator .municipio-label {
+.peticiones-container .municipio-indicator .municipio-label {
   font-weight: 500;
   color: #388e3c;
 }
 
-.municipio-indicator .municipio-nombre {
+.peticiones-container .municipio-indicator .municipio-nombre {
   font-weight: 700;
   color: #1b5e20;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.municipio-indicator.warning {
+.peticiones-container .municipio-indicator.warning {
   background: linear-gradient(135deg, #fff3e0, #ffe0b2);
   color: #e65100;
   border-color: #ffcc80;
 }
 
-.municipio-indicator.warning i {
+.peticiones-container .municipio-indicator.warning i {
   color: #ff9800;
 }
 
-.municipio-indicator.warning span {
+.peticiones-container .municipio-indicator.warning span {
   color: #e65100;
   font-weight: 500;
 }
 
 /* Estilos para el mensaje de bienvenida y contador */
-.welcome-message {
+.peticiones-container .welcome-message {
   margin-bottom: 15px;
   color: #666;
   font-size: 14px;
 }
 
-.welcome-message strong {
+.peticiones-container .welcome-message strong {
   color: #1b5e20;
   text-transform: uppercase;
 }
 
-.peticiones-count {
+.peticiones-container .peticiones-count {
   color: #999;
   font-size: 12px;
   margin-left: 8px;
@@ -2296,22 +2449,22 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .header-title-section {
+  .peticiones-container .header-title-section {
     align-items: flex-start;
   }
 
-  .municipio-indicator {
+  .peticiones-container .municipio-indicator {
     font-size: 11px;
     padding: 4px 10px;
   }
 
-  .municipio-indicator .municipio-label {
+  .peticiones-container .municipio-indicator .municipio-label {
     display: none;
   }
 }
 
 /* Estilos para sugerencias rápidas */
-.sugerencias-rapidas {
+.peticiones-container .sugerencias-rapidas {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -2323,7 +2476,7 @@ export default {
   border: 1px solid #ffe0a3;
 }
 
-.sugerencias-label {
+.peticiones-container .sugerencias-label {
   font-size: 13px;
   font-weight: 600;
   color: #b8860b;
@@ -2333,12 +2486,12 @@ export default {
   margin-right: 4px;
 }
 
-.sugerencias-label::before {
+.peticiones-container .sugerencias-label::before {
   content: "💡";
   font-size: 16px;
 }
 
-.btn-sugerencia-rapida {
+.peticiones-container .btn-sugerencia-rapida {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2354,25 +2507,26 @@ export default {
   box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
 }
 
-.btn-sugerencia-rapida:hover {
+.peticiones-container .btn-sugerencia-rapida:hover {
   background: linear-gradient(135deg, #ffed4e, #ffd700);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
   border-color: #b8860b;
 }
 
-.btn-sugerencia-rapida:active {
+.peticiones-container .btn-sugerencia-rapida:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
 }
 
-.btn-sugerencia-rapida i {
+.peticiones-container .btn-sugerencia-rapida i {
   font-size: 13px;
   animation: pulse-light 2s ease-in-out infinite;
 }
 
 @keyframes pulse-light {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -2381,16 +2535,16 @@ export default {
 }
 
 /* Contenedor de búsqueda */
-.busqueda-departamentos {
+.peticiones-container .busqueda-departamentos {
   margin-bottom: 20px;
 }
 
-.busqueda-input-container {
+.peticiones-container .busqueda-input-container {
   position: relative;
   margin-bottom: 8px;
 }
 
-.busqueda-input {
+.peticiones-container .busqueda-input {
   width: 100%;
   padding: 12px 40px 12px 16px;
   border: 2px solid #e0e0e0;
@@ -2399,13 +2553,13 @@ export default {
   transition: all 0.3s ease;
 }
 
-.busqueda-input:focus {
+.peticiones-container .busqueda-input:focus {
   outline: none;
   border-color: #0074D9;
   box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
 }
 
-.busqueda-icon {
+.peticiones-container .busqueda-icon {
   position: absolute;
   right: 14px;
   top: 50%;
@@ -2416,17 +2570,17 @@ export default {
 
 /* Responsive para sugerencias */
 @media (max-width: 768px) {
-  .sugerencias-rapidas {
+  .peticiones-container .sugerencias-rapidas {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .sugerencias-label {
+  .peticiones-container .sugerencias-label {
     width: 100%;
     margin-bottom: 4px;
   }
 
-  .btn-sugerencia-rapida {
+  .peticiones-container .btn-sugerencia-rapida {
     font-size: 11px;
     padding: 5px 12px;
   }

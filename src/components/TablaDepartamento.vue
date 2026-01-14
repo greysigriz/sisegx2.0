@@ -1,5 +1,5 @@
 <template>
-  <div class="peticiones-container">
+  <div class="tabla-departamento-container">
     <div class="card">
       <div class="card-header">
         <h3><i class="fas fa-building"></i> Gestión de Peticiones - Departamento</h3>
@@ -513,9 +513,9 @@ export default {
 };
 </script>
 
-<style src="@/assets/css/Petition.css"></style>
+<style src="@/assets/css/TablaDepartamento.css"></style>
 <style scoped>
-/* ✅ NUEVOS: Estilos para mostrar departamento actual */
+/* ✅ NUEVOS: Estilos para mostrar departamento actual y estilos de peticiones */
 .departamento-actual {
   display: flex;
   align-items: center;

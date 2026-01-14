@@ -1,10 +1,6 @@
 <template>
   <div id="app">
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </transition>
-    </router-view>
+    <router-view />
   </div>
 </template>
 
@@ -30,16 +26,6 @@ onErrorCaptured((error, instance, info) => {
 </script>
 
 <style>
-/* ...existing styles... */
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+/* Estilos globales */
 </style>
 

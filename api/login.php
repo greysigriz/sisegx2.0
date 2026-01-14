@@ -275,15 +275,28 @@ try {
 
                         debugLog("Login exitoso, obteniendo datos adicionales");
                         
-                        // ✅ Obtener datos del rol por separado
+                        // ✅ Obtener todos los roles del usuario desde UsuarioRol
+                        $roles = $this->getUserRoles($user['Id']);
+                        $rolesIds = array_column($roles, 'Id');
+                        $rolesNombres = array_column($roles, 'Nombre');
+
+                        // ✅ Obtener todos los permisos del usuario desde RolPermiso + Permiso
+                        $permisos = $this->getUserPermisos($user['Id']);
+                        
+                        // ✅ Obtener datos del rol principal (compatibilidad)
                         $rolData = $this->getRolData($user['IdRolSistema']);
                         
-                        // ✅ Obtener datos de división por separado
+                        // ✅ Obtener datos de división
                         $divisionData = $this->getDivisionData($user['IdDivisionAdm']);
                         
                         $unidades = $this->getUserUnidades($user['Id']);
-                        $permisos = $this->getRolPermisos($user['IdRolSistema']);
                         unset($user['Password']);
+
+                        // Agregar nuevos campos al usuario
+                        $user['Roles'] = $roles;
+                        $user['RolesIds'] = $rolesIds;
+                        $user['RolesNombres'] = $rolesNombres;
+                        $user['Permisos'] = $permisos;
 
                         $userData = [
                             'usuario' => $user,
@@ -293,7 +306,7 @@ try {
                             'permisos' => $permisos
                         ];
 
-                        debugLog("Datos de usuario preparados correctamente");
+                        debugLog("Datos de usuario preparados - " . count($permisos) . " permisos cargados");
                         return ['success' => true, 'user' => $userData];
                     } else {
                         debugLog("Contraseña incorrecta");
@@ -389,26 +402,50 @@ try {
             }
         }
 
-        private function getRolPermisos($rolId) {
-            $permisos = ['ver_dashboard'];
-
-            switch ($rolId) {
-                case 1:
-                    $permisos = array_merge($permisos, [
-                        'admin_usuarios', 'admin_roles', 'admin_unidades', 'admin_divisiones',
-                        'crear_tramite', 'editar_tramite', 'eliminar_tramite', 
-                        'ver_reportes', 'exportar_reportes', 'configuracion_sistema','admin_peticiones'
-                    ]);
-                    break;
-                case 9:
-                    $permisos = array_merge($permisos, ['ver_dashboard', 'ver_departamentos']);
-                    break;
-                case 10:
-                    $permisos = array_merge($permisos, ['ver_tablero']);
-                    break;
+        // ✅ Obtener todos los roles del usuario desde UsuarioRol
+        private function getUserRoles($userId) {
+            try {
+                $query = "SELECT r.Id, r.Nombre, r.Descripcion
+                          FROM UsuarioRol ur
+                          JOIN RolSistema r ON ur.IdRolSistema = r.Id
+                          WHERE ur.IdUsuario = :userId
+                          ORDER BY r.Nombre";
+                
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':userId', $userId);
+                $stmt->execute();
+                
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                debugLog("Error obteniendo roles: " . $e->getMessage());
+                return [];
             }
+        }
 
-            return $permisos;
+        // ✅ Obtener todos los permisos del usuario desde RolPermiso + Permiso
+        private function getUserPermisos($userId) {
+            try {
+                $query = "SELECT DISTINCT p.Codigo
+                          FROM UsuarioRol ur
+                          JOIN RolPermiso rp ON ur.IdRolSistema = rp.IdRolSistema
+                          JOIN Permiso p ON rp.IdPermiso = p.Id
+                          WHERE ur.IdUsuario = :userId";
+                
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':userId', $userId);
+                $stmt->execute();
+                
+                $permisos = [];
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $permisos[] = $row['Codigo'];
+                }
+                
+                debugLog("Permisos cargados para usuario $userId: " . count($permisos) . " permisos");
+                return $permisos;
+            } catch (Exception $e) {
+                debugLog("Error obteniendo permisos: " . $e->getMessage());
+                return ['ver_dashboard']; // Fallback mínimo
+            }
         }
     }
 

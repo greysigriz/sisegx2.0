@@ -43,6 +43,16 @@ switch($method) {
                 while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                     extract($row);
                     
+                    // Obtener todos los roles del usuario desde la tabla intermedia
+                    $queryRoles = "SELECT r.Id, r.Nombre, r.Descripcion
+                                   FROM UsuarioRol ur
+                                   JOIN RolSistema r ON ur.IdRolSistema = r.Id
+                                   WHERE ur.IdUsuario = ?
+                                   ORDER BY r.Nombre";
+                    $stmtRoles = $db->prepare($queryRoles);
+                    $stmtRoles->execute([$Id]);
+                    $roles = $stmtRoles->fetchAll(PDO::FETCH_ASSOC);
+                    
                     $usuario_item = array(
                         "Id" => $Id,
                         "Usuario" => $Usuario,
@@ -55,7 +65,8 @@ switch($method) {
                         "IdUnidad" => $IdUnidad,
                         "IdRolSistema" => $IdRolSistema,
                         "NombreRol" => $NombreRol,
-                        "NombreDivision" => $NombreDivision
+                        "NombreDivision" => $NombreDivision,
+                        "Roles" => $roles  // NUEVO: Array de roles del usuario
                     );
                     
                     array_push($usuarios_arr["records"], $usuario_item);
@@ -88,8 +99,13 @@ switch($method) {
             $usuario->Password = password_hash($data->Password, PASSWORD_DEFAULT);
             
             if($usuario->create()) {
+                // Obtener el ID del usuario recién creado
+                $lastId = $db->lastInsertId();
                 http_response_code(201);
-                echo json_encode(array("message" => "Usuario creado."));
+                echo json_encode(array(
+                    "message" => "Usuario creado.",
+                    "userId" => $lastId
+                ));
             } else {
                 http_response_code(503);
                 echo json_encode(array("message" => "No se pudo crear el usuario."));

@@ -18,7 +18,6 @@
   </div>
 </template>
 <script setup>
-import '@/assets/css/bar_dashboard.css'
 import * as echarts from 'echarts'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
@@ -169,3 +168,4 @@ onUnmounted(() => {
 })
 </script>
 
+<style src="@/assets/css/bar_dashboard.css"></style>

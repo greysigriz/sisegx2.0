@@ -87,7 +87,6 @@
 </template>
 
 <script>
-  import '@/assets/css/cards_dashboard.css'
 import { ref, onMounted } from "vue"
 
 export default {
@@ -125,3 +124,4 @@ export default {
 }
 </script>
 
+<style src="@/assets/css/cards_dashboard.css"></style>

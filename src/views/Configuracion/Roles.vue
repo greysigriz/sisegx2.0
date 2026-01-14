@@ -102,7 +102,7 @@
               <p class="rol-nombre">{{ rol.Nombre }}</p>
             </div>
             <div class="rol-info description">
-              <p>{{ rol.Descripcion || 'Sin descripción' }}</p>
+              <p v-html="rol.Descripcion || 'Sin descripción'"></p>
             </div>
             <div class="rol-actions">
               <button class="action-btn view" @click="verDetalles(rol)" title="Ver detalles">
@@ -857,10 +857,14 @@ export default {
 .list-header {
   display: grid;
   grid-template-columns: 40px 1fr 1.5fr 0.8fr;
-  background-color: rgba(39, 135, 245, 0.926);
+  background-color: rgba(39, 63, 245, 0.926);
   padding: 15px;
   font-weight: 600;
   color: white;
+}
+
+.list-header > div:last-child {
+  text-align: center;
 }
 
 .header-check {
@@ -914,10 +918,17 @@ export default {
   color: var(--primary-color);
 }
 
+.rol-info.description {
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .rol-info.description p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
 }
 
 .rol-actions {
