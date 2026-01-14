@@ -30,9 +30,10 @@ import BarChart from "@/components/dashboard/BarChart.vue"
 import PieChart from "@/components/dashboard/PieChart.vue"
 import '@/assets/css/Dashboard.css'
 
-import Reportes from "@/components/ReportsTable.vue"
-import MapaProblemas from "@/components/MapaProblemas.vue"
-// import TablaDeps from "@/components/TableroDash/TablaDeps.vue"
+import MapaProblemas from "@/components/TableroDash/MapaProblemas.vue"
+import TablaDeps from "@/components/TableroDash/ReportsTable.vue"
+//import MunicipiosYucatan from "@/components/dashboard/MunicipiosYucatan.vue"
+import Reportes from "@/components/TableroDash/LineaReportes.vue"
 
 export default {
   name: "DashboardReportes",
@@ -45,7 +46,7 @@ export default {
     PieChart,
     Reportes,
     MapaProblemas,
-    //TablaDeps
+    TablaDeps
   }
 }
 </script>

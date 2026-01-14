@@ -10,6 +10,7 @@
 defineOptions({ name: 'ReportesChart' })
 import * as echarts from 'echarts';
 import { onMounted, onUnmounted, ref } from 'vue';
+import '@/assets/css/lineareportes_dashboard.css'
 
 const chart = ref(null);
 
@@ -45,8 +46,13 @@ onMounted(() => {
     title: {
       text: 'Tendencia Temporal de Reportes',
       left: 'center',
-      top: 20,
-      textStyle: { fontSize: 20, fontWeight: 700, color: '#1E40AF' }
+      top: 10,
+      textStyle: {
+        fontSize: 29,
+        fontWeight: 700,
+        color: '#1E40AF',
+        fontFamily: '"Inter", "Segoe UI", sans-serif'
+      }
     },
     tooltip: {
       trigger: 'axis',
@@ -109,53 +115,3 @@ onMounted(() => {
   })
 });
 </script>
-
-<style scoped>
-.container {
-  padding: 32px;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  margin: 2rem auto;
-  max-width: 1400px;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  position: relative;
-  overflow: hidden;
-}
-
-.container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
-  border-radius: 20px 20px 0 0;
-}
-
-.row {
-  margin: 0;
-  padding: 0;
-}
-
-.chart1 {
-  width: 100%;
-  min-height: 500px;
-  padding: 20px 0;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 20px;
-    margin: 16px;
-  }
-
-  .chart1 {
-    min-height: 450px;
-  }
-}
-</style>
