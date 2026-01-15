@@ -695,7 +695,7 @@ export default {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
     const PETITION_API = `${import.meta.env.VITE_API_URL || '/api'}/peticiones.php`;
     const DIVISION_API = `${import.meta.env.VITE_API_URL || '/api'}/division.php`;
-    
+
     // Helper para construir URL del backend (soporta proxy PHP)
     const buildBackendUrl = (path) => {
       if (BACKEND_URL.includes('proxy-clasificacion.php')) {
