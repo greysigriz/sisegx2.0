@@ -36,7 +36,8 @@ import {
   faStar,
   faTag,
   faList,
-  faKey
+  faKey,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
 // Agregar los iconos a la librería
@@ -76,7 +77,8 @@ library.add(
   faStar,
   faTag,
   faList,
-  faKey
+  faKey,
+  faChevronRight
 );
 
 export { FontAwesomeIcon };
