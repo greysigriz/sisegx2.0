@@ -94,26 +94,415 @@
         </div>
       </div>
 
-      <!-- Quick Stats Cards -->
-      <UserMetricsCards
-        v-if="dashboardData && dashboardData.statistics"
-        :stats="dashboardData.statistics"
-        :userRole="userRoleId"
-      />
+      <!-- Para usuarios NO admin: mostrar cards simples y actividad reciente -->
+      <template v-if="!isAdmin && !isCanalizadorMunicipal && !isCanalizadorEstatal && !isDepartmentUser">
+        <!-- Quick Stats Cards -->
+        <UserMetricsCards
+          v-if="dashboardData && dashboardData.statistics"
+          :stats="dashboardData.statistics"
+          :userRole="userRoleId"
+        />
 
-      <!-- Recent Activity -->
-      <RecentActivity
-        v-if="dashboardData"
-        :petitions="dashboardData.recent_petitions || []"
-        :alerts="dashboardData.alerts || []"
-        @view-petition="viewPetitionDetails"
-      />
+        <!-- Recent Activity -->
+        <RecentActivity
+          v-if="dashboardData"
+          :petitions="dashboardData.recent_petitions || []"
+          :alerts="dashboardData.alerts || []"
+          @view-petition="viewPetitionDetails"
+        />
+      </template>
 
-      <!-- Additional Stats for Admin -->
+      <!-- Para Usuario de Departamento: Dashboard especializado -->
+      <div v-if="isDepartmentUser && dashboardData.statistics" class="departamento-section">
+        <div class="section-title">
+          <i class="fas fa-building"></i>
+          <h2>Panel de Departamento - {{ dashboardData.statistics.nombre_departamento || 'Tu Departamento' }}</h2>
+          <p class="section-subtitle">Gestión de peticiones asignadas a tu departamento</p>
+        </div>
+
+        <!-- Alertas del Departamento -->
+        <div v-if="dashboardData.alerts && dashboardData.alerts.length > 0" class="alertas-destacadas">
+          <div
+            v-for="(alert, index) in dashboardData.alerts"
+            :key="index"
+            class="alert-card"
+            :class="'alert-' + alert.type"
+          >
+            <div class="alert-icon">
+              <i :class="alert.type === 'critical' ? 'fas fa-exclamation-circle' : 'fas fa-clock'"></i>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-count">{{ alert.count }} peticiones</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas del Departamento -->
+        <div class="departamento-metrics">
+          <div class="metric-card total-dept">
+            <div class="metric-icon">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-label">Peticiones Asignadas</div>
+              <div class="metric-value">{{ dashboardData.statistics.total_peticiones || 0 }}</div>
+              <div class="metric-subtitle">Total en tu departamento</div>
+            </div>
+          </div>
+
+          <div class="metric-card pendientes-dept">
+            <div class="metric-icon">
+              <i class="fas fa-spinner"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-label">Pendientes</div>
+              <div class="metric-value">{{ dashboardData.statistics.peticiones_pendientes || 0 }}</div>
+              <div class="metric-subtitle">En proceso</div>
+            </div>
+          </div>
+
+          <div class="metric-card retrasadas-dept">
+            <div class="metric-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-label">Retrasadas</div>
+              <div class="metric-value">{{ dashboardData.statistics.peticiones_retrasadas || 0 }}</div>
+              <div class="metric-subtitle">Más de 15 días</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estados de Peticiones del Departamento -->
+        <div v-if="dashboardData.statistics.por_estado && dashboardData.statistics.por_estado.length > 0" class="departamento-estados-section">
+          <div class="subsection-title">
+            <i class="fas fa-chart-pie"></i>
+            <h3>Estado de las Peticiones</h3>
+          </div>
+          <div class="estados-grid">
+            <div
+              v-for="(estado, index) in dashboardData.statistics.por_estado"
+              :key="index"
+              class="estado-card"
+              :class="'estado-' + estado.estado.toLowerCase().replace(/ /g, '-')"
+            >
+              <div class="estado-icon">
+                <i :class="getEstadoIcon(estado.estado)"></i>
+              </div>
+              <div class="estado-info">
+                <div class="estado-cantidad">{{ estado.cantidad }}</div>
+                <div class="estado-nombre">{{ estado.estado }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Niveles de Importancia del Departamento -->
+        <div v-if="dashboardData.statistics.por_importancia && dashboardData.statistics.por_importancia.length > 0" class="importancia-section">
+          <div class="subsection-title">
+            <i class="fas fa-flag"></i>
+            <h3>Peticiones por Nivel de Importancia</h3>
+          </div>
+          <div class="importancia-grid">
+            <div
+              v-for="imp in dashboardData.statistics.por_importancia"
+              :key="imp.NivelImportancia"
+              class="importancia-item"
+              :class="'nivel-' + imp.NivelImportancia"
+            >
+              <div class="importancia-header">
+                <span class="nivel-badge">Nivel {{ imp.NivelImportancia }}</span>
+                <span class="nivel-label">{{ getNivelLabel(imp.NivelImportancia) }}</span>
+              </div>
+              <div class="importancia-count">{{ imp.cantidad }}</div>
+              <div class="importancia-bar">
+                <div
+                  class="bar-fill"
+                  :style="{ width: getImportanciaPercentage(imp.cantidad) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peticiones Asignadas (Urgentes Primero) -->
+        <div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="peticiones-departamento-section">
+          <div class="subsection-title">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>Peticiones Asignadas - Requieren Atención</h3>
+            <p>Ordenadas por prioridad y antigüedad</p>
+          </div>
+          <div class="peticiones-departamento-list">
+            <div
+              v-for="petition in dashboardData.recent_petitions"
+              :key="petition.id"
+              class="peticion-dept-card"
+              :class="['nivel-' + petition.NivelImportancia, petition.dias_asignacion > 15 ? 'retrasada' : '']"
+              @click="viewPetitionDetails(petition.id)"
+            >
+              <div class="petition-header">
+                <span class="petition-folio">{{ petition.folio }}</span>
+                <span class="petition-nivel" :class="'nivel-badge-' + petition.NivelImportancia">
+                  <i class="fas fa-flag"></i>
+                  Nivel {{ petition.NivelImportancia }}
+                </span>
+                <span v-if="petition.dias_asignacion" class="petition-dias" :class="petition.dias_asignacion > 15 ? 'dias-retrasado' : ''">
+                  <i class="fas fa-calendar-day"></i>
+                  {{ petition.dias_asignacion }} días asignada
+                </span>
+              </div>
+              <div class="petition-body">
+                <div class="petition-nombre">{{ petition.nombre }}</div>
+                <div class="petition-descripcion">{{ petition.descripcion }}</div>
+              </div>
+              <div class="petition-footer">
+                <span class="petition-municipio">
+                  <i class="fas fa-map-marker-alt"></i>
+                  {{ petition.Municipio || 'Sin municipio' }}
+                </span>
+                <span class="petition-estado-dept" :class="'estado-badge-dept-' + petition.estado_departamento.toLowerCase().replace(/ /g, '-')">
+                  {{ petition.estado_departamento }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje si no hay peticiones -->
+        <div v-else class="no-peticiones-message">
+          <i class="fas fa-inbox"></i>
+          <h3>No hay peticiones asignadas</h3>
+          <p>Tu departamento no tiene peticiones pendientes en este momento.</p>
+        </div>
+      </div>
+
+      <!-- Para Canalizadores (Municipal y Estatal): Dashboard especializado -->
+      <div v-if="(isCanalizadorMunicipal || isCanalizadorEstatal) && dashboardData.statistics" class="canalizador-section">
+        <div class="section-title">
+          <i class="fas fa-broadcast-tower"></i>
+          <h2>{{ isCanalizadorMunicipal ? 'Panel de Canalización Municipal' : 'Panel de Canalización Estatal' }}</h2>
+          <p class="section-subtitle">
+            {{ isCanalizadorMunicipal ? 'Vista de tu municipio' : 'Vista a nivel estatal' }}
+          </p>
+        </div>
+
+        <!-- Alertas Destacadas -->
+        <div v-if="dashboardData.alerts && dashboardData.alerts.length > 0" class="alertas-destacadas">
+          <div
+            v-for="(alert, index) in dashboardData.alerts"
+            :key="index"
+            class="alert-card"
+            :class="'alert-' + alert.type"
+          >
+            <div class="alert-icon">
+              <i :class="alert.type === 'critical' ? 'fas fa-exclamation-circle' : 'fas fa-clock'"></i>
+            </div>
+            <div class="alert-content">
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-count">{{ alert.count }} peticiones</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métricas Principales -->
+        <div class="canalizador-metrics">
+          <div class="metric-card total">
+            <div class="metric-icon">
+              <i class="fas fa-inbox"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-label">Total de Peticiones</div>
+              <div class="metric-value">{{ dashboardData.statistics.total_peticiones || 0 }}</div>
+            </div>
+          </div>
+
+          <div class="metric-card retrasadas">
+            <div class="metric-icon">
+              <i class="fas fa-hourglass-end"></i>
+            </div>
+            <div class="metric-content">
+              <div class="metric-label">Peticiones Retrasadas</div>
+              <div class="metric-value">{{ dashboardData.statistics.peticiones_retrasadas || 0 }}</div>
+              <div class="metric-subtitle">Más de 30 días sin completar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estados de Peticiones -->
+        <div v-if="dashboardData.statistics.por_estado" class="estados-grid">
+          <div
+            v-for="(estado, index) in dashboardData.statistics.por_estado"
+            :key="index"
+            class="estado-card"
+            :class="'estado-' + estado.estado.toLowerCase().replace(/ /g, '-')"
+          >
+            <div class="estado-icon">
+              <i :class="getEstadoIcon(estado.estado)"></i>
+            </div>
+            <div class="estado-info">
+              <div class="estado-cantidad">{{ estado.cantidad }}</div>
+              <div class="estado-nombre">{{ estado.estado }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Departamentos con Más Peticiones -->
+        <div v-if="dashboardData.statistics.departamentos_top && dashboardData.statistics.departamentos_top.length > 0" class="departamentos-section">
+          <div class="subsection-title">
+            <i class="fas fa-building"></i>
+            <h3>Departamentos con Más Peticiones Asignadas</h3>
+            <p>Identifica los departamentos que requieren mayor seguimiento</p>
+          </div>
+          <div class="departamentos-list">
+            <div
+              v-for="(dept, index) in dashboardData.statistics.departamentos_top"
+              :key="index"
+              class="departamento-item"
+            >
+              <div class="dept-ranking">
+                <span class="dept-rank" :class="'rank-' + (index + 1)">#{{ index + 1 }}</span>
+              </div>
+              <div class="dept-info">
+                <div class="dept-name">{{ dept.departamento }}</div>
+                <div class="dept-count">{{ dept.cantidad }} peticiones asignadas</div>
+              </div>
+              <div class="dept-bar-container">
+                <div
+                  class="dept-bar"
+                  :style="{ width: getDepartamentoPercentage(dept.cantidad) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Para Canalizador Estatal: Top Municipios -->
+        <div v-if="isCanalizadorEstatal && dashboardData.statistics.top_municipios" class="municipios-section">
+          <div class="subsection-title">
+            <i class="fas fa-map-marked-alt"></i>
+            <h3>Municipios con Más Peticiones</h3>
+          </div>
+          <div class="municipios-list">
+            <div
+              v-for="(municipio, index) in dashboardData.statistics.top_municipios"
+              :key="index"
+              class="municipio-item"
+            >
+              <div class="municipio-info">
+                <span class="municipio-rank" :class="'rank-' + (index + 1)">
+                  <span class="rank-number">#{{ index + 1 }}</span>
+                </span>
+                <span class="municipio-name">{{ municipio.Municipio || 'Sin municipio' }}</span>
+                <span class="municipio-count-badge">{{ municipio.cantidad }}</span>
+              </div>
+              <div class="municipio-bar-container">
+                <div class="municipio-bar">
+                  <div
+                    class="bar-fill"
+                    :style="{ width: getMunicipioPercentage(municipio.cantidad) + '%' }"
+                  >
+                    <span class="bar-percentage">{{ Math.round(getMunicipioPercentage(municipio.cantidad)) }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peticiones Urgentes que Requieren Atención -->
+        <div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="peticiones-urgentes-section">
+          <div class="subsection-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Peticiones que Requieren Atención</h3>
+            <p>Ordenadas por urgencia y antigüedad</p>
+          </div>
+          <div class="peticiones-urgentes-list">
+            <div
+              v-for="petition in dashboardData.recent_petitions"
+              :key="petition.id"
+              class="peticion-urgente-card"
+              :class="'nivel-' + petition.NivelImportancia"
+              @click="viewPetitionDetails(petition.id)"
+            >
+              <div class="petition-header">
+                <span class="petition-folio">{{ petition.folio }}</span>
+                <span class="petition-nivel" :class="'nivel-badge-' + petition.NivelImportancia">
+                  Nivel {{ petition.NivelImportancia }}
+                </span>
+                <span v-if="petition.dias_transcurridos" class="petition-dias">
+                  <i class="fas fa-clock"></i> {{ petition.dias_transcurridos }} días
+                </span>
+              </div>
+              <div class="petition-body">
+                <div class="petition-nombre">{{ petition.nombre }}</div>
+                <div class="petition-descripcion">{{ petition.descripcion }}</div>
+              </div>
+              <div class="petition-footer">
+                <span class="petition-municipio">
+                  <i class="fas fa-map-marker-alt"></i>
+                  {{ petition.Municipio || 'Sin municipio' }}
+                </span>
+                <span class="petition-estado" :class="'estado-badge-' + petition.estado.toLowerCase().replace(/ /g, '-')">
+                  {{ petition.estado }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Para Admin/Director: Panel administrativo completo (sin duplicados) -->
       <div v-if="isAdmin && dashboardData.statistics" class="admin-section">
         <div class="section-title">
           <i class="fas fa-chart-bar"></i>
-          <h2>Análisis General</h2>
+          <h2>Panel Administrativo - Vista General</h2>
+        </div>
+
+        <!-- Resumen de Estados -->
+        <div v-if="dashboardData.statistics.por_estado" class="estados-grid">
+          <div
+            v-for="(estado, index) in dashboardData.statistics.por_estado"
+            :key="index"
+            class="estado-card"
+            :class="'estado-' + estado.estado.toLowerCase().replace(/ /g, '-')"
+          >
+            <div class="estado-icon">
+              <i :class="getEstadoIcon(estado.estado)"></i>
+            </div>
+            <div class="estado-info">
+              <div class="estado-cantidad">{{ estado.cantidad }}</div>
+              <div class="estado-nombre">{{ estado.estado }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Niveles de Importancia -->
+        <div v-if="dashboardData.statistics.por_importancia" class="importancia-section">
+          <div class="subsection-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Peticiones por Nivel de Importancia</h3>
+          </div>
+          <div class="importancia-grid">
+            <div
+              v-for="imp in dashboardData.statistics.por_importancia"
+              :key="imp.NivelImportancia"
+              class="importancia-item"
+              :class="'nivel-' + imp.NivelImportancia"
+            >
+              <div class="importancia-header">
+                <span class="nivel-badge">Nivel {{ imp.NivelImportancia }}</span>
+                <span class="nivel-label">{{ getNivelLabel(imp.NivelImportancia) }}</span>
+              </div>
+              <div class="importancia-count">{{ imp.cantidad }}</div>
+              <div class="importancia-bar">
+                <div
+                  class="bar-fill"
+                  :style="{ width: getImportanciaPercentage(imp.cantidad) + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="charts-grid">
@@ -200,6 +589,14 @@
             </div>
           </div>
         </div>
+
+        <!-- Actividad Reciente (dentro del panel admin) -->
+        <RecentActivity
+          v-if="dashboardData"
+          :petitions="dashboardData.recent_petitions || []"
+          :alerts="dashboardData.alerts || []"
+          @view-petition="viewPetitionDetails"
+        />
       </div>
       </div><!-- Close content-wrapper -->
     </div>
@@ -238,6 +635,11 @@ export default {
 
     const userRole = computed(() => {
       const user = authService.getCurrentUser()
+      // Nuevo sistema: mostrar múltiples roles
+      if (user?.usuario?.RolesNombres && Array.isArray(user.usuario.RolesNombres)) {
+        return user.usuario.RolesNombres.join(', ')
+      }
+      // Fallback al sistema antiguo
       return user?.rol?.nombre || 'Usuario'
     })
 
@@ -253,35 +655,126 @@ export default {
 
     const userPermissions = computed(() => {
       const user = authService.getCurrentUser()
+      // Nuevo sistema: obtener permisos del array Permisos
+      if (user?.usuario?.Permisos && Array.isArray(user.usuario.Permisos)) {
+        return user.usuario.Permisos
+      }
+      // Fallback al sistema antiguo
       return user?.permisos || []
     })
 
-    const isAdmin = computed(() => userRoleId.value === 1)
-    const isDepartmentUser = computed(() => userRoleId.value === 9)
+    // Obtener nombres de roles del usuario
+    const userRoles = computed(() => {
+      const user = authService.getCurrentUser()
+      // Nuevo sistema: obtener roles del array RolesNombres
+      if (user?.usuario?.RolesNombres && Array.isArray(user.usuario.RolesNombres)) {
+        return user.usuario.RolesNombres
+      }
+      // Fallback al sistema antiguo
+      if (user?.rol?.nombre) {
+        return [user.rol.nombre]
+      }
+      return []
+    })
 
-    // Quick Actions Definition
+    // Helper local para verificar si tiene un permiso
+    const hasPermission = (permission) => {
+      return userPermissions.value.includes(permission)
+    }
+
+    // Helper local para verificar si tiene alguno de varios permisos
+    const hasAnyPermission = (permissions) => {
+      return permissions.some(p => userPermissions.value.includes(p))
+    }
+
+    // Helper local para verificar si tiene un rol específico
+    const hasRole = (roleName) => {
+      return userRoles.value.some(r => r.toLowerCase() === roleName.toLowerCase())
+    }
+
+    // Verificaciones de roles basadas en nombre de rol Y permisos
+    const isAdmin = computed(() => {
+      // Verificar por nombre de rol (más confiable)
+      const isAdminByRole = hasRole('Super Usuario') || hasRole('Director')
+      // O verificar por permisos
+      const isAdminByPermission = hasAnyPermission(['admin_peticiones', 'configuracion_sistema', 'gestionar_usuarios', 'ver_reportes'])
+
+      return isAdminByRole || isAdminByPermission
+    })
+
+    const isDepartmentUser = computed(() => {
+      return hasRole('Departamento') || hasPermission('gestion_peticiones_departamento')
+    })
+
+    const isFormularioUser = computed(() => {
+      return hasRole('Formulario') || hasPermission('peticiones_formulario')
+    })
+
+    const isCanalizadorMunicipal = computed(() => {
+      return hasRole('Canalizador Municipal') || hasPermission('peticiones_municipio')
+    })
+
+    const isCanalizadorEstatal = computed(() => {
+      return hasRole('Canalizador Estatal') || hasPermission('peticiones_estatal')
+    })
+
+    // Quick Actions Definition - Completo para todos los roles
     const quickActions = [
+      // Super Usuario y Director
       {
         name: 'peticiones',
-        label: 'Ver Peticiones',
-        icon: 'fas fa-list',
+        label: 'Gestión de Peticiones',
+        icon: 'fas fa-tasks',
         handler: () => router.push('/peticiones'),
         requiredPermission: 'admin_peticiones'
       },
       {
-        name: 'petitions',
-        label: 'Petitions',
-        icon: 'fas fa-user-check',
-        handler: () => router.push('/petitions'),
-        requiredPermission: 'admin_peticiones'
+        name: 'configuracion',
+        label: 'Configuración',
+        icon: 'fas fa-cog',
+        handler: () => router.push('/configuracion'),
+        requiredPermission: 'acceder_configuracion'
       },
       {
-        name: 'departamentos',
-        label: 'Mi Departamento',
-        icon: 'fas fa-building',
-        handler: () => router.push('/departamentos'),
-        requiredPermission: 'ver_departamentos'
+        name: 'reportes',
+        label: 'Reportes',
+        icon: 'fas fa-chart-bar',
+        handler: () => router.push('/reportes'),
+        requiredPermission: 'ver_reportes'
       },
+      // Formulario (entrada de peticiones)
+      {
+        name: 'petitions',
+        label: 'Registro de Peticiones',
+        icon: 'fas fa-file-alt',
+        handler: () => router.push('/petition'),
+        requiredPermission: 'peticiones_formulario'
+      },
+      // Canalizador Municipal (peticiones por municipio)
+      {
+        name: 'peticiones-municipio',
+        label: 'Peticiones de mi Municipio',
+        icon: 'fas fa-map-marked-alt',
+        handler: () => router.push('/peticiones'),
+        requiredPermission: 'peticiones_municipio'
+      },
+      // Canalizador Estatal (todas las peticiones)
+      {
+        name: 'peticiones-estatal',
+        label: 'Peticiones Estatales',
+        icon: 'fas fa-globe-americas',
+        handler: () => router.push('/peticiones'),
+        requiredPermission: 'peticiones_estatal'
+      },
+      // Departamento (solo sus peticiones asignadas)
+      {
+        name: 'mis-peticiones',
+        label: 'Mis Peticiones',
+        icon: 'fas fa-clipboard-list',
+        handler: () => router.push('/departamentos'),
+        requiredPermission: 'gestion_peticiones_departamento'
+      },
+      // Tablero (varios roles)
       {
         name: 'tablero',
         label: 'Tablero',
@@ -289,23 +782,41 @@ export default {
         handler: () => router.push('/tablero'),
         requiredPermission: 'ver_tablero'
       },
+      // Ver usuarios (Director)
       {
-        name: 'configuracion',
-        label: 'Configuración',
-        icon: 'fas fa-cog',
-        handler: () => router.push('/configuracion'),
-        requiredPermission: 'configuracion_sistema'
+        name: 'usuarios',
+        label: 'Usuarios',
+        icon: 'fas fa-users',
+        handler: () => router.push('/configuracion/usuarios'),
+        requiredPermission: 'ver_usuarios'
       }
     ]
 
     // Filter quick actions based on user permissions
     const filteredQuickActions = computed(() => {
       const permissions = userPermissions.value
-      if (!Array.isArray(permissions)) return []
-      
-      return quickActions.filter(action => {
-        return permissions.includes(action.requiredPermission)
+
+      // Verificar que permissions sea un array válido
+      if (!Array.isArray(permissions) || permissions.length === 0) {
+        console.warn('⚠️ No se encontraron permisos para el usuario')
+        return []
+      }
+
+      console.log('🔐 Permisos del usuario:', permissions)
+
+      const filtered = quickActions.filter(action => {
+        // Verificar si el usuario tiene el permiso requerido
+        const hasPermission = permissions.includes(action.requiredPermission)
+
+        if (hasPermission) {
+          console.log(`✅ Acción permitida: ${action.label} (${action.requiredPermission})`)
+        }
+
+        return hasPermission
       })
+
+      console.log(`📋 Total de acciones rápidas disponibles: ${filtered.length}/${quickActions.length}`)
+      return filtered
     })
 
     // Methods
@@ -322,6 +833,21 @@ export default {
 
         dashboardData.value = response.data
         console.log('✅ Dashboard data loaded:', response.data)
+        console.log('👤 Usuario roles:', userRoles.value)
+        console.log('🔐 Usuario permisos:', userPermissions.value)
+        console.log('👔 Es Admin?:', isAdmin.value)
+        console.log('🆔 User Info del backend:', response.data.user_info)
+        console.log('🎯 Rol ID del backend:', response.data.user_info?.rol_id)
+        console.log('📊 Estadísticas recibidas:', response.data.statistics)
+        console.log('📝 Peticiones recientes:', response.data.recent_petitions?.length || 0)
+        console.log('🚨 Alertas:', response.data.alerts?.length || 0)
+
+        if (response.data.statistics) {
+          console.log('📈 Por estado:', response.data.statistics.por_estado)
+          console.log('⚠️ Por importancia:', response.data.statistics.por_importancia)
+          console.log('🗓️ Últimos 7 días:', response.data.statistics.ultimos_7_dias)
+          console.log('🏙️ Top municipios:', response.data.statistics.top_municipios)
+        }
 
       } catch (err) {
         console.error('❌ Error loading dashboard:', err)
@@ -359,6 +885,40 @@ export default {
       router.push(`/peticiones?id=${petitionId}`)
     }
 
+    const getEstadoIcon = (estado) => {
+      const iconMap = {
+        'Esperando recepción': 'fas fa-clock',
+        'Aceptado en proceso': 'fas fa-cog fa-spin',
+        'Devuelto a seguimiento': 'fas fa-undo',
+        'Rechazado': 'fas fa-times-circle',
+        'Completado': 'fas fa-check-circle'
+      }
+      return iconMap[estado] || 'fas fa-file-alt'
+    }
+
+    const getNivelLabel = (nivel) => {
+      const labels = {
+        1: 'Muy Alta',
+        2: 'Alta',
+        3: 'Media',
+        4: 'Baja',
+        5: 'Muy Baja'
+      }
+      return labels[nivel] || 'N/D'
+    }
+
+    const getImportanciaPercentage = (cantidad) => {
+      if (!dashboardData.value?.statistics?.por_importancia) return 0
+      const max = Math.max(...dashboardData.value.statistics.por_importancia.map(i => i.cantidad))
+      return max > 0 ? (cantidad / max) * 100 : 0
+    }
+
+    const getDepartamentoPercentage = (cantidad) => {
+      if (!dashboardData.value?.statistics?.departamentos_top) return 0
+      const max = Math.max(...dashboardData.value.statistics.departamentos_top.map(d => d.cantidad))
+      return max > 0 ? (cantidad / max) * 100 : 0
+    }
+
     // Lifecycle
     onMounted(() => {
       loadDashboardData()
@@ -376,13 +936,20 @@ export default {
       userPermissions,
       isAdmin,
       isDepartmentUser,
+      isFormularioUser,
+      isCanalizadorMunicipal,
+      isCanalizadorEstatal,
       filteredQuickActions,
       loadDashboardData,
       refreshData,
       getMunicipioPercentage,
       getTrendHeight,
       formatShortDate,
-      viewPetitionDetails
+      viewPetitionDetails,
+      getEstadoIcon,
+      getNivelLabel,
+      getImportanciaPercentage,
+      getDepartamentoPercentage
     }
   }
 }
@@ -736,6 +1303,257 @@ export default {
   margin: 0;
 }
 
+/* Estados Grid */
+.bienvenido-container .estados-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.bienvenido-container .estado-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid;
+  transition: all 0.3s ease;
+}
+
+.bienvenido-container .estado-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.bienvenido-container .estado-esperando-recepción {
+  border-left-color: #f59e0b;
+}
+
+.bienvenido-container .estado-aceptado-en-proceso {
+  border-left-color: #0074D9;
+}
+
+.bienvenido-container .estado-devuelto-a-seguimiento {
+  border-left-color: #8b5cf6;
+}
+
+.bienvenido-container .estado-rechazado {
+  border-left-color: #ef4444;
+}
+
+.bienvenido-container .estado-completado {
+  border-left-color: #10b981;
+}
+
+.bienvenido-container .estado-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.bienvenido-container .estado-esperando-recepción .estado-icon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.bienvenido-container .estado-aceptado-en-proceso .estado-icon {
+  background: rgba(0, 116, 217, 0.1);
+  color: #0074D9;
+}
+
+.bienvenido-container .estado-devuelto-a-seguimiento .estado-icon {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.bienvenido-container .estado-rechazado .estado-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.bienvenido-container .estado-completado .estado-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.bienvenido-container .estado-info {
+  flex: 1;
+}
+
+.bienvenido-container .estado-cantidad {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.bienvenido-container .estado-nombre {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Importancia Section */
+.bienvenido-container .importancia-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bienvenido-container .subsection-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.bienvenido-container .subsection-title i {
+  color: #f59e0b;
+  font-size: 1.15rem;
+}
+
+.bienvenido-container .subsection-title h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.bienvenido-container .importancia-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.bienvenido-container .importancia-item {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 2px solid;
+  transition: all 0.3s ease;
+}
+
+.bienvenido-container .importancia-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.bienvenido-container .nivel-1 {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(239, 68, 68, 0.1) 100%);
+}
+
+.bienvenido-container .nivel-2 {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
+
+.bienvenido-container .nivel-3 {
+  border-color: #0074D9;
+  background: linear-gradient(135deg, rgba(0, 116, 217, 0.05) 0%, rgba(0, 116, 217, 0.1) 100%);
+}
+
+.bienvenido-container .nivel-4 {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.1) 100%);
+}
+
+.bienvenido-container .nivel-5 {
+  border-color: #94a3b8;
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.05) 0%, rgba(148, 163, 184, 0.1) 100%);
+}
+
+.bienvenido-container .importancia-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.bienvenido-container .nivel-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+}
+
+.bienvenido-container .nivel-1 .nivel-badge {
+  background: #ef4444;
+}
+
+.bienvenido-container .nivel-2 .nivel-badge {
+  background: #f59e0b;
+}
+
+.bienvenido-container .nivel-3 .nivel-badge {
+  background: #0074D9;
+}
+
+.bienvenido-container .nivel-4 .nivel-badge {
+  background: #10b981;
+}
+
+.bienvenido-container .nivel-5 .nivel-badge {
+  background: #94a3b8;
+}
+
+.bienvenido-container .nivel-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.bienvenido-container .importancia-count {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.bienvenido-container .importancia-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bienvenido-container .importancia-bar .bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.bienvenido-container .nivel-1 .importancia-bar .bar-fill {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.bienvenido-container .nivel-2 .importancia-bar .bar-fill {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.bienvenido-container .nivel-3 .importancia-bar .bar-fill {
+  background: linear-gradient(90deg, #0074D9, #0056a6);
+}
+
+.bienvenido-container .nivel-4 .importancia-bar .bar-fill {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.bienvenido-container .nivel-5 .importancia-bar .bar-fill {
+  background: linear-gradient(90deg, #94a3b8, #64748b);
+}
+
 .bienvenido-container .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -1086,6 +1904,491 @@ export default {
   background: linear-gradient(135deg, rgba(0, 116, 217, 0.05) 0%, rgba(0, 86, 166, 0.05) 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 116, 217, 0.15);
+}
+
+/* Estilos para Sección de Canalizadores */
+.bienvenido-container .canalizador-section {
+  margin-top: 2rem;
+}
+
+.bienvenido-container .alertas-destacadas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.bienvenido-container .alert-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border-left: 4px solid;
+}
+
+.bienvenido-container .alert-card.alert-critical {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border-left-color: #ef4444;
+}
+
+.bienvenido-container .alert-card.alert-warning {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border-left-color: #f59e0b;
+}
+
+.bienvenido-container .alert-icon {
+  font-size: 2rem;
+  color: inherit;
+}
+
+.bienvenido-container .alert-critical .alert-icon {
+  color: #ef4444;
+}
+
+.bienvenido-container .alert-warning .alert-icon {
+  color: #f59e0b;
+}
+
+.bienvenido-container .alert-content {
+  flex: 1;
+}
+
+.bienvenido-container .alert-message {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.bienvenido-container .alert-count {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.bienvenido-container .canalizador-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bienvenido-container .metric-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.bienvenido-container .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.bienvenido-container .metric-card.total {
+  border-left: 4px solid #0074D9;
+}
+
+.bienvenido-container .metric-card.retrasadas {
+  border-left: 4px solid #f59e0b;
+}
+
+.bienvenido-container .metric-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-size: 1.75rem;
+}
+
+.bienvenido-container .metric-card.total .metric-icon {
+  background: linear-gradient(135deg, rgba(0, 116, 217, 0.1) 0%, rgba(0, 86, 166, 0.05) 100%);
+  color: #0074D9;
+}
+
+.bienvenido-container .metric-card.retrasadas .metric-icon {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  color: #f59e0b;
+}
+
+.bienvenido-container .metric-content {
+  flex: 1;
+}
+
+.bienvenido-container .metric-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.bienvenido-container .metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.bienvenido-container .metric-subtitle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+.bienvenido-container .departamentos-section,
+.bienvenido-container .peticiones-urgentes-section {
+  margin-top: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bienvenido-container .departamentos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bienvenido-container .departamento-item {
+  display: grid;
+  grid-template-columns: 50px 1fr 200px;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.bienvenido-container .departamento-item:hover {
+  background: #f1f5f9;
+  transform: translateX(4px);
+}
+
+.bienvenido-container .dept-ranking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bienvenido-container .dept-rank {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #475569;
+}
+
+.bienvenido-container .dept-rank.rank-1 {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+}
+
+.bienvenido-container .dept-rank.rank-2 {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  color: white;
+}
+
+.bienvenido-container .dept-rank.rank-3 {
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  color: white;
+}
+
+.bienvenido-container .dept-info {
+  flex: 1;
+}
+
+.bienvenido-container .dept-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.bienvenido-container .dept-count {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.bienvenido-container .dept-bar-container {
+  position: relative;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bienvenido-container .dept-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #0074D9 0%, #0056a6 100%);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.bienvenido-container .peticiones-urgentes-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.bienvenido-container .peticion-urgente-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.bienvenido-container .peticion-urgente-card:hover {
+  border-color: #0074D9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.15);
+}
+
+.bienvenido-container .peticion-urgente-card.nivel-1 {
+  border-left: 4px solid #ef4444;
+}
+
+.bienvenido-container .peticion-urgente-card.nivel-2 {
+  border-left: 4px solid #f59e0b;
+}
+
+.bienvenido-container .peticion-urgente-card.nivel-3 {
+  border-left: 4px solid #3b82f6;
+}
+
+.bienvenido-container .petition-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bienvenido-container .petition-folio {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.bienvenido-container .petition-nivel {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bienvenido-container .petition-nivel.nivel-badge-1 {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.bienvenido-container .petition-nivel.nivel-badge-2 {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.bienvenido-container .petition-nivel.nivel-badge-3 {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.bienvenido-container .petition-dias {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.bienvenido-container .petition-body {
+  margin-bottom: 0.75rem;
+}
+
+.bienvenido-container .petition-nombre {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.375rem;
+}
+
+.bienvenido-container .petition-descripcion {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bienvenido-container .petition-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.bienvenido-container .petition-municipio {
+  font-size: 0.85rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.bienvenido-container .petition-estado {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ========================================
+   Estilos para Sección de Departamento
+   ======================================== */
+
+.bienvenido-container .departamento-section {
+  margin-top: 2rem;
+}
+
+.bienvenido-container .departamento-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.bienvenido-container .metric-card.total-dept {
+  border-left: 4px solid #0074D9;
+}
+
+.bienvenido-container .metric-card.pendientes-dept {
+  border-left: 4px solid #f59e0b;
+}
+
+.bienvenido-container .metric-card.retrasadas-dept {
+  border-left: 4px solid #ef4444;
+}
+
+.bienvenido-container .departamento-estados-section {
+  margin-bottom: 2rem;
+}
+
+.bienvenido-container .peticiones-departamento-section {
+  margin-top: 2rem;
+}
+
+.bienvenido-container .peticiones-departamento-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bienvenido-container .peticion-dept-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-left: 4px solid #cbd5e1;
+}
+
+.bienvenido-container .peticion-dept-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.bienvenido-container .peticion-dept-card.retrasada {
+  background: #fef2f2;
+}
+
+.bienvenido-container .peticion-dept-card.nivel-1 {
+  border-left-color: #ef4444;
+}
+
+.bienvenido-container .peticion-dept-card.nivel-2 {
+  border-left-color: #f59e0b;
+}
+
+.bienvenido-container .peticion-dept-card.nivel-3 {
+  border-left-color: #3b82f6;
+}
+
+.bienvenido-container .petition-dias.dias-retrasado {
+  background: #fef2f2;
+  color: #ef4444;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.bienvenido-container .petition-estado-dept {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.bienvenido-container .estado-badge-dept-aceptado-en-proceso,
+.bienvenido-container .estado-badge-dept-en-proceso {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.bienvenido-container .estado-badge-dept-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.bienvenido-container .estado-badge-dept-completado {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.bienvenido-container .estado-badge-dept-rechazado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.bienvenido-container .no-peticiones-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  color: #64748b;
+}
+
+.bienvenido-container .no-peticiones-message i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.bienvenido-container .no-peticiones-message h3 {
+  font-size: 1.25rem;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.bienvenido-container .no-peticiones-message p {
+  font-size: 0.95rem;
 }
 
 /* Responsive Design */

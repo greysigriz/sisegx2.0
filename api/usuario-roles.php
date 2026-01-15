@@ -10,43 +10,159 @@ $db = $database->getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// GET - Obtener roles de un usuario específico
+// GET - Múltiples acciones según el parámetro 'action'
 if($method === 'GET') {
-    if(!isset($_GET['idUsuario'])) {
-        http_response_code(400);
-        echo json_encode(array("message" => "Se requiere idUsuario"));
-        exit;
-    }
-
-    $idUsuario = $_GET['idUsuario'];
-
-    try {
-        $query = "SELECT 
-                    ur.Id,
-                    ur.IdUsuario,
-                    ur.IdRolSistema,
-                    r.Nombre as NombreRol,
-                    r.Descripcion,
-                    ur.FechaAsignacion
-                  FROM UsuarioRol ur
-                  JOIN RolSistema r ON ur.IdRolSistema = r.Id
-                  WHERE ur.IdUsuario = :idUsuario
-                  ORDER BY r.Nombre";
-        
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $roles = array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            array_push($roles, $row);
+    $action = isset($_GET['action']) ? $_GET['action'] : 'getRolesByUser';
+    
+    // Acción 1: Obtener roles de un usuario específico
+    if($action === 'getRolesByUser') {
+        if(!isset($_GET['idUsuario'])) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Se requiere idUsuario"));
+            exit;
         }
 
-        http_response_code(200);
-        echo json_encode(array("records" => $roles));
-    } catch(Exception $e) {
-        http_response_code(500);
-        echo json_encode(array("message" => "Error: " . $e->getMessage()));
+        $idUsuario = $_GET['idUsuario'];
+
+        try {
+            $query = "SELECT 
+                        ur.Id,
+                        ur.IdUsuario,
+                        ur.IdRolSistema,
+                        r.Nombre as NombreRol,
+                        r.Descripcion,
+                        ur.FechaAsignacion
+                      FROM UsuarioRol ur
+                      JOIN RolSistema r ON ur.IdRolSistema = r.Id
+                      WHERE ur.IdUsuario = :idUsuario
+                      ORDER BY r.Nombre";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $roles = array();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                array_push($roles, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode(array("records" => $roles));
+        } catch(Exception $e) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+        }
+    }
+    
+    // Acción 2: Contar cuántos usuarios tienen un rol específico
+    elseif($action === 'countByRole') {
+        if(!isset($_GET['idRol'])) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Se requiere idRol"));
+            exit;
+        }
+
+        $idRol = $_GET['idRol'];
+
+        try {
+            $query = "SELECT COUNT(*) as count FROM UsuarioRol WHERE IdRolSistema = :idRol";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            http_response_code(200);
+            echo json_encode(array("count" => (int)$row['count']));
+        } catch(Exception $e) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+        }
+    }
+    
+    // Acción 3: Obtener usuarios que tienen un rol específico
+    elseif($action === 'getUsersByRole') {
+        if(!isset($_GET['idRol'])) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Se requiere idRol"));
+            exit;
+        }
+
+        $idRol = $_GET['idRol'];
+
+        try {
+            $query = "SELECT 
+                        ur.IdUsuario,
+                        u.Nombre,
+                        u.ApellidoPaterno,
+                        u.ApellidoMaterno,
+                        CONCAT(u.Nombre, ' ', u.ApellidoPaterno, ' ', u.ApellidoMaterno) as NombreCompleto,
+                        u.Email,
+                        ur.FechaAsignacion
+                      FROM UsuarioRol ur
+                      JOIN Usuario u ON ur.IdUsuario = u.Id
+                      WHERE ur.IdRolSistema = :idRol
+                      ORDER BY u.Nombre, u.ApellidoPaterno";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $usuarios = array();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                array_push($usuarios, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode(array("usuarios" => $usuarios));
+        } catch(Exception $e) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+        }
+    }
+    
+    // Acción 4: Obtener permisos de un rol específico
+    elseif($action === 'getPermisosByRole') {
+        if(!isset($_GET['idRol'])) {
+            http_response_code(400);
+            echo json_encode(array("message" => "Se requiere idRol"));
+            exit;
+        }
+
+        $idRol = $_GET['idRol'];
+
+        try {
+            $query = "SELECT 
+                        p.Id,
+                        p.Codigo,
+                        p.Nombre,
+                        p.Descripcion,
+                        p.Modulo
+                      FROM RolPermiso rp
+                      JOIN Permiso p ON rp.IdPermiso = p.Id
+                      WHERE rp.IdRolSistema = :idRol
+                      ORDER BY p.Modulo, p.Nombre";
+            
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $permisos = array();
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                array_push($permisos, $row);
+            }
+
+            http_response_code(200);
+            echo json_encode(array("permisos" => $permisos));
+        } catch(Exception $e) {
+            http_response_code(500);
+            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+        }
+    }
+    
+    else {
+        http_response_code(400);
+        echo json_encode(array("message" => "Acción no reconocida"));
     }
 }
 

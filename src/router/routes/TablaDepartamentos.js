@@ -7,6 +7,10 @@ export default [
           path: 'departamentos',
           name: 'Departamentos',
           component: () => import('@/views/TablaDepartamentos.vue'),
+          meta: {
+            requiresAuth: true,
+            requiredPermission: 'gestion_peticiones_departamento'
+          }
         }
       ]
     }

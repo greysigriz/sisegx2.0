@@ -1,5 +1,63 @@
 # 📖 Sistema de Permisos y Roles - Guía Completa
 
+## 🚨 CONTEXTO TÉCNICO PARA IA
+
+### Ubicación del Proyecto
+- **Path absoluto**: `c:\xampp\htdocs\SISEE\`
+- **Base de datos**: `sisegestion` (MySQL 8.0+)
+- **Backend**: PHP 7.4+ (carpeta `api/`)
+- **Frontend**: Vue.js 3 + Vite (carpeta `src/`)
+- **Servidor**: XAMPP (http://localhost)
+
+### Archivos Clave del Sistema de Permisos
+
+#### SQL (Base de Datos)
+```
+c:\xampp\htdocs\SISEE\database\
+├── permisos_sistema.sql              # EJECUTAR: Crea tablas Permiso y RolPermiso
+└── migration_roles_multiples.sql     # EJECUTAR: Crea tabla UsuarioRol
+```
+
+#### Backend PHP
+```
+c:\xampp\htdocs\SISEE\api\
+├── check-session.php                 # MODIFICAR: Cargar permisos del usuario
+├── login.php                         # MODIFICAR: Incluir permisos en login
+├── roles.php                         # Gestión de roles
+├── usuarios.php                      # Gestión de usuarios
+└── usuario-roles.php                 # Asignar roles a usuarios
+```
+
+#### Frontend Vue.js
+```
+c:\xampp\htdocs\SISEE\src\
+├── components\Sidebar.vue            # USA: Filtra menú por permisos
+├── utils\rolesHelper.js              # HELPER: hasRole(), hasAnyRole(), etc.
+├── services\auth.js                  # Servicio de autenticación
+└── views\Configuracion\Usuarios.vue  # Gestión de usuarios y roles
+```
+
+### Variables Importantes
+- **VITE_API_URL**: URL del backend (default: `http://localhost/sisee/api`)
+- **Base de datos**: `sisegestion`
+- **Tabla principal roles**: `RolSistema`
+- **Tabla permisos**: `Permiso`
+- **Tabla intermedia rol-permiso**: `RolPermiso`
+- **Tabla intermedia usuario-rol**: `UsuarioRol`
+
+### Flujo de Datos
+```
+1. Usuario inicia sesión → login.php
+2. login.php consulta UsuarioRol → obtiene roles
+3. login.php consulta RolPermiso → obtiene permisos
+4. Retorna: user { Roles[], Permisos[] }
+5. Frontend guarda en localStorage
+6. Sidebar.vue filtra menú según Permisos[]
+7. Vistas verifican permisos con rolesHelper.js
+```
+
+---
+
 ## 🎯 ¿Cómo Funciona el Sistema?
 
 El sistema tiene **3 niveles** de control de acceso:
@@ -56,17 +114,29 @@ Cada usuario tiene uno o más roles asignados.
 
 ### PASO 1: Ejecutar el SQL de Permisos
 
+**Archivo SQL**: `c:\xampp\htdocs\SISEE\database\permisos_sistema.sql`
+
+**Cómo ejecutar**:
+1. Abrir phpMyAdmin: http://localhost/phpmyadmin
+2. Seleccionar base de datos: `sisegestion`
+3. Ir a pestaña **SQL**
+4. Abrir archivo: `c:\xampp\htdocs\SISEE\database\permisos_sistema.sql`
+5. Copiar todo el contenido
+6. Pegar en el textarea y hacer clic en **Ejecutar**
+
+**Verificar ejecución**:
 ```sql
--- Ejecutar en phpMyAdmin
-database/permisos_sistema.sql
+-- Debe retornar > 0 registros
+SELECT COUNT(*) as TotalPermisos FROM Permiso;
+SELECT COUNT(*) as AsignacionesRolPermiso FROM RolPermiso;
 ```
 
-Este script:
-- ✅ Crea la tabla `Permiso`
-- ✅ Crea la tabla `RolPermiso`
-- ✅ Inserta 30+ permisos predefinidos
-- ✅ Asigna permisos a los roles existentes
-- ✅ Crea vistas útiles
+**Este script**:
+- ✅ Crea la tabla `Permiso` (30+ permisos predefinidos)
+- ✅ Crea la tabla `RolPermiso` (relación roles-permisos)
+- ✅ Inserta permisos base del sistema
+- ✅ Asigna permisos a roles existentes (Super Usuario, Director, etc.)
+- ✅ Crea vistas: `v_RolesConPermisos`, `v_UsuariosConPermisos`
 
 ---
 
@@ -315,15 +385,146 @@ export default {
 
 ## 🛠️ Crear Nueva Vista de Gestión de Permisos
 
-Próximamente crearemos una vista en `/configuracion/permisos` donde podrás:
+### Archivo a crear:
+**Ruta**: `c:\xampp\htdocs\SISEE\src\views\Configuracion\Permisos.vue`
 
-1. **Ver todos los roles**
-2. **Seleccionar un rol**
-3. **Ver sus permisos actuales**
-4. **Agregar/quitar permisos con checkboxes**
-5. **Guardar cambios**
+### Funcionalidad requerida:
+1. **Ver todos los roles** (GET /api/roles.php)
+2. **Seleccionar un rol** (v-model)
+3. **Ver permisos actuales** (GET /api/rol-permisos.php?idRol=X)
+4. **Agregar/quitar permisos** (checkboxes con v-model)
+5. **Guardar cambios** (POST /api/rol-permisos.php)
 
-Similar a cómo funciona la asignación de roles en Usuarios.
+### Estructura del componente:
+```vue
+<template>
+  <div class="gestion-permisos">
+    <!-- Selector de rol -->
+    <select v-model="rolSeleccionado">
+      <option v-for="rol in roles" :value="rol.Id">{{ rol.Nombre }}</option>
+    </select>
+    
+    <!-- Checkboxes de permisos por módulo -->
+    <div v-for="modulo in modulosAgrupados">
+      <h3>{{ modulo.nombre }}</h3>
+      <label v-for="permiso in modulo.permisos">
+        <input type="checkbox" v-model="permisosSeleccionados" :value="permiso.Id">
+        {{ permiso.Nombre }}
+      </label>
+    </div>
+    
+    <!-- Botón guardar -->
+    <button @click="guardarPermisos">Guardar</button>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      roles: [],
+      permisosDisponibles: [],
+      permisosSeleccionados: [],
+      rolSeleccionado: null
+    }
+  },
+  computed: {
+    modulosAgrupados() {
+      // Agrupar permisos por módulo
+    }
+  },
+  methods: {
+    async cargarRoles() { /* GET /api/roles.php */ },
+    async cargarPermisos() { /* GET /api/permisos.php */ },
+    async cargarPermisosRol(idRol) { /* GET /api/rol-permisos.php */ },
+    async guardarPermisos() { /* POST /api/rol-permisos.php */ }
+  }
+}
+</script>
+```
+
+Similar a cómo funciona la asignación de roles en `Usuarios.vue`.
+
+---
+
+## 🔍 DIAGNÓSTICO Y VERIFICACIÓN
+
+### Verificar que el sistema está funcionando:
+
+#### 1. Verificar Base de Datos
+```sql
+-- En phpMyAdmin, ejecutar:
+
+-- ¿Existen las tablas?
+SHOW TABLES LIKE 'Permiso';
+SHOW TABLES LIKE 'RolPermiso';
+SHOW TABLES LIKE 'UsuarioRol';
+
+-- ¿Hay permisos en la BD?
+SELECT COUNT(*) as TotalPermisos FROM Permiso;
+
+-- ¿Hay relaciones rol-permiso?
+SELECT r.Nombre, COUNT(rp.IdPermiso) as TotalPermisos
+FROM RolSistema r
+LEFT JOIN RolPermiso rp ON r.Id = rp.IdRolSistema
+GROUP BY r.Id, r.Nombre;
+
+-- ¿Los usuarios tienen roles?
+SELECT u.Usuario, COUNT(ur.IdRolSistema) as TotalRoles
+FROM Usuario u
+LEFT JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
+GROUP BY u.Id, u.Usuario;
+```
+
+#### 2. Verificar Backend PHP
+```bash
+# En terminal PowerShell
+cd c:\xampp\htdocs\SISEE\api
+
+# Verificar que existen los archivos:
+ls check-session.php
+ls login.php
+ls usuario-roles.php
+
+# Verificar logs de errores:
+cat logs\error.log
+```
+
+#### 3. Verificar Frontend
+```javascript
+// En consola del navegador (F12):
+
+// ¿El usuario tiene permisos?
+const user = JSON.parse(localStorage.getItem('user'));
+console.log('Permisos:', user.Permisos);
+console.log('Roles:', user.Roles);
+
+// ¿Las funciones helper funcionan?
+import { hasRole } from '@/utils/rolesHelper';
+console.log('Es admin?', hasRole('Super Usuario'));
+```
+
+#### 4. Verificar VITE_API_URL
+```bash
+# Verificar .env
+cat c:\xampp\htdocs\SISEE\.env
+
+# Debe contener:
+VITE_API_URL=http://localhost/sisee/api
+```
+
+### Checklist de Verificación
+
+- [ ] Tabla `Permiso` creada con 30+ registros
+- [ ] Tabla `RolPermiso` tiene asignaciones
+- [ ] Tabla `UsuarioRol` tiene usuarios con roles
+- [ ] `check-session.php` retorna array `Permisos[]`
+- [ ] `login.php` retorna `user.Roles[]` y `user.Permisos[]`
+- [ ] `rolesHelper.js` existe en `src/utils/`
+- [ ] localStorage tiene `user` con `Permisos[]`
+- [ ] Sidebar muestra opciones según permisos
+- [ ] No hay errores en consola de navegador
+- [ ] No hay errores en `api/logs/error.log`
 
 ---
 

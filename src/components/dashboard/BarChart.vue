@@ -18,6 +18,7 @@
   </div>
 </template>
 <script setup>
+import '@/assets/css/bar_dashboard.css'
 import * as echarts from 'echarts'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
@@ -51,7 +52,7 @@ const colors = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
 
 const filteredData = computed(() => {
   const sorted = [...allReports.value].sort((a, b) => b.count - a.count)
-  
+
   if (topFilter.value === '10') return sorted.slice(0, 10)
   if (topFilter.value === '15') return sorted.slice(0, 15)
   return sorted
@@ -63,7 +64,7 @@ const renderBarChart = () => {
   const data = filteredData.value
 
   const option = {
-             
+
     tooltip: {
       trigger: 'axis',
       backgroundColor: '#ffffff',
@@ -102,8 +103,8 @@ const renderBarChart = () => {
       position: 'top',
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { 
-        color: '#1e293b', 
+      axisLabel: {
+        color: '#1e293b',
         fontSize: 10,
         fontWeight: 500,
         interval: 0,
@@ -167,5 +168,3 @@ onUnmounted(() => {
   if (barChartInstance) barChartInstance.dispose()
 })
 </script>
-
-<style src="@/assets/css/bar_dashboard.css"></style>

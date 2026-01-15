@@ -87,10 +87,11 @@ export default {
       isSidebarHidden: false,
       allMenuItems: [
         { name: 'Inicio', label: 'Bienvenido', icon: 'fas fa-chart-line', path: '/bienvenido', requiredPermission: 'ver_dashboard' },
-        { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'ver_peticiones' },
+        { name: 'formulario', label: 'Crear Petición', icon: 'fas fa-edit', path: '/petition', requiredPermission: 'peticiones_formulario' },
+        { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'ver_peticiones,peticiones_municipio,peticiones_estatal' },
         { name: 'petitions', label: 'Petitions', icon: 'fas fa-user-check', path: '/petitions', requiredPermission: 'ver_peticiones' },
         { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'acceder_configuracion' },
-        { name: 'departamentos', label: 'Departamentos', icon: 'fas fa-users', path: '/departamentos', requiredPermission: 'ver_departamentos' },
+        { name: 'mis-peticiones', label: 'Mis Peticiones', icon: 'fas fa-clipboard-list', path: '/departamentos', requiredPermission: 'gestion_peticiones_departamento' },
         { name: 'tablero', label: 'Tablero', icon: 'fas fa-th-large', path: '/tablero', requiredPermission: 'ver_tablero' },
       ],
       currentUser: null,
@@ -164,6 +165,12 @@ export default {
 
       // Filtrar elementos del menú según los permisos del usuario
       return this.allMenuItems.filter(item => {
+        // Si el permiso contiene múltiples opciones separadas por coma, verificar si tiene alguno
+        if (item.requiredPermission.includes(',')) {
+          const permisosRequeridos = item.requiredPermission.split(',').map(p => p.trim());
+          return permisosRequeridos.some(p => permisos.includes(p));
+        }
+        // Si es un solo permiso, verificar directamente
         return permisos.includes(item.requiredPermission);
       });
     }

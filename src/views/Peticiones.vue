@@ -4,16 +4,6 @@
       <div class="card-header">
         <div class="header-title-section">
           <h3>Gestión de Peticiones</h3>
-          <!-- ✅ NUEVO: Indicador del municipio que observa el usuario -->
-          <div v-if="municipioUsuario" class="municipio-indicator">
-            <i class="fas fa-map-marker-alt"></i>
-            <span class="municipio-label">Municipio:</span>
-            <span class="municipio-nombre">{{ municipioUsuario }}</span>
-          </div>
-          <div v-else-if="!loading && usuarioLogueado" class="municipio-indicator warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Sin municipio asignado - Mostrando todas las peticiones</span>
-          </div>
         </div>
         <div class="header-actions">
           <button @click="filtrarMisPeticiones" class="btn-filter">
@@ -32,8 +22,14 @@
       </div>
       <div class="card-body">
         <p class="welcome-message">
-          <template v-if="municipioUsuario">
+          <template v-if="hasPermission('peticiones_municipio') && municipioUsuario">
             Administrando peticiones del municipio de <strong>{{ municipioUsuario }}</strong>
+          </template>
+          <template v-else-if="hasPermission('peticiones_estatal') && filtros.municipio_id">
+            Administra las peticiones recibidas
+          </template>
+          <template v-else-if="hasPermission('peticiones_estatal') && !filtros.municipio_id">
+            Administrando peticiones de <strong>todos los municipios</strong>
           </template>
           <template v-else>
             Administra las peticiones recibidas
@@ -96,6 +92,44 @@
           <div class="filtro">
             <label for="filtroNombre">Nombre:</label>
             <input type="text" id="filtroNombre" v-model="filtros.nombre" placeholder="Buscar por nombre">
+          </div>
+          <!-- ✅ NUEVO: Filtro de municipio solo para Canalizador Estatal -->
+          <div v-if="hasPermission('peticiones_estatal')" class="filtro">
+            <label for="filtroMunicipio">
+              <i class="fas fa-map-marker-alt"></i> Municipio:
+            </label>
+            <select id="filtroMunicipio" v-model="filtros.municipio_id">
+              <option value="">Todos los municipios</option>
+              <option v-for="mun in municipios" :key="mun.Id" :value="mun.Id">
+                {{ mun.Municipio }}
+              </option>
+            </select>
+          </div>
+          <!-- ✅ NUEVO: Filtro de ordenamiento -->
+          <div class="filtro">
+            <label for="filtroOrdenar">
+              <i class="fas fa-sort"></i> Ordenar por:
+            </label>
+            <select id="filtroOrdenar" v-model="filtros.ordenarPor">
+              <option value="prioridad">Prioridad (Semáforo + Importancia)</option>
+              <option value="fecha_desc">Fecha (Más reciente primero)</option>
+              <option value="fecha_asc">Fecha (Más antigua primero)</option>
+              <option value="importancia">Nivel de Importancia</option>
+              <option value="folio">Folio</option>
+            </select>
+          </div>
+          <!-- ✅ NUEVO: Filtro de rango de fechas -->
+          <div class="filtro filtro-fecha">
+            <label for="filtroFechaDesde">
+              <i class="fas fa-calendar-alt"></i> Desde:
+            </label>
+            <input type="date" id="filtroFechaDesde" v-model="filtros.fechaDesde">
+          </div>
+          <div class="filtro filtro-fecha">
+            <label for="filtroFechaHasta">
+              <i class="fas fa-calendar-alt"></i> Hasta:
+            </label>
+            <input type="date" id="filtroFechaHasta" v-model="filtros.fechaHasta">
           </div>
         </div>
 
@@ -893,8 +927,14 @@ export default {
       folio: '',
       nombre: '',
       nivelImportancia: '',
-      usuario_seguimiento: ''
+      usuario_seguimiento: '',
+      municipio_id: '', // ✅ Filtro de municipio para Canalizador Estatal
+      ordenarPor: 'prioridad', // ✅ NUEVO: Ordenamiento (prioridad por defecto)
+      fechaDesde: '', // ✅ NUEVO: Fecha desde para filtro de rango
+      fechaHasta: '' // ✅ NUEVO: Fecha hasta para filtro de rango
     });
+
+    const municipios = ref([]); // ✅ NUEVO: Lista de municipios disponibles
 
     const sugerenciasIA = ref([]);
 
@@ -987,46 +1027,90 @@ export default {
       return null;
     };
 
-    // Función mejorada para ordenar peticiones por prioridad
-    const ordenarPeticionesPorPrioridad = (peticiones) => {
+    // ✅ MEJORADO: Función de ordenamiento dinámico según filtro seleccionado
+    const ordenarPeticiones = (peticiones) => {
+      const criterio = filtros.ordenarPor || 'prioridad';
+
       return peticiones.sort((a, b) => {
-        // Primero separamos por color de semáforo
-        const colorA = obtenerColorSemaforo(a);
-        const colorB = obtenerColorSemaforo(b);
+        switch (criterio) {
+          case 'prioridad': {
+            // Ordenamiento por prioridad (semáforo + importancia)
+            const colorA = obtenerColorSemaforo(a);
+            const colorB = obtenerColorSemaforo(b);
 
-        // Si uno es verde y el otro no, el verde va al final
-        if (colorA === 'verde' && colorB !== 'verde') return 1;
-        if (colorB === 'verde' && colorA !== 'verde') return -1;
+            // Si uno es verde y el otro no, el verde va al final
+            if (colorA === 'verde' && colorB !== 'verde') return 1;
+            if (colorB === 'verde' && colorA !== 'verde') return -1;
 
-        // Si ambos son verdes, ordenamos por fecha más reciente
-        if (colorA === 'verde' && colorB === 'verde') {
-          const fechaA = new Date(a.fecha_registro);
-          const fechaB = new Date(b.fecha_registro);
-          return fechaB - fechaA;
+            // Si ambos son verdes, ordenamos por fecha más reciente
+            if (colorA === 'verde' && colorB === 'verde') {
+              const fechaA = new Date(a.fecha_registro);
+              const fechaB = new Date(b.fecha_registro);
+              return fechaB - fechaA;
+            }
+
+            // Para registros no verdes, aplicamos la lógica de prioridad
+            // 1. Primero por nivel de importancia (1 es más importante que 4)
+            const importanciaA = parseInt(a.NivelImportancia) || 3;
+            const importanciaB = parseInt(b.NivelImportancia) || 3;
+
+            if (importanciaA !== importanciaB) {
+              return importanciaA - importanciaB;
+            }
+
+            // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
+            const fechaA2 = new Date(a.fecha_registro);
+            const fechaB2 = new Date(b.fecha_registro);
+            return fechaA2 - fechaB2;
+          }
+
+          case 'fecha_desc':
+            // Más reciente primero
+            return new Date(b.fecha_registro) - new Date(a.fecha_registro);
+
+          case 'fecha_asc':
+            // Más antigua primero
+            return new Date(a.fecha_registro) - new Date(b.fecha_registro);
+
+          case 'importancia': {
+            // Por nivel de importancia (1 más importante)
+            const nivelA = parseInt(a.NivelImportancia) || 3;
+            const nivelB = parseInt(b.NivelImportancia) || 3;
+            if (nivelA !== nivelB) {
+              return nivelA - nivelB;
+            }
+            // Si empatan, ordenar por fecha (más antiguo primero)
+            return new Date(a.fecha_registro) - new Date(b.fecha_registro);
+          }
+
+          case 'folio':
+            // Ordenar alfabéticamente por folio
+            return (a.folio || '').localeCompare(b.folio || '');
+
+          default:
+            return 0;
         }
-
-        // Para registros no verdes, aplicamos la lógica de prioridad
-        // 1. Primero por nivel de importancia (1 es más importante que 4)
-        const importanciaA = parseInt(a.NivelImportancia) || 3;
-        const importanciaB = parseInt(b.NivelImportancia) || 3;
-
-        if (importanciaA !== importanciaB) {
-          return importanciaA - importanciaB;
-        }
-
-        // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
-        const fechaA = new Date(a.fecha_registro);
-        const fechaB = new Date(b.fecha_registro);
-
-        return fechaA - fechaB;
       });
     };
+
 
     const cargarPeticiones = async () => {
       try {
         loading.value = true;
 
-        const response = await axios.get(`${backendUrl}/peticiones.php`);
+        // ✅ NUEVO: Construir query params según permisos
+        const queryParams = new URLSearchParams();
+
+        // Si es Canalizador Estatal y seleccionó un municipio, agregarlo al query
+        if (hasPermission('peticiones_estatal') && filtros.municipio_id) {
+          queryParams.append('municipio_id', filtros.municipio_id);
+        }
+
+        const url = queryParams.toString()
+          ? `${backendUrl}/peticiones.php?${queryParams.toString()}`
+          : `${backendUrl}/peticiones.php`;
+
+        const response = await axios.get(url);
 
         console.log('🔍 DEBUG - Respuesta del backend:', response.data);
 
@@ -1034,37 +1118,20 @@ export default {
 
         console.log('📊 Total peticiones recibidas:', peticionesRaw.length);
 
-        // ✅ NUEVO: Filtrar por división administrativa del usuario
+        // ✅ MODIFICADO: El filtro por municipio ahora lo hace el backend
+        // Solo mostramos el mensaje informativo
         const divisionUsuario = obtenerDivisionUsuario();
-        console.log('🏢 División del usuario logueado:', divisionUsuario);
 
-        let peticionesFiltradas_temp = peticionesRaw;
-
-        if (divisionUsuario) {
-          peticionesFiltradas_temp = peticionesRaw.filter(pet => {
-            const divisionPeticion = parseInt(pet.division_id);
-            const divisionUser = parseInt(divisionUsuario);
-
-            // Si la petición no tiene división, no mostrarla (o cambiar lógica según necesidad)
-            if (!pet.division_id) {
-              console.log(`⚠️ Petición ${pet.folio} sin división asignada`);
-              return false;
-            }
-
-            const coincide = divisionPeticion === divisionUser;
-            if (!coincide) {
-              console.log(`❌ Petición ${pet.folio} excluida: división ${divisionPeticion} != ${divisionUser}`);
-            }
-            return coincide;
-          });
-
-          console.log(`✅ Peticiones filtradas por división ${divisionUsuario}:`, peticionesFiltradas_temp.length);
+        if (hasPermission('peticiones_municipio') && divisionUsuario) {
+          console.log(`🏢 Canalizador Municipal - Mostrando solo municipio ${divisionUsuario}`);
+        } else if (hasPermission('peticiones_estatal')) {
+          console.log('🌍 Canalizador Estatal - Mostrando todos los municipios o filtrado seleccionado');
         } else {
-          console.warn('⚠️ Usuario sin división asignada - mostrando todas las peticiones');
+          console.log('👤 Usuario con acceso completo - Mostrando todas las peticiones');
         }
 
         // Asegurar que todas las peticiones tengan array de departamentos
-        peticiones.value = peticionesFiltradas_temp.map(pet => ({
+        peticiones.value = peticionesRaw.map(pet => ({
           ...pet,
           departamentos: pet.departamentos || []
         }));
@@ -1074,8 +1141,8 @@ export default {
         // Limpiar cache de semáforo
         limpiarCacheSemaforo();
 
-        // Ordenamos las peticiones por prioridad
-        peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
+        // Ordenamos las peticiones según criterio seleccionado
+        peticiones.value = ordenarPeticiones(peticiones.value);
 
         // Aplicamos filtros después de cargar
         aplicarFiltros();
@@ -1406,11 +1473,12 @@ export default {
         console.log('📊 Total peticiones antes de filtrar:', peticiones.value.length);
 
         // Si no hay filtros activos, retornar todas las peticiones
-        const hayFiltros = filtros.estado || filtros.departamento || filtros.folio || 
-                          filtros.nombre || filtros.nivelImportancia || filtros.usuario_seguimiento;
-        
+        const hayFiltros = filtros.estado || filtros.departamento || filtros.folio ||
+                          filtros.nombre || filtros.nivelImportancia || filtros.usuario_seguimiento ||
+                          filtros.fechaDesde || filtros.fechaHasta;
+
         if (!hayFiltros) {
-          peticionesFiltradas.value = ordenarPeticionesPorPrioridad([...peticiones.value]);
+          peticionesFiltradas.value = ordenarPeticiones([...peticiones.value]);
           actualizarPaginacion();
           return;
         }
@@ -1503,6 +1571,30 @@ export default {
             }
           }
 
+          // ✅ NUEVO: Filtrar por rango de fechas
+          if (filtros.fechaDesde || filtros.fechaHasta) {
+            const fechaPeticion = new Date(peticion.fecha_registro);
+            fechaPeticion.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+
+            if (filtros.fechaDesde) {
+              const fechaDesde = new Date(filtros.fechaDesde);
+              fechaDesde.setHours(0, 0, 0, 0);
+              if (fechaPeticion < fechaDesde) {
+                console.log(`❌ Petición ${peticion.folio} excluida - antes de fecha desde`);
+                return false;
+              }
+            }
+
+            if (filtros.fechaHasta) {
+              const fechaHasta = new Date(filtros.fechaHasta);
+              fechaHasta.setHours(23, 59, 59, 999); // Incluir todo el día hasta
+              if (fechaPeticion > fechaHasta) {
+                console.log(`❌ Petición ${peticion.folio} excluida - después de fecha hasta`);
+                return false;
+              }
+            }
+          }
+
           return true;
         });
 
@@ -1515,8 +1607,8 @@ export default {
           }))
         );
 
-        // Aplicamos el ordenamiento a los resultados filtrados
-        peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
+        // Aplicamos el ordenamiento dinámico a los resultados filtrados
+        peticionesFiltradas.value = ordenarPeticiones(peticionesFiltradas_temp);
 
         // Actualizar paginación después de filtrar
         actualizarPaginacion();
@@ -1532,7 +1624,7 @@ export default {
     // ✅ OPTIMIZADO: Watchers con debounce para filtros de texto
     let debounceTimeout = null;
     watch(
-      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento],
+      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.ordenarPor, filtros.fechaDesde, filtros.fechaHasta],
       () => {
         aplicarFiltros();
       }
@@ -1552,6 +1644,13 @@ export default {
     // ✅ AGREGAR: Watcher para filtro de departamento
     watch(() => filtros.departamento, () => {
       aplicarFiltros();
+    });
+
+    // ✅ NUEVO: Watcher para filtro de municipio (recarga peticiones del backend)
+    watch(() => filtros.municipio_id, async () => {
+      if (hasPermission('peticiones_estatal')) {
+        await cargarPeticiones();
+      }
     });
 
     // En el setup(), agregar nuevas variables reactivas:
@@ -1987,6 +2086,10 @@ export default {
       filtros.nombre = '';
       filtros.nivelImportancia = '';
       filtros.usuario_seguimiento = '';
+      filtros.municipio_id = '';
+      filtros.ordenarPor = 'prioridad'; // ✅ NUEVO: Resetear a ordenamiento por defecto
+      filtros.fechaDesde = ''; // ✅ NUEVO
+      filtros.fechaHasta = ''; // ✅ NUEVO
 
       // Forzar aplicación de filtros
       aplicarFiltros();
@@ -1999,13 +2102,34 @@ export default {
       }
     };
 
+    // ✅ NUEVO: Cargar municipios para el filtro
+    const cargarMunicipios = async () => {
+      try {
+        const response = await axios.get(`${backendUrl}/division.php`);
+        if (response.data.success && response.data.divisions) {
+          municipios.value = response.data.divisions;
+        }
+      } catch (error) {
+        console.error('Error al cargar municipios:', error);
+      }
+    };
+
+    // ✅ NUEVO: Verificar si el usuario tiene un permiso específico
+    const hasPermission = (permiso) => {
+      if (!usuarioLogueado.value || !usuarioLogueado.value.Permisos) {
+        return false;
+      }
+      return usuarioLogueado.value.Permisos.includes(permiso);
+    };
+
     onMounted(async () => {
       // ✅ IMPORTANTE: Obtener usuario ANTES de cargar peticiones
       await obtenerUsuarioLogueado();
 
       await Promise.all([
         cargarPeticiones(),
-        cargarDepartamentos()
+        cargarDepartamentos(),
+        cargarMunicipios() // ✅ NUEVO: Cargar municipios
       ]);
 
       document.addEventListener('click', cerrarMenusAcciones);
@@ -2246,6 +2370,11 @@ export default {
       cancelarAccion,
       filtrarMisPeticiones,
 
+      // ✅ NUEVO: Variables para filtro de municipios
+      municipios,
+      municipioUsuario,
+      hasPermission,
+
       // ✅ Modal de estados de departamentos
       showModalDepartamentosEstados,
       peticionDeptEstados,
@@ -2263,7 +2392,6 @@ export default {
       cerrarHistorialDepartamento,
       truncarTexto,
       formatearFechaCompleta,
-      municipioUsuario,
     };
   }
 };

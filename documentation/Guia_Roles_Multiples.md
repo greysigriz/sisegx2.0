@@ -1,6 +1,42 @@
 # Guía de Implementación: Sistema de Roles Múltiples
 
-## 📋 Resumen
+## � IMPORTANTE: LEE ESTO PRIMERO
+
+Si eres una IA leyendo este documento para ayudar con el proyecto:
+
+1. **Ubicación del proyecto**: `c:\xampp\htdocs\SISEE\`
+2. **Base de datos**: `sisegestion` en MySQL (acceso: http://localhost/phpmyadmin)
+3. **Backend**: PHP 7.4+ con PDO en carpeta `api/`
+4. **Frontend**: Vue.js 3 con Vite en carpeta `src/`
+5. **Servidor**: XAMPP (Apache + MySQL en puerto 3306)
+
+### 🔗 Archivos Relacionados
+- **Este archivo**: Guía paso a paso de implementación
+- **`CAMBIOS_ROLES_MULTIPLES.md`**: Resumen de cambios realizados
+- **`Sistema_Permisos.md`**: Documentación del sistema de permisos
+
+### 📂 Rutas Críticas
+```
+BACKEND (PHP):
+├── c:\xampp\htdocs\SISEE\api\usuarios.php          # Gestión de usuarios
+├── c:\xampp\htdocs\SISEE\api\usuario-roles.php    # NUEVO: Gestión de roles
+├── c:\xampp\htdocs\SISEE\api\check-session.php    # MODIFICAR: Cargar roles
+├── c:\xampp\htdocs\SISEE\api\login.php            # MODIFICAR: Autenticación
+└── c:\xampp\htdocs\SISEE\config\database.php      # Conexión BD
+
+FRONTEND (Vue.js):
+├── c:\xampp\htdocs\SISEE\src\views\Configuracion\Usuarios.vue  # MODIFICAR
+├── c:\xampp\htdocs\SISEE\src\utils\rolesHelper.js              # NUEVO
+├── c:\xampp\htdocs\SISEE\src\components\Sidebar.vue            # Usa permisos
+└── c:\xampp\htdocs\SISEE\src\services\auth.js                  # Auth service
+
+BASE DE DATOS (SQL):
+└── c:\xampp\htdocs\SISEE\database\migration_roles_multiples.sql  # EJECUTAR PRIMERO
+```
+
+---
+
+## �📋 Resumen
 Esta guía explica cómo implementar el sistema de roles múltiples para usuarios en SISEE.
 
 ## 🎯 Objetivo
@@ -40,7 +76,14 @@ SELECT * FROM v_UsuariosConRoles;
 
 ## 🔧 PASO 2: Actualizar el Endpoint de Login
 
-El archivo `api/login.php` debe actualizar para cargar los roles desde la nueva tabla.
+### Archivo a modificar:
+**Ruta completa**: `c:\xampp\htdocs\SISEE\api\login.php`
+
+### ⚠️ IMPORTANTE: Verificar estructura
+Antes de modificar, verificar que el archivo tenga:
+- Una clase `Login` con método `login()`
+- Una consulta SQL que retorna datos del usuario
+- Un array de retorno con `success`, `message`, y `user`
 
 ### Buscar en login.php (aproximadamente línea 208):
 ```php
@@ -119,8 +162,43 @@ return array(
 
 ## 🎨 PASO 3: Actualizar el Componente de Usuarios
 
+### Archivo a modificar:
+**Ruta completa**: `c:\xampp\htdocs\SISEE\src\views\Configuracion\Usuarios.vue`
+
+### ⚠️ Estructura actual del componente:
+```vue
+<template>
+  <div class="configuracion-usuarios">
+    <!-- Filtros y búsqueda -->
+    <!-- Tabla de usuarios -->
+    <!-- Modal de formulario -->
+    <!-- Modal de detalles -->
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      usuarios: [],
+      rolesDisponibles: [],  // AGREGAR ESTO
+      usuarioForm: { /* campos */ },
+      // ...
+    }
+  },
+  methods: {
+    cargarDatos() { /* ... */ },
+    cargarRoles() { /* AGREGAR ESTO */ },
+    // ...
+  }
+}
+</script>
+```
+
 ### 3.1 Leer todos los roles disponibles
-En `src/views/Configuracion/Usuarios.vue`, en el método `cargarDatos()`:
+Agregar método `cargarRoles()` en el objeto `methods`:
 
 ```javascript
 async cargarRoles() {

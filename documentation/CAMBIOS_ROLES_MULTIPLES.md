@@ -1,5 +1,52 @@
 # ✅ Actualización Completada: Sistema de Roles Múltiples en Usuarios
 
+## 📁 CONTEXTO DEL PROYECTO
+
+### Estructura del Proyecto
+```
+SISEE/
+├── api/                          # Backend PHP
+│   ├── usuarios.php              # CRUD de usuarios
+│   ├── roles.php                 # Gestión de roles
+│   ├── usuario-roles.php         # Gestión roles de usuarios (NUEVO)
+│   ├── check-session.php         # Validación de sesión
+│   ├── login.php                 # Autenticación
+│   └── cors.php                  # Configuración CORS
+├── database/                     # Scripts SQL
+│   ├── migration_roles_multiples.sql  # CRÍTICO: Migración de roles
+│   └── permisos_sistema.sql      # Sistema de permisos
+├── src/                          # Frontend Vue.js 3
+│   ├── views/
+│   │   └── Configuracion/
+│   │       └── Usuarios.vue      # MODIFICAR: Gestión de usuarios
+│   ├── components/
+│   │   └── Sidebar.vue           # Menú lateral con permisos
+│   ├── router/
+│   │   └── index.js              # Rutas de la aplicación
+│   ├── services/
+│   │   ├── auth.js               # Servicio de autenticación
+│   │   └── axios-config.js       # Configuración de Axios
+│   └── utils/
+│       └── rolesHelper.js        # NUEVO: Helper de roles
+└── documentation/                # Documentación
+    ├── CAMBIOS_ROLES_MULTIPLES.md    # Este archivo
+    ├── Guia_Roles_Multiples.md       # Guía paso a paso
+    └── Sistema_Permisos.md           # Sistema de permisos
+```
+
+### Variables de Entorno
+- **Backend URL**: `VITE_API_URL` en `.env` (default: `http://localhost/sisee/api`)
+- **Base de datos**: `sisegestion` en MySQL/MariaDB
+- **Puerto frontend**: 5173 (Vite dev server)
+
+### Tecnologías
+- **Frontend**: Vue.js 3 (Composition API), Vite, Axios
+- **Backend**: PHP 7.4+, PDO
+- **Base de datos**: MySQL 8.0+ / MariaDB 10.5+
+- **Servidor**: XAMPP (Apache + MySQL)
+
+---
+
 ## 🎯 Cambios Realizados
 
 ### 1. Backend (PHP)
@@ -83,16 +130,114 @@ if (isAdmin()) { ... }
 
 ---
 
+## 🎯 ARCHIVOS CRÍTICOS A REVISAR/MODIFICAR
+
+### Archivos que DEBEN existir:
+1. **`c:\xampp\htdocs\SISEE\api\usuario-roles.php`** ✅ NUEVO
+   - Endpoint para gestionar roles de usuarios
+   - Métodos: GET, POST, DELETE
+
+2. **`c:\xampp\htdocs\SISEE\src\utils\rolesHelper.js`** ✅ NUEVO
+   - Funciones para verificar roles
+   - Exporta: hasRole(), hasAnyRole(), isAdmin(), etc.
+
+3. **`c:\xampp\htdocs\SISEE\database\migration_roles_multiples.sql`** ✅ NUEVO
+   - Crea tabla UsuarioRol
+   - Migra datos existentes
+   - Crea vistas útiles
+
+### Archivos que DEBEN modificarse:
+1. **`c:\xampp\htdocs\SISEE\api\usuarios.php`**
+   - ⚠️ GET: Agregar carga de roles en la respuesta
+   - ⚠️ POST: Retornar userId del usuario creado
+
+2. **`c:\xampp\htdocs\SISEE\api\check-session.php`**
+   - ⚠️ Cargar roles desde UsuarioRol
+   - ⚠️ Agregar Roles, RolesIds, RolesNombres al objeto user
+
+3. **`c:\xampp\htdocs\SISEE\api\login.php`**
+   - ⚠️ Aproximadamente línea 250: Agregar carga de roles
+   - ⚠️ Aproximadamente línea 270: Actualizar return con arrays de roles
+
+4. **`c:\xampp\htdocs\SISEE\src\views\Configuracion\Usuarios.vue`**
+   - ⚠️ data(): Agregar RolesSeleccionados: []
+   - ⚠️ methods.crearNuevoUsuario(): Inicializar RolesSeleccionados
+   - ⚠️ methods.editarUsuario(): Cargar roles del usuario
+   - ⚠️ methods.guardarUsuario(): Llamar a usuario-roles.php
+   - ⚠️ template: Cambiar select único por checkboxes múltiples
+   - ⚠️ template: Mostrar badges de múltiples roles en la lista
+
+### Archivos a consultar (NO modificar):
+1. **`c:\xampp\htdocs\SISEE\config\database.php`**
+   - Configuración de conexión a BD
+
+2. **`c:\xampp\htdocs\SISEE\src\services\axios-config.js`**
+   - Configuración de Axios con baseURL
+
+3. **`c:\xampp\htdocs\SISEE\.env`**
+   - Variables de entorno (VITE_API_URL)
+
+---
+
 ## 📋 Próximos Pasos para Completar
 
 ### PASO 1: Ejecutar la Migración SQL ⚠️
 ```sql
--- En phpMyAdmin, ejecutar:
-database/migration_roles_multiples.sql
+-- En phpMyAdmin (http://localhost/phpmyadmin)
+-- Seleccionar base de datos: sisegestion
+-- Ejecutar archivo: c:\xampp\htdocs\SISEE\database\migration_roles_multiples.sql
 ```
 
 ### PASO 2: Actualizar login.php
-Agregar carga de roles en el login (ver guía en `documentation/Guia_Roles_Multiples.md`)
+**Archivo**: `c:\xampp\htdocs\SISEE\api\login.php`
+
+**Ubicación exacta**: Después de obtener datos del usuario (línea ~250), ANTES del return
+
+**Qué agregar**:
+```php
+// Obtener todos los roles del usuario
+$queryRoles = "SELECT r.Id, r.Nombre, r.Descripcion
+               FROM UsuarioRol ur
+               JOIN RolSistema r ON ur.IdRolSistema = r.Id
+               WHERE ur.IdUsuario = :user_id
+               ORDER BY r.Nombre";
+
+$stmtRoles = $this->conn->prepare($queryRoles);
+$stmtRoles->bindParam(':user_id', $row['Id'], PDO::PARAM_INT);
+$stmtRoles->execute();
+
+$roles = [];
+$rolesIds = [];
+$rolesNombres = [];
+
+while ($rol = $stmtRoles->fetch(PDO::FETCH_ASSOC)) {
+    $roles[] = $rol;
+    $rolesIds[] = $rol['Id'];
+    $rolesNombres[] = $rol['Nombre'];
+}
+
+$_SESSION['roles'] = $roles;
+$_SESSION['roles_ids'] = $rolesIds;
+$_SESSION['roles_nombres'] = $rolesNombres;
+```
+
+**Actualizar return** (línea ~270):
+```php
+return array(
+    "success" => true,
+    "message" => "Login exitoso",
+    "user" => array(
+        "Id" => $row['Id'],
+        "Usuario" => $row['Usuario'],
+        // ... campos existentes ...
+        "Roles" => $roles,  // NUEVO
+        "RolesIds" => $rolesIds,  // NUEVO
+        "RolesNombres" => $rolesNombres  // NUEVO
+    )
+);
+```
+
+📖 Ver guía completa en `c:\xampp\htdocs\SISEE\documentation\Guia_Roles_Multiples.md`
 
 ### PASO 3: Probar el Sistema
 1. Crear un nuevo usuario con múltiples roles

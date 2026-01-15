@@ -6,6 +6,7 @@
 </template>
 
 <script setup>
+  import '@/assets/css/areachartt_dashboard.css'
 import { onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
 
@@ -268,4 +269,4 @@ onMounted(() => {
 })
 </script>
 
-<style src="@/assets/css/areachartt_dashboard.css"></style>
+

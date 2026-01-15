@@ -9,11 +9,11 @@
             <div class="metric-value">{{ Math.floor(cards[0].displayValue).toLocaleString() }}</div>
             <span :class="['metric-badge', cards[0].trend > 0 ? 'badge-up' : 'badge-down']">
               <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  :d="cards[0].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
-                  stroke="currentColor" 
-                  stroke-width="2" 
-                  stroke-linecap="round" 
+                <path
+                  :d="cards[0].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
@@ -29,11 +29,11 @@
             <div class="metric-value">{{ Math.floor(cards[1].displayValue).toLocaleString() }}</div>
             <span :class="['metric-badge', cards[1].trend > 0 ? 'badge-up' : 'badge-down']">
               <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  :d="cards[1].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
-                  stroke="currentColor" 
-                  stroke-width="2" 
-                  stroke-linecap="round" 
+                <path
+                  :d="cards[1].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
@@ -49,11 +49,11 @@
             <div class="metric-value">{{ Math.floor(cards[2].displayValue).toLocaleString() }}</div>
             <span :class="['metric-badge', cards[2].trend > 0 ? 'badge-up' : 'badge-down']">
               <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  :d="cards[2].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
-                  stroke="currentColor" 
-                  stroke-width="2" 
-                  stroke-linecap="round" 
+                <path
+                  :d="cards[2].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
@@ -69,11 +69,11 @@
             <div class="metric-value">{{ Math.floor(cards[3].displayValue).toLocaleString() }}</div>
             <span :class="['metric-badge', cards[3].trend > 0 ? 'badge-up' : 'badge-down']">
               <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path 
-                  :d="cards[3].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'" 
-                  stroke="currentColor" 
-                  stroke-width="2" 
-                  stroke-linecap="round" 
+                <path
+                  :d="cards[3].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
@@ -87,6 +87,7 @@
 </template>
 
 <script>
+  import '@/assets/css/cards_dashboard.css'
 import { ref, onMounted } from "vue"
 
 export default {
@@ -124,4 +125,4 @@ export default {
 }
 </script>
 
-<style src="@/assets/css/cards_dashboard.css"></style>
+

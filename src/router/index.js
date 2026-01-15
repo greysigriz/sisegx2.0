@@ -6,16 +6,6 @@ import AuthService from '../services/auth'
 const routeModules = import.meta.glob('./routes/*.js', { eager: true })
 const routes = Object.values(routeModules).flatMap(m => m.default)
 
-// Importar la vista para la página de peticiones
-import PetitionPage from '../views/PetitionPage.vue'
-
-// Definir explícitamente la ruta '/petition'
-routes.push({
-  path: '/petition',
-  name: 'PetitionPage',
-  component: PetitionPage
-})
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
@@ -36,7 +26,7 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  const publicPages = ['/login', '/register', '/recuperar-password', '/petition', '/'];
+  const publicPages = ['/login', '/register', '/recuperar-password', '/'];
   const authRequired = !publicPages.includes(to.path);
   const isAuthenticated = AuthService.isAuthenticated();
 
