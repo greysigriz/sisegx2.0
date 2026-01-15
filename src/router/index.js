@@ -45,10 +45,10 @@ router.beforeEach(async (to, from, next) => {
     });
   }
 
-  // Si está autenticado y trata de ir a login, redirigir a dashboard
+  // Si está autenticado y trata de ir a login, redirigir a bienvenido
   if (isAuthenticated && to.path === '/login') {
-    console.log('✅ Ya autenticado, redirigiendo a dashboard');
-    return next('/dashboard');
+    console.log('✅ Ya autenticado, redirigiendo a bienvenido');
+    return next('/bienvenido');
   }
 
   // Verificar permisos si la ruta los requiere
@@ -56,7 +56,7 @@ router.beforeEach(async (to, from, next) => {
     const hasPermission = AuthService.hasPermission(to.meta.requiredPermission);
     if (!hasPermission) {
       console.log('🚫 Sin permisos para:', to.path);
-      return next('/dashboard');
+      return next('/bienvenido');
     }
   }
 
