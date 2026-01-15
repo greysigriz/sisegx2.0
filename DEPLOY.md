@@ -48,14 +48,24 @@ git pull
 
 **⚠️ Si hay conflictos con archivos locales:**
 ```bash
-# Guardar cambios locales temporalmente
+# Guardar cambios locales temporalmente (especialmente .env)
 git stash
 
 # Hacer pull
 git pull
 
-# Si necesitas los cambios guardados
+# Restaurar .env si fue guardado
 git stash pop
+```
+
+**🔧 Verificar .env después del pull:**
+```bash
+# El .env DEBE tener las URLs del VPS, NO localhost
+cat .env
+
+# Si está mal, corregir:
+echo 'VITE_API_URL=http://50.21.181.205/api' > .env
+echo 'VITE_BACKEND_URL=http://50.21.181.205:8000' >> .env
 ```
 
 ---
@@ -292,12 +302,31 @@ VITE_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ### Producción (VPS)
-Las variables de entorno del VPS se configuran a través de:
-- Apache: Variables en VirtualHost
-- Backend Python: Configuración en main.py
-- Frontend compilado: Toma valores del .env al momento del build
+```env
+VITE_API_URL=http://50.21.181.205/api
+VITE_BACKEND_URL=http://50.21.181.205:8000
+```
 
-**⚠️ Nota:** Después de cambiar .env, siempre hacer `npm run build` para que los cambios se apliquen.
+**⚠️ IMPORTANTE:** El archivo `.env` en el VPS DEBE usar la IP pública (50.21.181.205), NO localhost ni 127.0.0.1
+
+**Cómo configurar en VPS:**
+```bash
+# Crear/actualizar .env en el VPS
+ssh root@50.21.181.205
+cd /var/www/sisee
+echo 'VITE_API_URL=http://50.21.181.205/api' > .env
+echo 'VITE_BACKEND_URL=http://50.21.181.205:8000' >> .env
+
+# SIEMPRE recompilar después de cambiar .env
+npm run build
+```
+
+Las variables de entorno del VPS se aplican:
+- Frontend: Durante `npm run build` (se compilan en el JavaScript)
+- Backend Python: En main.py (host 0.0.0.0 para aceptar conexiones externas)
+- Apache: Sirve los archivos estáticos de dist/
+
+**⚠️ Nota:** Después de cambiar .env, SIEMPRE hacer `npm run build` para que los cambios se apliquen.
 
 ---
 
