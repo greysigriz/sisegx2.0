@@ -13,7 +13,38 @@ Esta guía explica cómo subir cambios al VPS de producción de manera segura y 
 
 ---
 
-## 🔄 Proceso de Despliegue
+## � DESPLIEGUE RÁPIDO (TODO EN UNO)
+
+**Ejecuta este comando completo para desplegar todo de una vez:**
+
+```bash
+ssh root@50.21.181.205 "cd /var/www/sisee && \
+  git stash && \
+  git pull && \
+  echo 'VITE_API_URL=http://50.21.181.205/api' > .env && \
+  echo 'VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php' >> .env && \
+  sed -i 's/cookie_domain.*localhost/cookie_domain'\''\'', '\'''\''/' /var/www/sisee/api/login.php && \
+  npm install && \
+  npm run build && \
+  pkill -9 -f uvicorn ; sleep 3 && \
+  cd backend && \
+  pip3 install -r requirements.txt --break-system-packages 2>/dev/null ; \
+  nohup python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload > /var/log/uvicorn.log 2>&1 & \
+  sleep 4 && \
+  echo '=== VERIFICACIÓN ===' && \
+  ps aux | grep uvicorn | grep -v grep && \
+  curl -s 'http://localhost/api/proxy-clasificacion.php?path=clasificacion/categorias' | head -100"
+```
+
+**Después del despliegue:**
+1. Abre http://50.21.181.205 en el navegador
+2. Presiona **Ctrl+Shift+R** para recargar sin caché
+3. Cierra sesión y vuelve a iniciar sesión (para renovar cookies)
+4. Verifica que login, dashboard y clasificador funcionen
+
+---
+
+## �🔄 Proceso de Despliegue
 
 ### 1️⃣ **Preparar Cambios Locales**
 
@@ -42,30 +73,23 @@ ssh root@50.21.181.205
 # Navegar al directorio del proyecto
 cd /var/www/sisee
 
-# Hacer pull de los cambios
-git pull
-```
-
-**⚠️ Si hay conflictos con archivos locales:**
-```bash
-# Guardar cambios locales temporalmente (especialmente .env)
+# Guardar cambios locales antes de pull
 git stash
 
-# Hacer pull
+# Hacer pull de los cambios
 git pull
 
-# Restaurar .env si fue guardado
-git stash pop
-```
-
-**🔧 Verificar .env después del pull:**
-```bash
-# El .env DEBE tener las URLs del VPS, NO localhost
-cat .env
-
-# Si está mal, corregir:
+# ⚠️ CRÍTICO: Restaurar configuraciones de producción
+# El .env DEBE usar proxy PHP, NO localhost
 echo 'VITE_API_URL=http://50.21.181.205/api' > .env
-echo 'VITE_BACKEND_URL=http://50.21.181.205:8000' >> .env
+echo 'VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php' >> .env
+
+# Verificar que cookie_domain esté vacío (NO 'localhost')
+sed -i 's/cookie_domain.*localhost/cookie_domain'\''\'', '\'''\''/' /var/www/sisee/api/login.php
+
+# Confirmar cambios
+cat .env
+grep "cookie_domain" /var/www/sisee/api/login.php | head -1
 ```
 
 ---
@@ -97,29 +121,35 @@ npm run build
 ```bash
 # En el VPS, dentro de /var/www/sisee/backend
 
-# Instalar dependencias si hay cambios en requirements.txt
-pip3 install -r requirements.txt
+# Instalar/actualizar dependencias
+pip3 install -r requirements.txt --break-system-packages
 
-# Verificar si uvicorn está corriendo
-ps aux | grep uvicorn
+# Matar proceso anterior (si existe)
+pkill -9 -f uvicorn
 
-# Si NO está corriendo, iniciarlo:
+# Esperar a que el puerto se libere
+sleep 3
+
+# Iniciar backend en 127.0.0.1 (solo accesible vía proxy PHP)
 cd /var/www/sisee/backend
-nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
+nohup python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
 
-# Si SÍ está corriendo, reiniciarlo:
-pkill -f uvicorn
-cd /var/www/sisee/backend
-nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
+# Esperar inicio
+sleep 4
+
+# Verificar que esté corriendo
+ps aux | grep uvicorn | grep -v grep
+
+# Probar el clasificador vía proxy
+curl -s 'http://localhost/api/proxy-clasificacion.php?path=clasificacion/categorias' | head -100
 ```
 
 **✅ Verificación del Backend:**
 ```bash
-# Ver el log del backend
-tail -f /var/log/uvicorn.log
+# Ver el log del backend (últimas líneas)
+tail -20 /var/log/uvicorn.log
 
-# Verificar que esté corriendo
-curl http://localhost:8000/clasificacion/categorias
+# Debe mostrar: "Application startup complete"
 ```
 
 ---
@@ -169,9 +199,23 @@ sudo systemctl status apache2
 # Reiniciar Apache
 sudo systemctl restart apache2
 
-# Reiniciar Backend Python
-pkill -f uvicorn
-cd /var/www/sisee/backend && nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
+# Reiniciar Backend Python (con verificación)
+pkill -9 -f uvicorn
+sleep 3
+cd /var/www/sisee/backend
+nohup python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
+sleep 3
+ps aux | grep uvicorn | grep -v grep
+tail -10 /var/log/uvicorn.log
+```
+
+### Probar clasificador
+```bash
+# Probar desde el servidor (debe devolver JSON con categorías)
+curl -s 'http://localhost/api/proxy-clasificacion.php?path=clasificacion/categorias'
+
+# Desde tu computadora (debe funcionar igual)
+curl -s 'http://50.21.181.205/api/proxy-clasificacion.php?path=clasificacion/categorias'
 ```
 
 ---
@@ -180,39 +224,73 @@ cd /var/www/sisee/backend && nohup python3 -m uvicorn main:app --host 0.0.0.0 --
 
 ### 1. **Session cookies no funcionan después de pull**
 
-**Síntoma:** Login exitoso pero redirige inmediatamente al login
+**Síntoma:** Login exitoso pero redirige inmediatamente al login (401 Unauthorized)
+
+**Causa:** El archivo `login.php` tiene `cookie_domain = 'localhost'` en lugar de vacío
 
 **Solución:**
 ```bash
-# Verificar configuración de cookies en login.php
+# Corregir cookie_domain a vacío
+sed -i "s/cookie_domain', 'localhost'/cookie_domain', ''/" /var/www/sisee/api/login.php
+
+# Verificar el cambio
 grep "cookie_domain" /var/www/sisee/api/login.php
 
-# Debe estar vacío: ini_set('session.cookie_domain', '');
-# Si está en 'localhost', corregirlo:
-sed -i '427s/localhost//' /var/www/sisee/api/login.php
+# Debe mostrar: ini_set('session.cookie_domain', '');
 ```
 
-### 2. **Backend Python no inicia**
+**⚠️ Importante:** Después de corregir, los usuarios deben cerrar sesión y volver a iniciar sesión para que se generen nuevas cookies con el dominio correcto.
 
-**Síntoma:** Error 404 o CORS al clasificar
+### 2. **Backend Python no inicia o da "Address already in use"**
+
+**Síntoma:** Error al iniciar uvicorn o clasificador no responde
 
 **Solución:**
 ```bash
-# Verificar que uvicorn esté instalado
-pip3 list | grep uvicorn
+# Matar todos los procesos de uvicorn
+pkill -9 -f uvicorn
 
-# Si no está, instalar
-pip3 install uvicorn
+# Verificar que el puerto 8000 esté libre
+ss -tulnp | grep :8000
+# No debe mostrar nada
 
-# Verificar dependencias
+# Iniciar backend correctamente
 cd /var/www/sisee/backend
-pip3 install -r requirements.txt
+nohup python3 -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload > /var/log/uvicorn.log 2>&1 &
 
-# Iniciar backend
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+# Verificar que inició
+sleep 3
+ps aux | grep uvicorn | grep -v grep
+tail -10 /var/log/uvicorn.log
 ```
 
-### 3. **Cambios del frontend no se ven**
+### 3. **Clasificador da timeout o conexión rechazada**
+
+**Síntoma:** `ERR_CONNECTION_TIMED_OUT` al usar clasificador desde el navegador
+
+**Causa:** El frontend intenta conectarse directamente al puerto 8000 que está bloqueado. Debe usar el proxy PHP.
+
+**Solución:**
+```bash
+# Verificar que .env use el proxy PHP
+cat /var/www/sisee/.env
+
+# Debe mostrar:
+# VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php
+
+# Si está mal, corregir:
+echo 'VITE_API_URL=http://50.21.181.205/api' > /var/www/sisee/.env
+echo 'VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php' >> /var/www/sisee/.env
+
+# SIEMPRE recompilar después de cambiar .env
+cd /var/www/sisee
+npm run build
+
+# Probar el proxy
+curl -s 'http://localhost/api/proxy-clasificacion.php?path=clasificacion/categorias'
+```
+
+### 4. **Cambios del frontend no se ven**
 
 **Síntoma:** Código actualizado pero navegador muestra versión antigua
 
@@ -227,10 +305,10 @@ npm run build
 
 # En el navegador:
 # - Presionar Ctrl+Shift+R (recarga sin caché)
-# - O limpiar caché del navegador
+# - O limpiar caché del navegador manualmente
 ```
 
-### 4. **Error de permisos**
+### 5. **Error de permisos**
 
 **Síntoma:** Git pull falla por permisos
 
@@ -253,14 +331,17 @@ Usa esta lista para verificar cada despliegue:
 - [ ] ✅ Commit y push realizados desde local
 - [ ] ✅ Conectado al VPS por SSH
 - [ ] ✅ Git pull ejecutado sin errores
+- [ ] ✅ `.env` configurado con proxy PHP (NO puerto 8000 directo)
+- [ ] ✅ `login.php` tiene `cookie_domain` vacío (NO 'localhost')
 - [ ] ✅ npm install ejecutado (si hay cambios en package.json)
 - [ ] ✅ npm run build ejecutado correctamente
-- [ ] ✅ Backend Python corriendo (ps aux | grep uvicorn)
-- [ ] ✅ Logs del backend sin errores (tail /var/log/uvicorn.log)
+- [ ] ✅ Backend Python corriendo: `ps aux | grep uvicorn`
+- [ ] ✅ Logs del backend sin errores: `tail /var/log/uvicorn.log`
+- [ ] ✅ Proxy PHP funciona: `curl http://localhost/api/proxy-clasificacion.php?path=clasificacion/categorias`
 - [ ] ✅ Frontend carga correctamente en http://50.21.181.205
-- [ ] ✅ Login funciona correctamente
+- [ ] ✅ Login funciona correctamente (cerrar sesión y reiniciar)
 - [ ] ✅ Clasificador IA funciona correctamente
-- [ ] ✅ No hay errores en la consola del navegador
+- [ ] ✅ No hay errores en la consola del navegador (F12)
 
 ---
 
@@ -288,7 +369,8 @@ git push --force
 
 - **VPS IP:** 50.21.181.205
 - **Frontend:** http://50.21.181.205
-- **Backend Python:** http://50.21.181.205:8000
+- **Backend Python:** http://127.0.0.1:8000 (solo interno, vía proxy PHP)
+- **Proxy Backend:** http://50.21.181.205/api/proxy-clasificacion.php
 - **API PHP:** http://50.21.181.205/api
 
 ---
@@ -304,29 +386,37 @@ VITE_BACKEND_URL=http://127.0.0.1:8000
 ### Producción (VPS)
 ```env
 VITE_API_URL=http://50.21.181.205/api
-VITE_BACKEND_URL=http://50.21.181.205:8000
+VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php
 ```
 
-**⚠️ IMPORTANTE:** El archivo `.env` en el VPS DEBE usar la IP pública (50.21.181.205), NO localhost ni 127.0.0.1
+**⚠️ CRÍTICO:** 
+- El archivo `.env` en el VPS DEBE usar el **proxy PHP**, NO el puerto 8000 directo
+- El proxy PHP (`proxy-clasificacion.php`) redirige internamente a `127.0.0.1:8000`
+- Esto evita problemas de firewall y CORS
 
 **Cómo configurar en VPS:**
 ```bash
 # Crear/actualizar .env en el VPS
-ssh root@50.21.181.205
 cd /var/www/sisee
 echo 'VITE_API_URL=http://50.21.181.205/api' > .env
-echo 'VITE_BACKEND_URL=http://50.21.181.205:8000' >> .env
+echo 'VITE_BACKEND_URL=http://50.21.181.205/api/proxy-clasificacion.php' >> .env
 
 # SIEMPRE recompilar después de cambiar .env
 npm run build
 ```
 
-Las variables de entorno del VPS se aplican:
-- Frontend: Durante `npm run build` (se compilan en el JavaScript)
-- Backend Python: En main.py (host 0.0.0.0 para aceptar conexiones externas)
-- Apache: Sirve los archivos estáticos de dist/
-
-**⚠️ Nota:** Después de cambiar .env, SIEMPRE hacer `npm run build` para que los cambios se apliquen.
+**Arquitectura del clasificador:**
+```
+Navegador → http://50.21.181.205/api/proxy-clasificacion.php?path=clasificacion/categorias
+              ↓
+          Apache (puerto 80)
+              ↓
+          proxy-clasificacion.php
+              ↓
+          http://127.0.0.1:8000/clasificacion/categorias
+              ↓
+          FastAPI Backend (uvicorn)
+```
 
 ---
 
