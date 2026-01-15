@@ -258,22 +258,14 @@ export default {
           return;
         }
 
-        // Forzar navegación usando replace y luego push
-        await this.$router.replace({ path: '/' });
-        await this.$nextTick();
+        // Navegación directa sin trucos innecesarios
         await this.$router.push(path);
 
       } catch (error) {
         console.error('Error en navegación:', error);
 
-        // Fallback: navegación directa
-        try {
-          await this.$router.push(path);
-        } catch (fallbackError) {
-          console.error('Error en navegación fallback:', fallbackError);
-          // Último recurso: recargar la página con la nueva ruta
-          window.location.href = path;
-        }
+        // Fallback: recargar la página con la nueva ruta
+        window.location.href = path;
       }
 
       // Ocultar sidebar en móvil después de navegar

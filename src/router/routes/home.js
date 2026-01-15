@@ -2,6 +2,10 @@
 export default [
   {
     path: '/',
-    redirect: '/login'
+    redirect: to => {
+      // Si está autenticado, redirigir a bienvenido
+      const userData = localStorage.getItem('user');
+      return userData ? '/bienvenido' : '/login';
+    }
   }
 ]
