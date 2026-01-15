@@ -695,6 +695,16 @@ export default {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000';
     const PETITION_API = `${import.meta.env.VITE_API_URL || '/api'}/peticiones.php`;
     const DIVISION_API = `${import.meta.env.VITE_API_URL || '/api'}/division.php`;
+    
+    // Helper para construir URL del backend (soporta proxy PHP)
+    const buildBackendUrl = (path) => {
+      if (BACKEND_URL.includes('proxy-clasificacion.php')) {
+        // Usando proxy PHP: agregar parámetro ?path=
+        return `${BACKEND_URL}?path=${path}`;
+      }
+      // Backend directo: concatenar normalmente
+      return `${BACKEND_URL}/${path}`;
+    };
 
     // -----------------------
     // ✅ NUEVO: Cargar municipios desde API
@@ -835,7 +845,7 @@ export default {
         isClassifying.value = true;
         errorMessage.value = "";
 
-        const response = await fetch(`${BACKEND_URL}/clasificacion/clasificar`, {
+        const response = await fetch(buildBackendUrl('clasificacion/clasificar'), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1119,7 +1129,7 @@ export default {
 
       // Checks opcionales de conectividad
       try {
-        await fetch(`${BACKEND_URL}/clasificacion/categorias`);
+        await fetch(buildBackendUrl('clasificacion/categorias'));
       } catch {
         console.warn("API de clasificación no disponible");
       }
