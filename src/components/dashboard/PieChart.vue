@@ -16,45 +16,23 @@ import '@/assets/css/pie_dashboard.css'
 import * as echarts from 'echarts'
 import { ref, onMounted, onUnmounted } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
+import axios from '@/services/axios-config.js'
 
 const pieChart = ref(null)
 let pieChartInstance = null
+const categories = ref([])
 
-const initPieChart = () => {
-  pieChartInstance = echarts.init(pieChart.value)
+const colorVariants = ['#1E40AF', '#3B82F6', '#60A5FA', '#93C5FD', '#1D4ED8', '#2563EB']
 
-  const colorVariants = [
-        '#1E40AF',  // Azul marino ejecutivo
-        '#3B82F6',  // Azul principal
-        '#60A5FA',  // Azul claro
-        '#93C5FD',  // Azul muy claro
-        '#1D4ED8',  // Azul intermedio
-        '#2563EB'   // Azul corporativo
-      ]
-
-
+const updatePieChart = (data) => {
+  if (!pieChartInstance) return
   const option = {
     color: colorVariants,
     tooltip: {
-      trigger: 'item',
-      backgroundColor: '#fff',
-      borderColor: '#E5E7EB',
-      borderWidth: 1,
-      borderRadius: 12,
-      formatter: (params) => `
-        <div style="padding:16px;">
-          <div style="display:flex;align-items:center;margin-bottom:12px;">
-            <div style="width:12px;height:12px;border-radius:50%;background:${params.color};margin-right:10px;"></div>
-            <strong>${params.name}</strong>
-          </div>
-          <div>Reportes: <strong>${params.value}</strong></div>
-          <div>Porcentaje: <strong>${params.percent}%</strong></div>
-        </div>`
+      show: false,
+      trigger: 'item'
     },
-    legend: {
-      top: '5%',
-      left: 'center'
-    },
+    legend: { top: '5%', left: 'center' },
     series: [
       {
         name: 'Reportes Ciudadanos',
@@ -63,33 +41,11 @@ const initPieChart = () => {
         center: ['50%', '60%'],
         avoidLabelOverlap: false,
         padAngle: 5,
-        itemStyle: {
-          borderRadius: 10,
-          borderColor: '#fff',
-          borderWidth: 3
-        },
-        label: {
-          show: false,
-          position: 'center'
-        },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 40,
-            fontWeight: 'bold'
-          }
-        },
-        labelLine: {
-          show: false
-        },
-        data: [
-          { value: 123, name: 'Robos' },
-          { value: 98, name: 'Baches' },
-          { value: 35, name: 'Incendios' },
-          { value: 150, name: 'Alumbrado Público' },
-          { value: 110, name: 'Basura' },
-          { value: 80, name: 'Falta de Agua' }
-        ]
+        itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 3 },
+        label: { show: false, position: 'center' },
+        emphasis: { label: { show: true, fontSize: 40, fontWeight: 'bold' } },
+        labelLine: { show: false },
+        data: data
       }
     ]
   }
@@ -97,10 +53,28 @@ const initPieChart = () => {
   pieChartInstance.setOption(option)
 }
 
+const fetchCategorias = async () => {
+  try {
+    const res = await axios.get('peticiones_categorias.php')
+    if (res.data && Array.isArray(res.data.records)) {
+      categories.value = res.data.records.map(r => ({ value: Number(r.value || 0), name: r.name }))
+      updatePieChart(categories.value)
+    }
+  } catch (err) {
+    console.error('Error cargando categorías:', err)
+  }
+}
+
+const initPieChart = () => {
+  pieChartInstance = echarts.init(pieChart.value)
+  if (categories.value && categories.value.length) updatePieChart(categories.value)
+}
+
 const { resizeHandler } = useDashboardCharts(() => pieChartInstance)
 
 onMounted(() => {
   initPieChart()
+  fetchCategorias()
   window.addEventListener('resize', resizeHandler)
 })
 onUnmounted(() => {
