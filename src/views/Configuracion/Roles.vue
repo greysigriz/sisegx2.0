@@ -78,6 +78,7 @@
               <i class="fas" :class="getSortIcon('Nombre')"></i>
             </div>
             <div>Descripción</div>
+            <div class="text-center">Usuarios</div>
             <div>Acciones</div>
           </div>
 
@@ -102,7 +103,13 @@
               <p class="rol-nombre">{{ rol.Nombre }}</p>
             </div>
             <div class="rol-info description">
-              <p>{{ rol.Descripcion || 'Sin descripción' }}</p>
+              <p v-html="rol.Descripcion || 'Sin descripción'"></p>
+            </div>
+            <div class="rol-usuarios text-center">
+              <span class="badge-usuarios" :class="{ 'has-users': rol.CantidadUsuarios > 0 }">
+                <i class="fas fa-users"></i>
+                {{ rol.CantidadUsuarios || 0 }}
+              </span>
             </div>
             <div class="rol-actions">
               <button class="action-btn view" @click="verDetalles(rol)" title="Ver detalles">
@@ -236,6 +243,27 @@
               <label>Descripción:</label>
               <p>{{ rolDetalle.Descripcion || 'Sin descripción' }}</p>
             </div>
+            <div class="detalle-item full-width">
+              <label>Usuarios con este rol ({{ rolUsuarios.length }}):</label>
+              <div v-if="rolUsuarios.length > 0" class="usuarios-list-detail">
+                <div v-for="usuario in rolUsuarios" :key="usuario.IdUsuario" class="usuario-chip">
+                  <i class="fas fa-user"></i>
+                  {{ usuario.NombreCompleto }}
+                </div>
+              </div>
+              <p v-else class="empty-text">No hay usuarios asignados</p>
+            </div>
+            <div class="detalle-item full-width">
+              <label>Permisos asignados ({{ rolPermisos.length }}):</label>
+              <div v-if="rolPermisos.length > 0" class="permisos-list-detail">
+                <div v-for="permiso in rolPermisos" :key="permiso.Codigo" class="permiso-chip">
+                  <i class="fas fa-shield-alt"></i>
+                  {{ permiso.Nombre }}
+                  <span class="permiso-modulo">{{ permiso.Modulo }}</span>
+                </div>
+              </div>
+              <p v-else class="empty-text">No hay permisos asignados</p>
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn-secondary" @click="showDetallesModal = false">
@@ -319,6 +347,8 @@ export default {
       },
       rolEliminar: null,
       rolDetalle: null,
+      rolPermisos: [],
+      rolUsuarios: [],
       tieneUsuarios: false,
       backendUrl: import.meta.env.VITE_API_URL,
 
@@ -345,8 +375,7 @@ export default {
   },
   computed: {
     rolesConUsuarios() {
-      // Esto debería venir del backend idealmente
-      return this.roles.filter(r => r.tieneUsuarios).length;
+      return this.roles.filter(r => r.CantidadUsuarios && r.CantidadUsuarios > 0).length;
     },
     rolesPaginados() {
       const inicio = (this.paginaActual - 1) * this.itemsPorPagina;
@@ -456,12 +485,14 @@ export default {
     },
     async verificarUsuariosConRol(rolId) {
       try {
-        // Esto debería ser reemplazado por una llamada real a la API
-        const response = await axios.get(`${this.backendUrl}/usuarios.php?rolId=${rolId}`);
-        this.tieneUsuarios = (response.data.records && response.data.records.length > 0);
+        // Consultar cuántos usuarios tienen este rol en UsuarioRol
+        const response = await axios.get(
+          `${this.backendUrl}/usuario-roles.php?action=countByRole&idRol=${rolId}`
+        );
+        this.tieneUsuarios = (response.data.count && response.data.count > 0);
       } catch (error) {
         console.error('Error al verificar usuarios con rol:', error);
-        this.tieneUsuarios = false; // Por defecto, asumir que no hay usuarios
+        this.tieneUsuarios = false;
       }
     },
     async eliminarRol() {
@@ -553,9 +584,36 @@ export default {
       this.rolesSeleccionados = [];
       this.seleccionarTodos = false;
     },
-    verDetalles(rol) {
+    async verDetalles(rol) {
       this.rolDetalle = rol;
+      await this.cargarPermisosRol(rol.Id);
+      await this.cargarUsuariosRol(rol.Id);
       this.showDetallesModal = true;
+    },
+    async cargarPermisosRol(rolId) {
+      try {
+        // Obtener permisos del rol desde RolPermiso
+        const response = await axios.get(
+          `${this.backendUrl}/usuario-roles.php?action=getPermisosByRole&idRol=${rolId}`
+        );
+        this.rolPermisos = response.data.permisos || [];
+      } catch (error) {
+        console.error('Error al cargar permisos del rol:', error);
+        this.rolPermisos = [];
+        // No mostrar error toast si la tabla no existe aún
+      }
+    },
+    async cargarUsuariosRol(rolId) {
+      try {
+        // Obtener usuarios que tienen este rol desde UsuarioRol
+        const response = await axios.get(
+          `${this.backendUrl}/usuario-roles.php?action=getUsersByRole&idRol=${rolId}`
+        );
+        this.rolUsuarios = response.data.usuarios || [];
+      } catch (error) {
+        console.error('Error al cargar usuarios del rol:', error);
+        this.rolUsuarios = [];
+      }
     },
     editarDesdeDetalles() {
       this.showDetallesModal = false;
@@ -856,11 +914,19 @@ export default {
 
 .list-header {
   display: grid;
-  grid-template-columns: 40px 1fr 1.5fr 0.8fr;
-  background-color: rgba(39, 135, 245, 0.926);
+  grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
+  background-color: rgba(39, 63, 245, 0.926);
   padding: 15px;
   font-weight: 600;
   color: white;
+}
+
+.list-header > div:last-child {
+  text-align: center;
+}
+
+.text-center {
+  text-align: center;
 }
 
 .header-check {
@@ -883,7 +949,7 @@ export default {
 
 .rol-item {
   display: grid;
-  grid-template-columns: 40px 1fr 1.5fr 0.8fr;
+  grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
   padding: 15px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   transition: var(--transition);
@@ -914,10 +980,45 @@ export default {
   color: var(--primary-color);
 }
 
+.rol-info.description {
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
 .rol-info.description p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+}
+
+.rol-usuarios {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-usuarios {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.badge-usuarios.has-users {
+  background: #dbeafe;
+  color: var(--primary-color);
+}
+
+.badge-usuarios i {
+  font-size: 11px;
 }
 
 .rol-actions {
@@ -1278,6 +1379,70 @@ export default {
   font-style: italic;
   color: #6b7280;
   text-align: center;
+}
+
+/* Detalles de usuarios y permisos */
+.usuarios-list-detail,
+.permisos-list-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.usuario-chip,
+.permiso-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--secondary-color);
+  transition: all 0.2s;
+}
+
+.usuario-chip:hover {
+  background: #eff6ff;
+  border-color: var(--primary-color);
+}
+
+.usuario-chip i {
+  color: var(--primary-color);
+  font-size: 12px;
+}
+
+.permiso-chip {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.permiso-chip:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+}
+
+.permiso-chip i {
+  color: #10b981;
+  font-size: 12px;
+}
+
+.permiso-modulo {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.empty-text {
+  margin: 10px 0 0 0;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 14px;
 }
 
 /* Jerarquía */

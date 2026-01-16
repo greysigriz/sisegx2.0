@@ -12,7 +12,7 @@ const baseConfig = defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
-  },
+  }
 })
 
 const localConfigPath = path.resolve('./vite.config.local.js')

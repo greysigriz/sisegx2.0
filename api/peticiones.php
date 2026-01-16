@@ -111,6 +111,36 @@ function getPetitionRelatedData($db, $petitionId) {
 }
 
 if ($method === 'GET') {
+    // ✅ NUEVO: Obtener información del usuario logueado y sus permisos
+    session_start();
+    $userId = $_SESSION['user_id'] ?? null;
+    $userPermisos = [];
+    $userMunicipioId = null;
+    
+    if ($userId) {
+        // Obtener permisos del usuario
+        $permisosQuery = "SELECT DISTINCT p.Codigo
+                         FROM UsuarioRol ur
+                         JOIN RolPermiso rp ON ur.IdRolSistema = rp.IdRolSistema
+                         JOIN Permiso p ON rp.IdPermiso = p.Id
+                         WHERE ur.IdUsuario = :userId";
+        $stmtPermisos = $db->prepare($permisosQuery);
+        $stmtPermisos->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmtPermisos->execute();
+        
+        while ($permiso = $stmtPermisos->fetch(PDO::FETCH_ASSOC)) {
+            $userPermisos[] = $permiso['Codigo'];
+        }
+        
+        // Obtener municipio del usuario (IdDivisionAdm)
+        $userQuery = "SELECT IdDivisionAdm FROM Usuario WHERE Id = :userId";
+        $stmtUser = $db->prepare($userQuery);
+        $stmtUser->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmtUser->execute();
+        $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+        $userMunicipioId = $userData['IdDivisionAdm'] ?? null;
+    }
+    
     $baseQuery = "SELECT 
                     p.*,
                     p.division_id,
@@ -153,6 +183,20 @@ if ($method === 'GET') {
         try {
             $whereClause = [];
             $params = [];
+            
+            // ✅ NUEVO: Filtro automático por permiso de municipio
+            if (in_array('peticiones_municipio', $userPermisos) && $userMunicipioId) {
+                // Canalizador Municipal: Solo ve peticiones de su municipio
+                $whereClause[] = "p.division_id = :userMunicipioId";
+                $params[':userMunicipioId'] = $userMunicipioId;
+            } elseif (in_array('peticiones_estatal', $userPermisos)) {
+                // Canalizador Estatal: Ve todas, pero puede filtrar por municipio si lo especifica
+                if (isset($_GET['municipio_id']) && !empty($_GET['municipio_id'])) {
+                    $whereClause[] = "p.division_id = :municipioId";
+                    $params[':municipioId'] = intval($_GET['municipio_id']);
+                }
+            }
+            // Si tiene ver_peticiones (admin), ve todas sin restricción
             
             // ✅ SOLO aplicar filtros básicos (SIN departamento)
             if (isset($_GET['estado']) && !empty($_GET['estado'])) {

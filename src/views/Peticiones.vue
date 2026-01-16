@@ -4,16 +4,6 @@
       <div class="card-header">
         <div class="header-title-section">
           <h3>Gestión de Peticiones</h3>
-          <!-- ✅ NUEVO: Indicador del municipio que observa el usuario -->
-          <div v-if="municipioUsuario" class="municipio-indicator">
-            <i class="fas fa-map-marker-alt"></i>
-            <span class="municipio-label">Municipio:</span>
-            <span class="municipio-nombre">{{ municipioUsuario }}</span>
-          </div>
-          <div v-else-if="!loading && usuarioLogueado" class="municipio-indicator warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Sin municipio asignado - Mostrando todas las peticiones</span>
-          </div>
         </div>
         <div class="header-actions">
           <button @click="filtrarMisPeticiones" class="btn-filter">
@@ -32,8 +22,14 @@
       </div>
       <div class="card-body">
         <p class="welcome-message">
-          <template v-if="municipioUsuario">
+          <template v-if="hasPermission('peticiones_municipio') && municipioUsuario">
             Administrando peticiones del municipio de <strong>{{ municipioUsuario }}</strong>
+          </template>
+          <template v-else-if="hasPermission('peticiones_estatal') && filtros.municipio_id">
+            Administra las peticiones recibidas
+          </template>
+          <template v-else-if="hasPermission('peticiones_estatal') && !filtros.municipio_id">
+            Administrando peticiones de <strong>todos los municipios</strong>
           </template>
           <template v-else>
             Administra las peticiones recibidas
@@ -97,6 +93,44 @@
             <label for="filtroNombre">Nombre:</label>
             <input type="text" id="filtroNombre" v-model="filtros.nombre" placeholder="Buscar por nombre">
           </div>
+          <!-- ✅ NUEVO: Filtro de municipio solo para Canalizador Estatal -->
+          <div v-if="hasPermission('peticiones_estatal')" class="filtro">
+            <label for="filtroMunicipio">
+              <i class="fas fa-map-marker-alt"></i> Municipio:
+            </label>
+            <select id="filtroMunicipio" v-model="filtros.municipio_id">
+              <option value="">Todos los municipios</option>
+              <option v-for="mun in municipios" :key="mun.Id" :value="mun.Id">
+                {{ mun.Municipio }}
+              </option>
+            </select>
+          </div>
+          <!-- ✅ NUEVO: Filtro de ordenamiento -->
+          <div class="filtro">
+            <label for="filtroOrdenar">
+              <i class="fas fa-sort"></i> Ordenar por:
+            </label>
+            <select id="filtroOrdenar" v-model="filtros.ordenarPor">
+              <option value="prioridad">Prioridad (Semáforo + Importancia)</option>
+              <option value="fecha_desc">Fecha (Más reciente primero)</option>
+              <option value="fecha_asc">Fecha (Más antigua primero)</option>
+              <option value="importancia">Nivel de Importancia</option>
+              <option value="folio">Folio</option>
+            </select>
+          </div>
+          <!-- ✅ NUEVO: Filtro de rango de fechas -->
+          <div class="filtro filtro-fecha">
+            <label for="filtroFechaDesde">
+              <i class="fas fa-calendar-alt"></i> Desde:
+            </label>
+            <input type="date" id="filtroFechaDesde" v-model="filtros.fechaDesde">
+          </div>
+          <div class="filtro filtro-fecha">
+            <label for="filtroFechaHasta">
+              <i class="fas fa-calendar-alt"></i> Hasta:
+            </label>
+            <input type="date" id="filtroFechaHasta" v-model="filtros.fechaHasta">
+          </div>
         </div>
 
         <!-- Tabla de peticiones -->
@@ -117,15 +151,28 @@
                 <div>Fecha Registro</div>
               </div>
 
-              <div v-if="loading" class="loading-message">
-                <i class="fas fa-spinner fa-spin"></i> Cargando peticiones...
+              <!-- ✅ OPTIMIZADO: Usar v-show para loading que cambia frecuentemente -->
+              <div v-show="loading" class="loading-container">
+                <!-- Skeleton loader para mejor UX -->
+                <div class="skeleton-item" v-for="n in 5" :key="n">
+                  <div class="skeleton skeleton-acciones"></div>
+                  <div class="skeleton skeleton-folio"></div>
+                  <div class="skeleton skeleton-nombre"></div>
+                  <div class="skeleton skeleton-telefono"></div>
+                  <div class="skeleton skeleton-localidad"></div>
+                  <div class="skeleton skeleton-estado"></div>
+                  <div class="skeleton skeleton-depts"></div>
+                  <div class="skeleton skeleton-prioridad"></div>
+                  <div class="skeleton skeleton-fecha"></div>
+                </div>
               </div>
 
-              <div v-else-if="peticionesFiltradas.length === 0" class="empty-message">
+              <div v-show="!loading && peticionesFiltradas.length === 0" class="empty-message">
                 <i class="fas fa-inbox"></i> No se encontraron peticiones con los filtros aplicados
               </div>
 
-              <div v-else v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
+              <!-- ✅ OPTIMIZADO: Usar v-show en lugar de v-else para mejor rendimiento -->
+              <div v-show="!loading && peticionesFiltradas.length > 0" v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
                 <div class="peticion-acciones" :ref="el => { if (el) accionesRefs[peticion.id] = el }">
                   <button
                     :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
@@ -242,7 +289,8 @@
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
                       {{ obtenerTextoNivelImportancia(peticion.NivelImportancia) }}
                     </div>
-                    <div class="semaforo" :class="obtenerColorSemaforo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
+                    <!-- ✅ OPTIMIZADO: Usar función memoizada para semáforo -->
+                    <div class="semaforo" :class="obtenerColorSemaforoMemo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
                     <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
                       <i :class="obtenerIconoSeguimiento(peticion)"></i>
                     </div>
@@ -879,8 +927,14 @@ export default {
       folio: '',
       nombre: '',
       nivelImportancia: '',
-      usuario_seguimiento: ''
+      usuario_seguimiento: '',
+      municipio_id: '', // ✅ Filtro de municipio para Canalizador Estatal
+      ordenarPor: 'prioridad', // ✅ NUEVO: Ordenamiento (prioridad por defecto)
+      fechaDesde: '', // ✅ NUEVO: Fecha desde para filtro de rango
+      fechaHasta: '' // ✅ NUEVO: Fecha hasta para filtro de rango
     });
+
+    const municipios = ref([]); // ✅ NUEVO: Lista de municipios disponibles
 
     const sugerenciasIA = ref([]);
 
@@ -973,46 +1027,90 @@ export default {
       return null;
     };
 
-    // Función mejorada para ordenar peticiones por prioridad
-    const ordenarPeticionesPorPrioridad = (peticiones) => {
+    // ✅ MEJORADO: Función de ordenamiento dinámico según filtro seleccionado
+    const ordenarPeticiones = (peticiones) => {
+      const criterio = filtros.ordenarPor || 'prioridad';
+
       return peticiones.sort((a, b) => {
-        // Primero separamos por color de semáforo
-        const colorA = obtenerColorSemaforo(a);
-        const colorB = obtenerColorSemaforo(b);
+        switch (criterio) {
+          case 'prioridad': {
+            // Ordenamiento por prioridad (semáforo + importancia)
+            const colorA = obtenerColorSemaforo(a);
+            const colorB = obtenerColorSemaforo(b);
 
-        // Si uno es verde y el otro no, el verde va al final
-        if (colorA === 'verde' && colorB !== 'verde') return 1;
-        if (colorB === 'verde' && colorA !== 'verde') return -1;
+            // Si uno es verde y el otro no, el verde va al final
+            if (colorA === 'verde' && colorB !== 'verde') return 1;
+            if (colorB === 'verde' && colorA !== 'verde') return -1;
 
-        // Si ambos son verdes, ordenamos por fecha más reciente
-        if (colorA === 'verde' && colorB === 'verde') {
-          const fechaA = new Date(a.fecha_registro);
-          const fechaB = new Date(b.fecha_registro);
-          return fechaB - fechaA;
+            // Si ambos son verdes, ordenamos por fecha más reciente
+            if (colorA === 'verde' && colorB === 'verde') {
+              const fechaA = new Date(a.fecha_registro);
+              const fechaB = new Date(b.fecha_registro);
+              return fechaB - fechaA;
+            }
+
+            // Para registros no verdes, aplicamos la lógica de prioridad
+            // 1. Primero por nivel de importancia (1 es más importante que 4)
+            const importanciaA = parseInt(a.NivelImportancia) || 3;
+            const importanciaB = parseInt(b.NivelImportancia) || 3;
+
+            if (importanciaA !== importanciaB) {
+              return importanciaA - importanciaB;
+            }
+
+            // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
+            const fechaA2 = new Date(a.fecha_registro);
+            const fechaB2 = new Date(b.fecha_registro);
+            return fechaA2 - fechaB2;
+          }
+
+          case 'fecha_desc':
+            // Más reciente primero
+            return new Date(b.fecha_registro) - new Date(a.fecha_registro);
+
+          case 'fecha_asc':
+            // Más antigua primero
+            return new Date(a.fecha_registro) - new Date(b.fecha_registro);
+
+          case 'importancia': {
+            // Por nivel de importancia (1 más importante)
+            const nivelA = parseInt(a.NivelImportancia) || 3;
+            const nivelB = parseInt(b.NivelImportancia) || 3;
+            if (nivelA !== nivelB) {
+              return nivelA - nivelB;
+            }
+            // Si empatan, ordenar por fecha (más antiguo primero)
+            return new Date(a.fecha_registro) - new Date(b.fecha_registro);
+          }
+
+          case 'folio':
+            // Ordenar alfabéticamente por folio
+            return (a.folio || '').localeCompare(b.folio || '');
+
+          default:
+            return 0;
         }
-
-        // Para registros no verdes, aplicamos la lógica de prioridad
-        // 1. Primero por nivel de importancia (1 es más importante que 4)
-        const importanciaA = parseInt(a.NivelImportancia) || 3;
-        const importanciaB = parseInt(b.NivelImportancia) || 3;
-
-        if (importanciaA !== importanciaB) {
-          return importanciaA - importanciaB;
-        }
-
-        // 2. Si tienen la misma importancia, ordenar por antigüedad (más viejo primero)
-        const fechaA = new Date(a.fecha_registro);
-        const fechaB = new Date(b.fecha_registro);
-
-        return fechaA - fechaB;
       });
     };
+
 
     const cargarPeticiones = async () => {
       try {
         loading.value = true;
 
-        const response = await axios.get(`${backendUrl}/peticiones.php`);
+        // ✅ NUEVO: Construir query params según permisos
+        const queryParams = new URLSearchParams();
+
+        // Si es Canalizador Estatal y seleccionó un municipio, agregarlo al query
+        if (hasPermission('peticiones_estatal') && filtros.municipio_id) {
+          queryParams.append('municipio_id', filtros.municipio_id);
+        }
+
+        const url = queryParams.toString()
+          ? `${backendUrl}/peticiones.php?${queryParams.toString()}`
+          : `${backendUrl}/peticiones.php`;
+
+        const response = await axios.get(url);
 
         console.log('🔍 DEBUG - Respuesta del backend:', response.data);
 
@@ -1020,45 +1118,31 @@ export default {
 
         console.log('📊 Total peticiones recibidas:', peticionesRaw.length);
 
-        // ✅ NUEVO: Filtrar por división administrativa del usuario
+        // ✅ MODIFICADO: El filtro por municipio ahora lo hace el backend
+        // Solo mostramos el mensaje informativo
         const divisionUsuario = obtenerDivisionUsuario();
-        console.log('🏢 División del usuario logueado:', divisionUsuario);
 
-        let peticionesFiltradas_temp = peticionesRaw;
-
-        if (divisionUsuario) {
-          peticionesFiltradas_temp = peticionesRaw.filter(pet => {
-            const divisionPeticion = parseInt(pet.division_id);
-            const divisionUser = parseInt(divisionUsuario);
-
-            // Si la petición no tiene división, no mostrarla (o cambiar lógica según necesidad)
-            if (!pet.division_id) {
-              console.log(`⚠️ Petición ${pet.folio} sin división asignada`);
-              return false;
-            }
-
-            const coincide = divisionPeticion === divisionUser;
-            if (!coincide) {
-              console.log(`❌ Petición ${pet.folio} excluida: división ${divisionPeticion} != ${divisionUser}`);
-            }
-            return coincide;
-          });
-
-          console.log(`✅ Peticiones filtradas por división ${divisionUsuario}:`, peticionesFiltradas_temp.length);
+        if (hasPermission('peticiones_municipio') && divisionUsuario) {
+          console.log(`🏢 Canalizador Municipal - Mostrando solo municipio ${divisionUsuario}`);
+        } else if (hasPermission('peticiones_estatal')) {
+          console.log('🌍 Canalizador Estatal - Mostrando todos los municipios o filtrado seleccionado');
         } else {
-          console.warn('⚠️ Usuario sin división asignada - mostrando todas las peticiones');
+          console.log('👤 Usuario con acceso completo - Mostrando todas las peticiones');
         }
 
         // Asegurar que todas las peticiones tengan array de departamentos
-        peticiones.value = peticionesFiltradas_temp.map(pet => ({
+        peticiones.value = peticionesRaw.map(pet => ({
           ...pet,
           departamentos: pet.departamentos || []
         }));
 
         console.log('✅ Peticiones procesadas:', peticiones.value.length);
 
-        // Ordenamos las peticiones por prioridad
-        peticiones.value = ordenarPeticionesPorPrioridad(peticiones.value);
+        // Limpiar cache de semáforo
+        limpiarCacheSemaforo();
+
+        // Ordenamos las peticiones según criterio seleccionado
+        peticiones.value = ordenarPeticiones(peticiones.value);
 
         // Aplicamos filtros después de cargar
         aplicarFiltros();
@@ -1076,7 +1160,15 @@ export default {
       }
     };
 
-    const cargarDepartamentos = async () => {
+    // ✅ OPTIMIZADO: Cachear departamentos para evitar cargas múltiples
+    let departamentosCargados = false;
+    const cargarDepartamentos = async (forzarRecarga = false) => {
+      // Si ya están cargados y no se fuerza recarga, salir
+      if (departamentosCargados && !forzarRecarga && departamentos.value.length > 0) {
+        console.log('📦 Usando departamentos en cache');
+        return;
+      }
+
       try {
         loadingDepartamentos.value = true;
         console.log('🔄 Cargando unidades desde API...');
@@ -1086,6 +1178,7 @@ export default {
 
         if (response.data && response.data.records) {
           departamentos.value = response.data.records;
+          departamentosCargados = true;
           console.log('✅ Unidades cargadas:', departamentos.value.length);
         } else {
           console.warn('⚠️ No se encontraron unidades');
@@ -1275,6 +1368,23 @@ export default {
       return peticiones.value.filter(p => !tieneUsuarioAsignado(p)).length;
     });
 
+    // ✅ NUEVO: Cache de cálculos de semáforo para mejorar rendimiento
+    const cacheSemaforo = new Map();
+    const obtenerColorSemaforoMemo = (peticion) => {
+      const key = `${peticion.id}-${peticion.estado}-${peticion.fecha_registro}`;
+      if (cacheSemaforo.has(key)) {
+        return cacheSemaforo.get(key);
+      }
+      const color = obtenerColorSemaforo(peticion);
+      cacheSemaforo.set(key, color);
+      return color;
+    };
+
+    // ✅ NUEVO: Limpiar cache cuando se recargan peticiones
+    const limpiarCacheSemaforo = () => {
+      cacheSemaforo.clear();
+    };
+
     // Función para actualizar paginación cuando cambian los filtros
     const actualizarPaginacion = () => {
       paginacion.totalRegistros = peticionesFiltradas.value.length;
@@ -1356,11 +1466,22 @@ export default {
       return pages;
     });
 
-    // Modificar la función aplicarFiltros para actualizar paginación
+    // ✅ OPTIMIZADO: Función aplicarFiltros mejorada con debounce implícito
     const aplicarFiltros = () => {
       try {
         console.log('🔍 APLICANDO FILTROS:', filtros);
         console.log('📊 Total peticiones antes de filtrar:', peticiones.value.length);
+
+        // Si no hay filtros activos, retornar todas las peticiones
+        const hayFiltros = filtros.estado || filtros.departamento || filtros.folio ||
+                          filtros.nombre || filtros.nivelImportancia || filtros.usuario_seguimiento ||
+                          filtros.fechaDesde || filtros.fechaHasta;
+
+        if (!hayFiltros) {
+          peticionesFiltradas.value = ordenarPeticiones([...peticiones.value]);
+          actualizarPaginacion();
+          return;
+        }
 
         let peticionesFiltradas_temp = [...peticiones.value];
 
@@ -1450,6 +1571,30 @@ export default {
             }
           }
 
+          // ✅ NUEVO: Filtrar por rango de fechas
+          if (filtros.fechaDesde || filtros.fechaHasta) {
+            const fechaPeticion = new Date(peticion.fecha_registro);
+            fechaPeticion.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+
+            if (filtros.fechaDesde) {
+              const fechaDesde = new Date(filtros.fechaDesde);
+              fechaDesde.setHours(0, 0, 0, 0);
+              if (fechaPeticion < fechaDesde) {
+                console.log(`❌ Petición ${peticion.folio} excluida - antes de fecha desde`);
+                return false;
+              }
+            }
+
+            if (filtros.fechaHasta) {
+              const fechaHasta = new Date(filtros.fechaHasta);
+              fechaHasta.setHours(23, 59, 59, 999); // Incluir todo el día hasta
+              if (fechaPeticion > fechaHasta) {
+                console.log(`❌ Petición ${peticion.folio} excluida - después de fecha hasta`);
+                return false;
+              }
+            }
+          }
+
           return true;
         });
 
@@ -1462,8 +1607,8 @@ export default {
           }))
         );
 
-        // Aplicamos el ordenamiento a los resultados filtrados
-        peticionesFiltradas.value = ordenarPeticionesPorPrioridad(peticionesFiltradas_temp);
+        // Aplicamos el ordenamiento dinámico a los resultados filtrados
+        peticionesFiltradas.value = ordenarPeticiones(peticionesFiltradas_temp);
 
         // Actualizar paginación después de filtrar
         actualizarPaginacion();
@@ -1476,18 +1621,36 @@ export default {
       }
     };
 
-    // Watchers para los filtros
+    // ✅ OPTIMIZADO: Watchers con debounce para filtros de texto
+    let debounceTimeout = null;
     watch(
-      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.folio, filtros.nombre],
+      () => [filtros.estado, filtros.departamento, filtros.nivelImportancia, filtros.usuario_seguimiento, filtros.ordenarPor, filtros.fechaDesde, filtros.fechaHasta],
       () => {
         aplicarFiltros();
-      },
-      { deep: true }
+      }
+    );
+
+    // Debounce para filtros de texto (300ms)
+    watch(
+      () => [filtros.folio, filtros.nombre],
+      () => {
+        if (debounceTimeout) clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          aplicarFiltros();
+        }, 300);
+      }
     );
 
     // ✅ AGREGAR: Watcher para filtro de departamento
     watch(() => filtros.departamento, () => {
       aplicarFiltros();
+    });
+
+    // ✅ NUEVO: Watcher para filtro de municipio (recarga peticiones del backend)
+    watch(() => filtros.municipio_id, async () => {
+      if (hasPermission('peticiones_estatal')) {
+        await cargarPeticiones();
+      }
     });
 
     // En el setup(), agregar nuevas variables reactivas:
@@ -1498,6 +1661,18 @@ export default {
         .filter(s => s.departamento_nombre && s.departamento_nombre.trim() !== '')
         .map(s => s.departamento_nombre)
         .filter((nombre, index, arr) => arr.indexOf(nombre) === index); // Eliminar duplicados
+    });
+
+    // ✅ NUEVO: Computed para usuarios únicos (optimiza el filtro de usuario)
+    const usuariosUnicos = computed(() => {
+      const usuarios = new Map();
+      peticiones.value.forEach(p => {
+        if (tieneUsuarioAsignado(p) && p.usuario_id) {
+          const nombre = p.nombre_completo_usuario || p.nombre_usuario_seguimiento || 'Usuario';
+          usuarios.set(p.usuario_id, nombre);
+        }
+      });
+      return Array.from(usuarios, ([id, nombre]) => ({ id, nombre }));
     });
 
     // ✅ NUEVA: Función para filtrar departamentos
@@ -1911,6 +2086,10 @@ export default {
       filtros.nombre = '';
       filtros.nivelImportancia = '';
       filtros.usuario_seguimiento = '';
+      filtros.municipio_id = '';
+      filtros.ordenarPor = 'prioridad'; // ✅ NUEVO: Resetear a ordenamiento por defecto
+      filtros.fechaDesde = ''; // ✅ NUEVO
+      filtros.fechaHasta = ''; // ✅ NUEVO
 
       // Forzar aplicación de filtros
       aplicarFiltros();
@@ -1923,13 +2102,34 @@ export default {
       }
     };
 
+    // ✅ NUEVO: Cargar municipios para el filtro
+    const cargarMunicipios = async () => {
+      try {
+        const response = await axios.get(`${backendUrl}/division.php`);
+        if (response.data.success && response.data.divisions) {
+          municipios.value = response.data.divisions;
+        }
+      } catch (error) {
+        console.error('Error al cargar municipios:', error);
+      }
+    };
+
+    // ✅ NUEVO: Verificar si el usuario tiene un permiso específico
+    const hasPermission = (permiso) => {
+      if (!usuarioLogueado.value || !usuarioLogueado.value.Permisos) {
+        return false;
+      }
+      return usuarioLogueado.value.Permisos.includes(permiso);
+    };
+
     onMounted(async () => {
       // ✅ IMPORTANTE: Obtener usuario ANTES de cargar peticiones
       await obtenerUsuarioLogueado();
 
       await Promise.all([
         cargarPeticiones(),
-        cargarDepartamentos()
+        cargarDepartamentos(),
+        cargarMunicipios() // ✅ NUEVO: Cargar municipios
       ]);
 
       document.addEventListener('click', cerrarMenusAcciones);
@@ -2112,8 +2312,10 @@ export default {
       formatearFecha,
       obtenerNombreDepartamento,
       obtenerColorSemaforo,
+      obtenerColorSemaforoMemo,
       obtenerTituloSemaforo,
       aplicarFiltros,
+      usuariosUnicos,
       editarPeticion,
       cambiarEstado,
       cambiarImportancia,
@@ -2168,6 +2370,11 @@ export default {
       cancelarAccion,
       filtrarMisPeticiones,
 
+      // ✅ NUEVO: Variables para filtro de municipios
+      municipios,
+      municipioUsuario,
+      hasPermission,
+
       // ✅ Modal de estados de departamentos
       showModalDepartamentosEstados,
       peticionDeptEstados,
@@ -2185,16 +2392,90 @@ export default {
       cerrarHistorialDepartamento,
       truncarTexto,
       formatearFechaCompleta,
-      municipioUsuario,
     };
   }
 };
 </script>
 
 <style src="@/assets/css/Petition.css"></style>
-<style scoped>
+<style>
+/* Sin scoped - usando namespace .peticiones-container para evitar conflictos */
+
+/* ✅ NUEVO: Estilos para Skeleton Loader */
+.peticiones-container .loading-container {
+  padding: 1rem;
+}
+
+.peticiones-container .skeleton-item {
+  display: grid;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+}
+
+.peticiones-container .skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+  height: 20px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.peticiones-container .skeleton-acciones {
+  width: 80%;
+  height: 36px;
+}
+
+.peticiones-container .skeleton-folio {
+  width: 90%;
+  height: 24px;
+}
+
+.peticiones-container .skeleton-nombre {
+  width: 95%;
+}
+
+.peticiones-container .skeleton-telefono {
+  width: 85%;
+}
+
+.peticiones-container .skeleton-localidad {
+  width: 90%;
+}
+
+.peticiones-container .skeleton-estado {
+  width: 80%;
+  height: 28px;
+}
+
+.peticiones-container .skeleton-depts {
+  width: 90%;
+}
+
+.peticiones-container .skeleton-prioridad {
+  width: 85%;
+  height: 32px;
+}
+
+.peticiones-container .skeleton-fecha {
+  width: 90%;
+}
+
 /* Estilos con máxima especificidad para forzar el header */
-.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
+.peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
   display: grid !important;
   grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
   background: linear-gradient(135deg, #0074D9, #0056b3) !important;
@@ -2214,24 +2495,24 @@ export default {
   border-radius: 12px 12px 0 0 !important;
 }
 
-.peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
+.peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
   color: white !important;
   background: transparent !important;
 }
 
 /* Estilos para el header con título y municipio */
-.header-title-section {
+.peticiones-container .header-title-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.header-title-section h3 {
+.peticiones-container .header-title-section h3 {
   margin: 0;
 }
 
 /* Estilos para el indicador de municipio */
-.municipio-indicator {
+.peticiones-container .municipio-indicator {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2244,51 +2525,51 @@ export default {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.municipio-indicator i {
+.peticiones-container .municipio-indicator i {
   font-size: 14px;
   color: #43a047;
 }
 
-.municipio-indicator .municipio-label {
+.peticiones-container .municipio-indicator .municipio-label {
   font-weight: 500;
   color: #388e3c;
 }
 
-.municipio-indicator .municipio-nombre {
+.peticiones-container .municipio-indicator .municipio-nombre {
   font-weight: 700;
   color: #1b5e20;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.municipio-indicator.warning {
+.peticiones-container .municipio-indicator.warning {
   background: linear-gradient(135deg, #fff3e0, #ffe0b2);
   color: #e65100;
   border-color: #ffcc80;
 }
 
-.municipio-indicator.warning i {
+.peticiones-container .municipio-indicator.warning i {
   color: #ff9800;
 }
 
-.municipio-indicator.warning span {
+.peticiones-container .municipio-indicator.warning span {
   color: #e65100;
   font-weight: 500;
 }
 
 /* Estilos para el mensaje de bienvenida y contador */
-.welcome-message {
+.peticiones-container .welcome-message {
   margin-bottom: 15px;
   color: #666;
   font-size: 14px;
 }
 
-.welcome-message strong {
+.peticiones-container .welcome-message strong {
   color: #1b5e20;
   text-transform: uppercase;
 }
 
-.peticiones-count {
+.peticiones-container .peticiones-count {
   color: #999;
   font-size: 12px;
   margin-left: 8px;
@@ -2296,22 +2577,22 @@ export default {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .header-title-section {
+  .peticiones-container .header-title-section {
     align-items: flex-start;
   }
 
-  .municipio-indicator {
+  .peticiones-container .municipio-indicator {
     font-size: 11px;
     padding: 4px 10px;
   }
 
-  .municipio-indicator .municipio-label {
+  .peticiones-container .municipio-indicator .municipio-label {
     display: none;
   }
 }
 
 /* Estilos para sugerencias rápidas */
-.sugerencias-rapidas {
+.peticiones-container .sugerencias-rapidas {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -2323,7 +2604,7 @@ export default {
   border: 1px solid #ffe0a3;
 }
 
-.sugerencias-label {
+.peticiones-container .sugerencias-label {
   font-size: 13px;
   font-weight: 600;
   color: #b8860b;
@@ -2333,12 +2614,12 @@ export default {
   margin-right: 4px;
 }
 
-.sugerencias-label::before {
+.peticiones-container .sugerencias-label::before {
   content: "💡";
   font-size: 16px;
 }
 
-.btn-sugerencia-rapida {
+.peticiones-container .btn-sugerencia-rapida {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2354,25 +2635,26 @@ export default {
   box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
 }
 
-.btn-sugerencia-rapida:hover {
+.peticiones-container .btn-sugerencia-rapida:hover {
   background: linear-gradient(135deg, #ffed4e, #ffd700);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
   border-color: #b8860b;
 }
 
-.btn-sugerencia-rapida:active {
+.peticiones-container .btn-sugerencia-rapida:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(218, 165, 32, 0.2);
 }
 
-.btn-sugerencia-rapida i {
+.peticiones-container .btn-sugerencia-rapida i {
   font-size: 13px;
   animation: pulse-light 2s ease-in-out infinite;
 }
 
 @keyframes pulse-light {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -2381,16 +2663,16 @@ export default {
 }
 
 /* Contenedor de búsqueda */
-.busqueda-departamentos {
+.peticiones-container .busqueda-departamentos {
   margin-bottom: 20px;
 }
 
-.busqueda-input-container {
+.peticiones-container .busqueda-input-container {
   position: relative;
   margin-bottom: 8px;
 }
 
-.busqueda-input {
+.peticiones-container .busqueda-input {
   width: 100%;
   padding: 12px 40px 12px 16px;
   border: 2px solid #e0e0e0;
@@ -2399,13 +2681,13 @@ export default {
   transition: all 0.3s ease;
 }
 
-.busqueda-input:focus {
+.peticiones-container .busqueda-input:focus {
   outline: none;
   border-color: #0074D9;
   box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
 }
 
-.busqueda-icon {
+.peticiones-container .busqueda-icon {
   position: absolute;
   right: 14px;
   top: 50%;
@@ -2416,17 +2698,17 @@ export default {
 
 /* Responsive para sugerencias */
 @media (max-width: 768px) {
-  .sugerencias-rapidas {
+  .peticiones-container .sugerencias-rapidas {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .sugerencias-label {
+  .peticiones-container .sugerencias-label {
     width: 100%;
     margin-bottom: 4px;
   }
 
-  .btn-sugerencia-rapida {
+  .peticiones-container .btn-sugerencia-rapida {
     font-size: 11px;
     padding: 5px 12px;
   }

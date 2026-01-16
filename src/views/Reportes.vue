@@ -205,64 +205,66 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
+/* Sin scoped - usando namespace .reportes-container para evitar conflictos */
+
 .reportes-container {
   padding: 20px;
 }
 
-.card {
+.reportes-container .card {
   background-color: var(--white-color);
   border-radius: 8px;
   box-shadow: var(--shadow);
   overflow: hidden;
 }
 
-.card-header {
+.reportes-container .card-header {
   padding: 20px;
   background-color: var(--white-color);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.card-header h3 {
+.reportes-container .card-header h3 {
   margin: 0;
   color: var(--secondary-color);
   font-size: 18px;
 }
 
-.card-body {
+.reportes-container .card-body {
   padding: 20px;
 }
 
-.table-container {
+.reportes-container .table-container {
   overflow-x: auto;
   margin-bottom: 20px;
 }
 
-.solicitudes-table {
+.reportes-container .solicitudes-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 100%;
 }
 
 .solicitudes-table th,
-.solicitudes-table td {
+.reportes-container .solicitudes-table td {
   padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.solicitudes-table th {
+.reportes-container .solicitudes-table th {
   background-color: rgba(177, 22, 35, 0.05);
   color: var(--secondary-color);
   font-weight: 500;
   white-space: nowrap;
 }
 
-.solicitudes-table tr:hover {
+.reportes-container .solicitudes-table tr:hover {
   background-color: rgba(177, 22, 35, 0.02);
 }
 
-.estado-badge {
+.reportes-container .estado-badge {
   padding: 5px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -272,33 +274,33 @@ export default {
   white-space: nowrap;
 }
 
-.estado-pendiente {
+.reportes-container .estado-pendiente {
   background-color: rgba(255, 193, 7, 0.2);
   color: #ff9800;
 }
 
-.estado-proceso {
+.reportes-container .estado-proceso {
   background-color: rgba(33, 150, 243, 0.2);
   color: #2196f3;
 }
 
-.estado-completado {
+.reportes-container .estado-completado {
   background-color: rgba(76, 175, 80, 0.2);
   color: #4caf50;
 }
 
-.estado-cancelado {
+.reportes-container .estado-cancelado {
   background-color: rgba(244, 67, 54, 0.2);
   color: #f44336;
 }
 
-.acciones-container {
+.reportes-container .acciones-container {
   display: flex;
   gap: 5px;
   justify-content: center;
 }
 
-.btn-accion {
+.reportes-container .btn-accion {
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -311,30 +313,30 @@ export default {
   transition: var(--transition);
 }
 
-.btn-ver {
+.reportes-container .btn-ver {
   background-color: var(--secondary-color);
 }
 
-.btn-editar {
+.reportes-container .btn-editar {
   background-color: #2196f3;
 }
 
-.btn-eliminar {
+.reportes-container .btn-eliminar {
   background-color: var(--primary-color);
 }
 
-.btn-accion:hover {
+.reportes-container .btn-accion:hover {
   opacity: 0.8;
 }
 
-.pagination-container {
+.reportes-container .pagination-container {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: 20px;
 }
 
-.pagination-btn {
+.reportes-container .pagination-btn {
   width: 36px;
   height: 36px;
   border-radius: 4px;
@@ -347,16 +349,16 @@ export default {
   transition: var(--transition);
 }
 
-.pagination-btn:hover:not(:disabled) {
+.reportes-container .pagination-btn:hover:not(:disabled) {
   background-color: rgba(177, 22, 35, 0.05);
 }
 
-.pagination-btn:disabled {
+.reportes-container .pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.pagination-info {
+.reportes-container .pagination-info {
   margin: 0 15px;
   color: var(--light-color);
   font-size: 14px;

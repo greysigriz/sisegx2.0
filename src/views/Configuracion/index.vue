@@ -75,94 +75,96 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+/* Estilos sin scoped para asegurar que siempre se apliquen */
 .configuracion-container {
   padding: 20px;
 }
 
-.card {
-  background-color: var(--white-color);
+.configuracion-container .card {
+  background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-.card-header {
+.configuracion-container .card-header {
   padding: 20px;
-  background-color: var(--white-color);
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.card-header h3 {
+.configuracion-container .card-header h3 {
   margin: 0;
-  color: white;
+  color: white !important;
   font-size: 18px;
 }
 
-.card-body {
+.configuracion-container .card-body {
   padding: 20px;
 }
 
-.welcome-message {
+.configuracion-container .welcome-message {
   font-size: 16px;
   font-weight: 500;
-  color: var(--primary-color);
+  color: #165CB1;
   margin-bottom: 10px;
 }
 
-.config-sections {
+.configuracion-container .config-sections {
   margin-top: 20px;
 }
 
-.config-item {
+.configuracion-container .config-item {
   display: flex;
   align-items: center;
   padding: 15px;
   border-radius: 8px;
   background-color: rgba(22, 92, 177, 0.05);
   margin-bottom: 15px;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
-.config-item:hover {
+.configuracion-container .config-item:hover {
   background-color: rgba(22, 97, 177, 0.15);
 }
 
-.config-icon {
+.configuracion-container .config-icon {
   width: 50px;
   height: 50px;
-  background-color: var(--white-color);
+  background-color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 15px;
-  color: var(--primary-color);
+  color: #165CB1;
   font-size: 20px;
 }
 
-.config-details {
+.configuracion-container .config-details {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.config-details h4 {
-  margin: 0 0 5px 0;
-  color: var(--secondary-color);
-  font-size: 16px;
-}
-
-.config-details p {
+.configuracion-container .config-details h4 {
   margin: 0;
-  color: var(--light-color);
-  font-size: 14px;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
 }
 
-.arrow-icon {
-  color: var(--primary-color);
+.configuracion-container .config-details p {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.configuracion-container .arrow-icon {
+  color: #165CB1;
   font-size: 16px;
 }
 </style>

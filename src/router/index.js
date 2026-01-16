@@ -6,19 +6,15 @@ import AuthService from '../services/auth'
 const routeModules = import.meta.glob('./routes/*.js', { eager: true })
 const routes = Object.values(routeModules).flatMap(m => m.default)
 
-// Importar la vista para la página de peticiones
-import PetitionPage from '../views/PetitionPage.vue'
-
-// Definir explícitamente la ruta '/petition'
-routes.push({
-  path: '/petition',
-  name: 'PetitionPage',
-  component: PetitionPage
-})
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    return { top: 0, behavior: 'smooth' }
+  }
 })
 
 // ✅ CORREGIDO: Router guard más robusto para evitar loops
@@ -30,7 +26,7 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  const publicPages = ['/login', '/register', '/recuperar-password', '/petition', '/'];
+  const publicPages = ['/login', '/register', '/recuperar-password', '/'];
   const authRequired = !publicPages.includes(to.path);
   const isAuthenticated = AuthService.isAuthenticated();
 
@@ -49,10 +45,10 @@ router.beforeEach(async (to, from, next) => {
     });
   }
 
-  // Si está autenticado y trata de ir a login, redirigir a dashboard
+  // Si está autenticado y trata de ir a login, redirigir a bienvenido
   if (isAuthenticated && to.path === '/login') {
-    console.log('✅ Ya autenticado, redirigiendo a dashboard');
-    return next('/dashboard');
+    console.log('✅ Ya autenticado, redirigiendo a bienvenido');
+    return next('/bienvenido');
   }
 
   // Verificar permisos si la ruta los requiere
@@ -60,7 +56,7 @@ router.beforeEach(async (to, from, next) => {
     const hasPermission = AuthService.hasPermission(to.meta.requiredPermission);
     if (!hasPermission) {
       console.log('🚫 Sin permisos para:', to.path);
-      return next('/dashboard');
+      return next('/bienvenido');
     }
   }
 

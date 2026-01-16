@@ -358,9 +358,17 @@ class AuthService {
 
       // ✅ Asegurar estructura mínima para evitar errores en el frontend
       return {
-        usuario: parsedUser.usuario || {},
-        rol: parsedUser.rol || { nombre: 'Usuario' },
-        permisos: Array.isArray(parsedUser.permisos) ? parsedUser.permisos : [],
+        usuario: {
+          ...parsedUser,
+          Permisos: Array.isArray(parsedUser.Permisos) ? parsedUser.Permisos : [],
+          Roles: Array.isArray(parsedUser.Roles) ? parsedUser.Roles : [],
+          RolesIds: Array.isArray(parsedUser.RolesIds) ? parsedUser.RolesIds : [],
+          RolesNombres: Array.isArray(parsedUser.RolesNombres) ? parsedUser.RolesNombres : []
+        },
+        rol: parsedUser.Roles && parsedUser.Roles[0] ?
+          { id: parsedUser.Roles[0].Id, nombre: parsedUser.Roles[0].Nombre } :
+          { nombre: 'Usuario' },
+        permisos: Array.isArray(parsedUser.Permisos) ? parsedUser.Permisos : [],
         unidades: Array.isArray(parsedUser.unidades) ? parsedUser.unidades : [],
         ...parsedUser
       };

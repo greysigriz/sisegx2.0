@@ -84,13 +84,14 @@ export default {
     return {
       isCollapsed: false,
       isLoggingOut: false,
-      isSidebarHidden: false, // Nueva propiedad
+      isSidebarHidden: false,
       allMenuItems: [
         { name: 'Inicio', label: 'Bienvenido', icon: 'fas fa-chart-line', path: '/bienvenido', requiredPermission: 'ver_dashboard' },
-        { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'admin_peticiones' },
-        { name: 'petitions', label: 'Petitions', icon: 'fas fa-user-check', path: '/petitions', requiredPermission: 'admin_peticiones' },
-        { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'configuracion_sistema' },
-        { name: 'departamentos', label: 'Departamentos', icon: 'fas fa-users', path: '/departamentos', requiredPermission: 'ver_departamentos' },
+        { name: 'formulario', label: 'Crear Petición', icon: 'fas fa-edit', path: '/petition', requiredPermission: 'peticiones_formulario' },
+        { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'ver_peticiones,peticiones_municipio,peticiones_estatal' },
+        { name: 'petitions', label: 'Petitions', icon: 'fas fa-user-check', path: '/petitions', requiredPermission: 'ver_peticiones' },
+        { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'acceder_configuracion' },
+        { name: 'mis-peticiones', label: 'Mis Peticiones', icon: 'fas fa-clipboard-list', path: '/departamentos', requiredPermission: 'gestion_peticiones_departamento' },
         { name: 'tablero', label: 'Tablero', icon: 'fas fa-th-large', path: '/tablero', requiredPermission: 'ver_tablero' },
       ],
       currentUser: null,
@@ -99,7 +100,7 @@ export default {
       maxRetries: 3,
       authCheckInterval: null,
       isInitialized: false,
-      userReady: false // <-- NUEVO
+      userReady: false
     }
   },
 
@@ -127,17 +128,50 @@ export default {
       return 'Usuario';
     },
     userRole() {
-      if (!this.currentUser || !this.currentUser.rol) return 'Usuario';
-      return this.currentUser.rol.nombre || 'Usuario';
+      if (!this.currentUser || !this.currentUser.usuario) return 'Usuario';
+
+      // Mostrar todos los roles si tiene múltiples
+      const usuario = this.currentUser.usuario;
+      if (usuario.RolesNombres && Array.isArray(usuario.RolesNombres) && usuario.RolesNombres.length > 0) {
+        // Si tiene más de un rol, mostrar el primero + cantidad
+        if (usuario.RolesNombres.length > 1) {
+          return `${usuario.RolesNombres[0]} +${usuario.RolesNombres.length - 1}`;
+        }
+        return usuario.RolesNombres[0];
+      }
+
+      // Fallback al rol antiguo
+      if (this.currentUser.rol) {
+        return this.currentUser.rol.nombre || 'Usuario';
+      }
+
+      return 'Usuario';
     },
     filteredMenuItems() {
-      if (!this.currentUser || !Array.isArray(this.currentUser.permisos)) {
+      if (!this.currentUser || !this.currentUser.usuario) {
+        return [];
+      }
+
+      const usuario = this.currentUser.usuario;
+
+      // Obtener permisos del usuario
+      const permisos = usuario.Permisos || this.currentUser.permisos || [];
+
+      // Si no hay permisos, no mostrar ningún menú
+      if (!Array.isArray(permisos) || permisos.length === 0) {
+        console.warn('Usuario sin permisos asignados');
         return [];
       }
 
       // Filtrar elementos del menú según los permisos del usuario
       return this.allMenuItems.filter(item => {
-        return this.currentUser.permisos.includes(item.requiredPermission);
+        // Si el permiso contiene múltiples opciones separadas por coma, verificar si tiene alguno
+        if (item.requiredPermission.includes(',')) {
+          const permisosRequeridos = item.requiredPermission.split(',').map(p => p.trim());
+          return permisosRequeridos.some(p => permisos.includes(p));
+        }
+        // Si es un solo permiso, verificar directamente
+        return permisos.includes(item.requiredPermission);
       });
     }
   },
@@ -224,22 +258,14 @@ export default {
           return;
         }
 
-        // Forzar navegación usando replace y luego push
-        await this.$router.replace({ path: '/' });
-        await this.$nextTick();
+        // Navegación directa sin trucos innecesarios
         await this.$router.push(path);
 
       } catch (error) {
         console.error('Error en navegación:', error);
 
-        // Fallback: navegación directa
-        try {
-          await this.$router.push(path);
-        } catch (fallbackError) {
-          console.error('Error en navegación fallback:', fallbackError);
-          // Último recurso: recargar la página con la nueva ruta
-          window.location.href = path;
-        }
+        // Fallback: recargar la página con la nueva ruta
+        window.location.href = path;
       }
 
       // Ocultar sidebar en móvil después de navegar

@@ -130,7 +130,47 @@ try {
         ], 401);
     }
 
-    // Respuesta exitosa - asegurar que IdDivisionAdm está incluido
+    // Obtener todos los roles del usuario desde la tabla intermedia
+    $queryRoles = "SELECT 
+                    r.Id, 
+                    r.Nombre, 
+                    r.Descripcion
+                   FROM UsuarioRol ur
+                   JOIN RolSistema r ON ur.IdRolSistema = r.Id
+                   WHERE ur.IdUsuario = :user_id
+                   ORDER BY r.Nombre";
+    
+    $stmtRoles = $db->prepare($queryRoles);
+    $stmtRoles->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+    $stmtRoles->execute();
+    
+    $roles = [];
+    $rolesIds = [];
+    $rolesNombres = [];
+    
+    while ($rol = $stmtRoles->fetch(PDO::FETCH_ASSOC)) {
+        $roles[] = $rol;
+        $rolesIds[] = $rol['Id'];
+        $rolesNombres[] = $rol['Nombre'];
+    }
+
+    // Obtener todos los permisos del usuario basados en sus roles
+    $queryPermisos = "SELECT DISTINCT p.Codigo
+                      FROM UsuarioRol ur
+                      JOIN RolPermiso rp ON ur.IdRolSistema = rp.IdRolSistema
+                      JOIN Permiso p ON rp.IdPermiso = p.Id
+                      WHERE ur.IdUsuario = :user_id";
+    
+    $stmtPermisos = $db->prepare($queryPermisos);
+    $stmtPermisos->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
+    $stmtPermisos->execute();
+    
+    $permisos = [];
+    while ($permiso = $stmtPermisos->fetch(PDO::FETCH_ASSOC)) {
+        $permisos[] = $permiso['Codigo'];
+    }
+
+    // Respuesta exitosa - incluir roles múltiples y permisos
     sendJsonResponse([
         'success' => true,
         'message' => 'Sesión válida',
@@ -142,9 +182,13 @@ try {
             'ApellidoM' => $user['ApellidoM'],
             'Puesto' => $user['Puesto'],
             'Estatus' => $user['Estatus'],
-            'IdDivisionAdm' => $user['IdDivisionAdm'],  // ✅ Asegurar que está incluido
+            'IdDivisionAdm' => $user['IdDivisionAdm'],
             'IdUnidad' => $user['IdUnidad'],
-            'IdRolSistema' => $user['IdRolSistema'],
+            'IdRolSistema' => $user['IdRolSistema'], // Mantener por compatibilidad
+            'Roles' => $roles, // Array de objetos con todos los roles
+            'RolesIds' => $rolesIds, // Array de IDs de roles
+            'RolesNombres' => $rolesNombres, // Array de nombres de roles
+            'Permisos' => $permisos, // NUEVO: Array de códigos de permisos
             'NombreDivision' => $user['NombreDivision'],
             'Estado' => $user['Estado'] ?? 'Yucatán',
             'Pais' => $user['Pais'] ?? 'México'

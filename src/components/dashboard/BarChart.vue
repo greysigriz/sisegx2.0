@@ -69,12 +69,6 @@ const renderBarChart = () => {
   const maxValue = Math.max(...data.map(d => d.count), 1)
 
   const option = {
-    // aplica la fuente por defecto a todo el chart
-    textStyle: {
-      fontFamily: chartFont,
-      color: '#1F2937',
-      fontSize: 13
-    },
 
     tooltip: {
       trigger: 'axis',
@@ -118,8 +112,7 @@ const renderBarChart = () => {
       axisTick: { show: false },
       axisLabel: {
         color: '#1e293b',
-        fontSize: 15,
-        fontFamily: chartFont,
+        fontSize: 10,
         fontWeight: 500,
         interval: 0,
         rotate: 45,
@@ -183,4 +176,3 @@ onUnmounted(() => {
   if (barChartInstance) barChartInstance.dispose()
 })
 </script>
-
