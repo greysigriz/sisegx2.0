@@ -13,6 +13,9 @@ import 'swiper/css/effect-coverflow'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 
+// Estilos globales del dashboard
+import '@/assets/css/Dashboard.css'
+
 // FontAwesome - TODOS los iconos necesarios
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
