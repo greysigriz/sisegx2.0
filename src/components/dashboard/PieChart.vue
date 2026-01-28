@@ -17,6 +17,7 @@ import * as echarts from 'echarts'
 import { ref, onMounted, onUnmounted } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
 import axios from '@/services/axios-config.js'
+import { useVisibilityReflow } from '@/composables/useVisibilityReflow.js'
 
 const pieChart = ref(null)
 let pieChartInstance = null
@@ -66,6 +67,11 @@ const fetchCategorias = async () => {
 }
 
 const initPieChart = () => {
+  // Defensive: Validate container dimensions before init
+  if (!pieChart.value || pieChart.value.clientWidth === 0 || pieChart.value.clientHeight === 0) {
+    console.warn('[PieChart] Container has invalid dimensions, skipping init')
+    return
+  }
   pieChartInstance = echarts.init(pieChart.value)
   if (categories.value && categories.value.length) updatePieChart(categories.value)
 }
@@ -73,6 +79,7 @@ const initPieChart = () => {
 const { resizeHandler } = useDashboardCharts(() => pieChartInstance)
 
 onMounted(() => {
+  useVisibilityReflow()
   initPieChart()
   fetchCategorias()
   window.addEventListener('resize', resizeHandler)

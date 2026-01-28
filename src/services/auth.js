@@ -75,6 +75,11 @@ class AuthService {
 
   // ✅ Realizar verificación de sesión (menos agresiva)
   async performSessionCheck() {
+    // Phase 3: Skip auth check if tab is hidden (prevent silent logouts)
+    if (document.hidden) {
+      return;
+    }
+
     if (this.isCheckingSession || this.isDestroyed || this.isRedirecting) return;
 
     try {

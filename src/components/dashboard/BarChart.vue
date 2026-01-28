@@ -29,6 +29,7 @@ import * as echarts from 'echarts'
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
 import axios from '@/services/axios-config.js'
+import { useVisibilityReflow } from '@/composables/useVisibilityReflow.js'
 
 const barChart = ref(null)
 let barChartInstance = null
@@ -219,6 +220,11 @@ const renderBarChart = () => {
 }
 
 const initBarChart = () => {
+  // Defensive: Validate container dimensions before init
+  if (!barChart.value || barChart.value.clientWidth === 0 || barChart.value.clientHeight === 0) {
+    console.warn('[BarChart] Container has invalid dimensions, skipping init')
+    return
+  }
   barChartInstance = echarts.init(barChart.value)
   renderBarChart()
 }
@@ -230,6 +236,7 @@ watch(topFilter, () => {
 })
 
 onMounted(() => {
+  useVisibilityReflow()
   fetchDependencias().then(() => {
     initBarChart()
     window.addEventListener('resize', resizeHandler)

@@ -413,6 +413,11 @@ export default {
 
       // Verificar autenticación cada 2 minutos
       this.authCheckInterval = setInterval(async () => {
+        // Phase 3: Skip auth check if tab is hidden
+        if (document.hidden) {
+          return;
+        }
+
         if (!authService.isAuthenticated()) {
           console.log('Sesión no válida detectada en verificación periódica');
           this.cleanup();

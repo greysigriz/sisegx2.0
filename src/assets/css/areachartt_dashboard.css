@@ -1,121 +1,224 @@
+/* Contenedor principal del gráfico de área */
 .area-chart-wrapper {
+    /* Espaciado interno: 32px arriba/abajo, 1.25rem izquierda/derecha */
     padding: 32px 1.25rem;
+    /* Fondo: gradiente de blanco a gris claro formando un ángulo de 145 grados */
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    /* Bordes redondeados de 20px para un efecto moderno */
     border-radius: 20px;
+    /* Margen exterior: 2rem arriba/abajo, auto izquierda/derecha (centra horizontalmente) */
     margin: 2rem auto;
+    /* Sombra múltiple: sombra grande, sombra media y borde luminoso azul sutil */
     box-shadow:
         0 20px 25px -5px rgba(0, 0, 0, 0.1),
         0 10px 10px -5px rgba(0, 0, 0, 0.04),
         0 0 0 1px rgba(59, 130, 246, 0.05);
+    /* Borde de 1px en gris claro para delimitar el contenedor */
     border: 1px solid rgba(226, 232, 240, 0.6);
+    /* Posicionamiento relativo para permitir elementos posicionados dentro */
     position: relative;
+    /* Oculta cualquier contenido que se desborde del contenedor */
     overflow: hidden;
 }
 
 .area-chart-wrapper::before {
+    /* Crea un elemento pseudo (barra de color) sin contenido visible */
     content: '';
+    /* Posicionamiento absoluto para colocar la barra en la parte superior */
     position: absolute;
+    /* Inicia desde la esquina superior izquierda */
     top: 0;
     left: 0;
+    /* Se extiende hasta el borde derecho */
     right: 0;
+    /* Altura de la barra superior: 4px */
     height: 4px;
+    /* Gradiente de color azul (de oscuro a claro) */
     background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
+    /* Redondea solo las esquinas superiores */
     border-radius: 20px 20px 0 0;
 }
 
 .chart-canvas {
+    /* El canvas del gráfico ocupa el ancho completo del contenedor */
     width: 100%;
+    /* Altura fija de 500px para el área del gráfico */
     height: 500px;
 }
 
-/* Title + Legend DOM styles */
+/* Encabezado del gráfico: contiene título y leyenda */
 .area-chart-header {
+    /* Flexbox para alinear elementos en fila */
     display: flex;
+    /* Alinea verticalmente al centro */
     align-items: center;
+    /* Distribuye el espacio: título a la izquierda, leyenda a la derecha */
     justify-content: space-between;
+    /* Espaciado de 24px entre título y leyenda */
     gap: 24px;
+    /* Margen inferior de 12px */
     margin-bottom: 12px;
 }
+
+/* Estilo del título del gráfico */
 .area-chart-title {
+    /* Tamaño de fuente grande: 24px */
     font-size: 24px;
+    /* Texto en negrita */
     font-weight: 700;
+    /* Color azul oscuro */
     color: #1E40AF;
+    /* Fuente sans-serif moderna */
     font-family: "Inter", "Segoe UI", sans-serif;
+    /* Sin margen para mejor control de espaciado */
     margin: 0;
 }
+
+/* Contenedor de la leyenda del gráfico */
 .area-chart-legend {
+    /* Remueve los puntos de lista predeterminados */
     list-style: none;
+    /* Flexbox para alinear items en fila */
     display: flex;
+    /* Espaciado de 12px entre cada item */
     gap: 12px;
+    /* Sin espaciado interno predeterminado */
     padding: 0;
+    /* Sin margen predeterminado */
     margin: 0;
+    /* Alinea verticalmente todos los items al centro */
     align-items: center;
 }
+
+/* Estilo individual de cada elemento en la leyenda */
 .legend-item {
+    /* Flexbox inline para alinear icono y texto */
     display: inline-flex;
+    /* Alinea verticalmente el punto de color y etiqueta */
     align-items: center;
+    /* Espaciado de 8px entre punto y texto */
     gap: 8px;
+    /* Cambia el cursor a puntero para indicar que es clickeable */
     cursor: pointer;
+    /* Espaciado interno: 6px arriba/abajo, 10px izquierda/derecha */
     padding: 6px 10px;
+    /* Bordes ligeramente redondeados para mejor apariencia */
     border-radius: 8px;
+    /* Sin borde por defecto */
     border: 1px solid transparent;
+    /* Transiciones suaves para hover y cambios de estado (150ms) */
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.legend-item:hover { background: rgba(59,130,246,0.06); }
-.legend-item.active { background: var(--legend-color, #b5d5ff); color: #000000; border-color: transparent; }
+
+/* Efecto hover en los items de la leyenda */
+.legend-item:hover {
+    /* Fondo azul muy claro al pasar el mouse */
+    background: rgba(59,130,246,0.06);
+}
+
+/* Estilo cuando el item está activo/seleccionado */
+.legend-item.active {
+    /* Fondo con color variable de la leyenda, azul claro por defecto */
+    background: var(--legend-color, #b5d5ff);
+    /* Texto negro cuando está activo */
+    color: #000000;
+    /* Sin borde cuando está activo */
+    border-color: transparent;
+}
+
+/* Punto de color decorativo en la leyenda */
 .legend-dot {
+    /* Punto cuadrado de 12px */
     width: 12px;
     height: 12px;
+    /* Círculo perfecto con border-radius 50% */
     border-radius: 50%;
+    /* Color variable para cada serie del gráfico */
     background: var(--legend-color, #4465fa);
+    /* Sombra sutil debajo del punto */
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
-.legend-label { font-size: 13px; font-weight: 600; color: inherit; }
 
-/* Tooltip styles */
+/* Texto de la etiqueta en la leyenda */
+.legend-label {
+    /* Tamaño de fuente pequeño: 13px */
+    font-size: 13px;
+    /* Texto en negrita para mejor legibilidad */
+    font-weight: 600;
+    /* Hereda el color del elemento padre */
+    color: inherit;
+}
+
+/* Contenedor del tooltip (información emergente) */
 .tooltip-container {
+    /* Espaciado interno de 12px */
     padding: 12px;
 }
 
+/* Título mostrado en el tooltip */
 .tooltip-title {
+    /* Texto en negrita para destacar */
     font-weight: 600;
+    /* Color gris oscuro */
     color: #1F2937;
+    /* Margen inferior de 12px para separar del contenido */
     margin-bottom: 12px;
+    /* Tamaño de fuente: 15px */
     font-size: 15px;
 }
 
+/* Cada línea de datos en el tooltip */
 .tooltip-item {
+    /* Flexbox para alinear punto de color y valor */
     display: flex;
+    /* Alinea el punto y el texto verticalmente */
     align-items: center;
+    /* Margen inferior de 6px entre items */
     margin-bottom: 6px;
+    /* Color gris medio */
     color: #6B7280;
+    /* Tamaño de fuente pequeño: 13px */
     font-size: 13px;
 }
 
+/* Punto de color al lado del valor en el tooltip */
 .tooltip-color-dot {
+    /* Punto cuadrado de 10px */
     width: 10px;
     height: 10px;
+    /* Círculo perfecto */
     border-radius: 50%;
+    /* Margen a la derecha del punto */
     margin-right: 10px;
+    /* Color variable, gris por defecto */
     background: var(--dot, #cbd5e1);
 }
 
+/* Etiqueta del item en el tooltip */
 .tooltip-label {
+    /* Crece para ocupar espacio disponible */
     flex: 1;
 }
 
+/* Valor numérico mostrado en el tooltip */
 .tooltip-value {
+    /* Color gris oscuro para los números */
     color: #1F2937;
+    /* Margen a la izquierda para separar de la etiqueta */
     margin-left: 8px;
 }
 
+/* Media query: estilos para dispositivos hasta 768px de ancho (tablets y móviles) */
 @media (max-width: 768px) {
     .area-chart-wrapper {
-    padding: 20px;
-    margin: 16px;
-}
+        /* Reducir padding a 20px en todos los lados */
+        padding: 20px;
+        /* Reducir margen a 16px */
+        margin: 16px;
+    }
 
-.chart-canvas {
-    height: 800px;
-}
+    .chart-canvas {
+        /* Aumentar altura a 800px para móviles (mejor legibilidad en pantalla pequeña) */
+        height: 800px;
+    }
 }

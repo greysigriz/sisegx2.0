@@ -88,7 +88,7 @@
 
 <script>
   import '@/assets/css/cards_dashboard.css'
-import { ref, onMounted } from "vue"
+import { ref, onMounted, onUnmounted } from "vue"
 
 export default {
   name: "DashboardCards",
@@ -100,13 +100,27 @@ export default {
       { title: 'En Proceso', value: 56, displayValue: 0, trend: 2.2 },
     ])
 
+    const animationIntervals = ref([])
+
     const animateNumber = (index, targetValue, duration = 1500) => {
+      // Defensive: Don't animate if tab is hidden
+      if (document.hidden) {
+        cards.value[index].displayValue = targetValue
+        return
+      }
+
       const frameRate = 1000 / 60
       const totalFrames = Math.round(duration / frameRate)
       let frame = 0
       const increment = targetValue / totalFrames
 
       const counter = setInterval(() => {
+        // Pause animation if tab becomes hidden
+        if (document.hidden) {
+          clearInterval(counter)
+          return
+        }
+
         frame++
         cards.value[index].displayValue += increment
         if (frame >= totalFrames) {
@@ -114,10 +128,18 @@ export default {
           clearInterval(counter)
         }
       }, frameRate)
+
+      animationIntervals.value.push(counter)
     }
 
     onMounted(() => {
       cards.value.forEach((c, i) => animateNumber(i, c.value))
+    })
+
+    onUnmounted(() => {
+      // Cleanup: clear all animation intervals
+      animationIntervals.value.forEach(interval => clearInterval(interval))
+      animationIntervals.value = []
     })
 
     return { cards }

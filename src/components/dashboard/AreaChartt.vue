@@ -2,7 +2,7 @@
 <template>
   <div class="area-chart-wrapper">
     <div class="area-chart-header">
-      <h2 class="area-chart-title">Gráfico de Estado de peticiones</h2>
+      <h2 class="area-chart-title">Gráfico de Estado de peticiones</h2><br>
       <div class="area-chart-legend">
         <template v-for="(item, idx) in legendItems" :key="idx">
           <div class="legend-item" :class="{ active: item.active }" @click="toggleSeries(idx)">
@@ -20,6 +20,7 @@
 import '@/assets/css/areachartt_dashboard.css'
 import { onMounted, onUnmounted, ref } from 'vue'
 import * as echarts from 'echarts'
+import { useVisibilityReflow } from '@/composables/useVisibilityReflow.js'
 
 const chart = ref(null)
 const legendItems = ref([])
@@ -29,6 +30,12 @@ const originalSeries = ref([])
 // legend DOM removed — ECharts internal legend or other components can be used instead
 
 onMounted(() => {
+  useVisibilityReflow()
+  // Defensive: Validate container dimensions before init
+  if (!chart.value || chart.value.clientWidth === 0 || chart.value.clientHeight === 0) {
+    console.warn('[AreaChartt] Container has invalid dimensions, skipping init')
+    return
+  }
   const myChart = echarts.init(chart.value)
   myChartRef.value = myChart
 

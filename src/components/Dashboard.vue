@@ -21,9 +21,10 @@
 <script setup>
 import axios from 'axios'
 import * as echarts from 'echarts'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 const chart = ref(null)
+const myChartInstance = ref(null)
 const backendUrl = import.meta.env.VITE_API_URL
 
 const mapaColores = {
@@ -39,7 +40,7 @@ const leyendaDatos = ref([])
 
 const estadosActivos = ref(Object.keys(mapaColores))
 
-onMounted(async () => {
+const initChart = async () => {
   try {
     const res = await axios.get(`${backendUrl}/peticiones.php`)
     const peticiones = res.data.records
@@ -63,7 +64,17 @@ onMounted(async () => {
         name: d.estado
       }))
 
-    const myChart = echarts.init(chart.value)
+    // Defensive: Validate container has valid dimensions
+    if (!chart.value || chart.value.clientWidth === 0 || chart.value.clientHeight === 0) {
+      console.warn('[Dashboard] Chart container has invalid dimensions')
+      return
+    }
+
+    if (myChartInstance.value) {
+      myChartInstance.value.dispose()
+    }
+
+    myChartInstance.value = echarts.init(chart.value)
     const option = {
       color: data.map(d => mapaColores[d.name] || '#AAAAAA'),
       tooltip: { trigger: 'item' },
@@ -89,10 +100,35 @@ onMounted(async () => {
       ]
     }
 
-    myChart.setOption(option)
-    window.addEventListener('resize', () => myChart.resize())
+    myChartInstance.value.setOption(option)
   } catch (error) {
     console.error('Error al cargar datos del gráfico:', error)
+  }
+}
+
+const resizeHandler = () => {
+  // Defensive: Only resize if tab is visible and chart is initialized
+  if (!document.hidden && myChartInstance.value) {
+    myChartInstance.value.resize()
+  }
+}
+
+onMounted(async () => {
+  await initChart()
+  window.addEventListener('resize', resizeHandler)
+  document.addEventListener('visibilitychange', () => {
+    // Reinitialize chart when tab becomes visible
+    if (!document.hidden && myChartInstance.value) {
+      myChartInstance.value.resize()
+    }
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', resizeHandler)
+  if (myChartInstance.value) {
+    myChartInstance.value.dispose()
+    myChartInstance.value = null
   }
 })
 </script>
