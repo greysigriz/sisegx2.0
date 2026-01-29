@@ -93,6 +93,7 @@ import PieChart from "@/components/dashboard/PieChart.vue"
 import MapaProblemas from "@/components/TableroDash/MapaProblemas.vue"
 import TablaDeps from "@/components/TableroDash/ReportsTable.vue"
 import Reportes from "@/components/TableroDash/LineaReportes.vue"
+import DepartmentGrid from "@/components/TableroDash/DepartmentGrid.vue"
 
 export default {
   name: "DashboardReportes",
@@ -104,7 +105,8 @@ export default {
     PieChart,
     Reportes,
     MapaProblemas,
-    TablaDeps
+    TablaDeps,
+    DepartmentGrid
   },
   setup() {
     const activeView = ref('map')
@@ -115,3 +117,4 @@ export default {
   }
 }
 </script>
+

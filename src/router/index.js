@@ -59,6 +59,10 @@ router.beforeEach(async (to, from, next) => {
       return next('/bienvenido');
     }
   }
+  // 🔥 ARRANQUE CONTROLADO
+    if (isAuthenticated) {
+      AuthService.start?.();
+    }
 
   next();
 });

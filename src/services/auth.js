@@ -1,5 +1,7 @@
 // src/services/auth.js
 import axios from './axios-config';
+import router from '@/router';
+
 
 class AuthService {
   constructor() {
@@ -243,7 +245,7 @@ class AuthService {
 
         setTimeout(() => {
           if (!this.isDestroyed) {
-            window.location.href = '/login';
+            router.replace('/login');
           }
         }, 1500);
       } else {
@@ -255,7 +257,7 @@ class AuthService {
       console.error('Error en forceLogout:', error);
       // Solo redirigir si no estamos en login
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        router.replace('/login');
       }
     }
   }

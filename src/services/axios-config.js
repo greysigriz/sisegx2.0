@@ -1,5 +1,7 @@
 // src/services/axios-config.js
 import axios from 'axios';
+import router from '@/router'
+
 
 // Configurar Axios para enviar cookies con todas las peticiones
 axios.defaults.withCredentials = true;
@@ -137,7 +139,7 @@ async function handleAuthError() {
       // Redirigir al login después de un breve delay
       setTimeout(() => {
         if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+          router.replace('/login');
         }
         isRedirecting = false;
       }, 2000);
@@ -266,5 +268,14 @@ export const clearNotifications = () => {
     }
   });
 };
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'))
+    }, 50)
+  }
+})
+
 
 export default axios;
