@@ -1,0 +1,7 @@
+cd C:\xampp\htdocs\SISEE\backend
+.\venv\Scripts\Activate.ps1
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+
+y para vue
+
+npm run full-dev-win
