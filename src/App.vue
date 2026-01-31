@@ -1,13 +1,18 @@
 <template>
-  <div id="app">
-    <router-view />
+  <div id="app" class="app-container">
+    <router-view v-slot="{ Component, route }">
+      <transition name="fade" mode="out-in" @before-leave="onBeforeLeave" @after-enter="onAfterEnter">
+        <component :is="Component" :key="route.path" />
+      </transition>
+    </router-view>
   </div>
 </template>
 
 <script setup>
-import { onErrorCaptured, ref } from 'vue';
+import { onErrorCaptured, ref, nextTick } from 'vue';
 
 const hasError = ref(false);
+let isTransitioning = false;
 
 // ✅ Capturar errores para evitar que rompan la app
 onErrorCaptured((error, instance, info) => {
@@ -20,9 +25,42 @@ onErrorCaptured((error, instance, info) => {
     return false; // Evitar propagación
   }
 
+  // Ignorar errores de navegación cancelada
+  if (error.cancelled) {
+    console.log('Request cancelado, ignorando error');
+    return false;
+  }
+
   hasError.value = true;
   return true;
 });
+
+// ✅ NUEVO: Manejar transiciones de componentes
+const onBeforeLeave = () => {
+  if (isTransitioning) return;
+  isTransitioning = true;
+  console.log('🔄 Iniciando transición de salida');
+
+  // Cancelar requests pendientes
+  import('@/services/axios-config').then(({ cancelAllPendingRequests }) => {
+    cancelAllPendingRequests();
+  });
+};
+
+const onAfterEnter = async () => {
+  console.log('✅ Transición de entrada completada');
+
+  // Esperar a que Vue actualice el DOM
+  await nextTick();
+
+  // Forzar repaint para aplicar estilos correctamente
+  document.body.offsetHeight;
+
+  // Liberar flag de transición
+  setTimeout(() => {
+    isTransitioning = false;
+  }, 100);
+};
 </script>
 
 <style>
@@ -30,16 +68,17 @@ onErrorCaptured((error, instance, info) => {
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
-:root {
-  --primary-color: #1630b1;
-  --secondary-color: #292c37;
-  --dark-color: #000000;
-  --accent-color: #9f111b;
-  --light-color: #cccccc;
-  --background-color: #f5f7fa;
-  --white-color: #ffffff;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
+/* Variables CSS específicas SOLO para App.vue - No globales */
+.app-container {
+  --app-primary-color: #1630b1;
+  --app-secondary-color: #292c37;
+  --app-dark-color: #000000;
+  --app-accent-color: #9f111b;
+  --app-light-color: #cccccc;
+  --app-background-color: #f5f7fa;
+  --app-white-color: #ffffff;
+  --app-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --app-transition: all 0.3s ease;
 }
 
 * {
@@ -49,6 +88,7 @@ onErrorCaptured((error, instance, info) => {
   font-family: 'Poppins', sans-serif;
 }
 
+/* ⚠️ ESTILOS GLOBALES DESACTIVADOS - Cada vista tiene sus propios estilos con prefijos únicos
 .app-container {
   display: flex;
   height: 100vh;
@@ -87,7 +127,7 @@ onErrorCaptured((error, instance, info) => {
 
 .date-display {
   margin-right: 15px;
-  color: var(--secondary-color);
+  color: #374151;
   font-size: 14px;
 }
 
@@ -118,6 +158,21 @@ onErrorCaptured((error, instance, info) => {
   .main-content {
     height: auto;
   }
+}
+*/
+
+/* ✅ Transiciones suaves entre rutas */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+}
+
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
 

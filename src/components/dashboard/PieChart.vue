@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import '@/assets/css/pie_dashboard.css'
+// 🚫 ELIMINADO: import CSS global - ahora está en <style> scoped
 import * as echarts from 'echarts'
 import { ref, onMounted, onUnmounted } from 'vue'
 import useDashboardCharts from '@/composables/useDashboardCharts.js'
@@ -89,3 +89,5 @@ onUnmounted(() => {
   if (pieChartInstance) pieChartInstance.dispose()
 })
 </script>
+
+<style src="@/assets/css/pie_dashboard.css" scoped></style>

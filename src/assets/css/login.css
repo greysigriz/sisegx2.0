@@ -1,31 +1,31 @@
 /* Importar fuente Ramaraja para títulos elegantes y Hanuman como respaldo */
 @import url('https://fonts.googleapis.com/css2?family=Hanuman:wght@100;300;400;700;900&family=Ramaraja&display=swap');
 
-/* Definición de paleta de colores y valores reutilizables */
-:root {
-  /* Colores principales - Tema turquesa/azul */
-  --primary-color: #0891b2;      /* Azul turquesa principal */
-  --primary-dark: #0e7490;       /* Versión más oscura del primario */
-  --secondary-color: #06b6d4;    /* Azul claro secundario */
-  --accent-color: #22d3ee;       /* Color de acento brillante */
+/* Definición de paleta de colores ESPECÍFICOS SOLO PARA LOGIN */
+.login-page, .login-container {
+  /* Colores principales - Tema turquesa/azul SOLO LOGIN */
+  --login-primary-color: #0891b2;      /* Azul turquesa principal */
+  --login-primary-dark: #0e7490;       /* Versión más oscura del primario */
+  --login-secondary-color: #06b6d4;    /* Azul claro secundario */
+  --login-accent-color: #22d3ee;       /* Color de acento brillante */
 
   /* Colores de fondo */
-  --bg-light: #f7f7f7;           /* Fondo claro azulado */
-  --bg-blue: #eaf7ff;            /* Fondo azul suave */
+  --login-bg-light: #f7f7f7;           /* Fondo claro azulado */
+  --login-bg-blue: #eaf7ff;            /* Fondo azul suave */
 
   /* Colores de texto */
-  --text-dark: #0f172a;          /* Texto principal oscuro */
-  --text-gray: #475569;          /* Texto secundario gris */
+  --login-text-dark: #0f172a;          /* Texto principal oscuro */
+  --login-text-gray: #475569;          /* Texto secundario gris */
 
   /* Colores neutros */
-  --white: #ffffff;                        /* Blanco puro */
-  --white-transparent: rgba(255, 255, 255, 0.9);  /* Blanco semi-transparente */
-  --border-color: #cbd5e1;                /* Color de bordes */
+  --login-white: #ffffff;                        /* Blanco puro */
+  --login-white-transparent: rgba(255, 255, 255, 0.9);  /* Blanco semi-transparente */
+  --login-border-color: #cbd5e1;                /* Color de bordes */
 
   /* Sombras predefinidas */
-  --shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1);    /* Sombra ligera */
-  --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra media */
-  --shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Sombra fuerte */
+  --login-shadow-light: 0 1px 3px 0 rgba(0, 0, 0, 0.1);    /* Sombra ligera */
+  --login-shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sombra media */
+  --login-shadow-strong: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Sombra fuerte */
 }
 
 /* ========================================
@@ -44,7 +44,7 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;              /* Altura de línea para mejor legibilidad */
-  color: var(--text-dark);       /* Color de texto principal */
+  color: var(--login-text-dark);       /* Color de texto principal */
 }
 
 /* ========================================
@@ -130,7 +130,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.8); /* Borde semi-transparente */
 
   /* Efectos visuales */
-  box-shadow: var(--shadow-strong); /* Sombra pronunciada */
+  box-shadow: var(--login-shadow-strong); /* Sombra pronunciada */
   position: relative;
   z-index: 2;                    /* Sobre todos los otros elementos */
   margin: 0;                     /* CAMBIADO: Sin margen para ocupar toda la mitad */
@@ -161,7 +161,7 @@ body {
   z-index: 3;                    /* Sobre otros elementos */
 
   /* Respaldo por si la imagen no carga */
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, var(--login-primary-color), var(--login-secondary-color));
   display: block;                /* Asegura que se comporte como bloque */
 }
 
@@ -285,12 +285,12 @@ body {
   font-family: 'Ramaraja', serif; /* Fuente elegante serif */
   font-size: 3rem;               /* Tamaño grande para impacto visual */
   font-weight: 700;              /* Peso bold */
-  color: var(--primary-color);   /* Color primario para contraste en fondo blanco */
+  color: var(--login-primary-color);   /* Color primario para contraste en fondo blanco */
   margin-bottom: 0.5rem;         /* Espacio inferior pequeño */
   text-align: center;            /* Texto centrado */
 
   /* Efecto de texto con gradiente */
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(135deg, var(--login-primary-color), var(--login-secondary-color));
   -webkit-background-clip: text; /* Recorta el gradiente al texto */
   -webkit-text-fill-color: transparent; /* Hace el texto transparente para mostrar el gradiente */
   background-clip: text;         /* Versión estándar */
@@ -306,7 +306,7 @@ body {
 .login-container h2 {
   font-size: 1.5rem;             /* Tamaño medio */
   font-weight: 600;              /* Peso semi-bold */
-  color: var(--text-gray);       /* Color gris para jerarquía visual */
+  color: var(--login-text-gray);       /* Color gris para jerarquía visual */
   margin-bottom: 2.5rem;         /* Espaciado generoso antes del formulario */
   text-align: center;            /* Texto centrado */
   text-shadow: none;             /* Sin sombra para limpieza en fondo blanco */
@@ -336,7 +336,7 @@ form {
 /* Etiquetas de los campos */
 .input-group label {
   font-weight: 600;              /* Peso semi-bold para destacar */
-  color: var(--text-dark);       /* Color oscuro para contraste en fondo blanco */
+  color: var(--login-text-dark);       /* Color oscuro para contraste en fondo blanco */
   font-size: 0.875rem;           /* Tamaño ligeramente menor que el texto normal */
   margin-bottom: 0.25rem;        /* Espacio adicional pequeño */
   text-shadow: none;             /* Sin sombra para limpieza */
@@ -345,26 +345,26 @@ form {
 /* Campos de entrada (inputs) */
 .input-group input {
   padding: 1rem 1.25rem;         /* Padding generoso para comodidad */
-  border: 2px solid var(--border-color); /* Borde gris visible */
+  border: 2px solid var(--login-border-color); /* Borde gris visible */
   border-radius: 12px;           /* Bordes redondeados modernos */
   font-size: 1rem;               /* Tamaño de texto estándar */
   transition: all 0.3s ease;     /* Transición suave para todas las propiedades */
-  background: var(--white);      /* Fondo blanco sólido */
-  color: var(--text-dark);       /* Texto oscuro */
+  background: var(--login-white);      /* Fondo blanco sólido */
+  color: var(--login-text-dark);       /* Texto oscuro */
 }
 
 /* Estado de focus en los inputs */
 .input-group input:focus {
   outline: none;                 /* Remueve el outline por defecto del navegador */
-  border-color: var(--primary-color); /* Cambio de color del borde */
+  border-color: var(--login-primary-color); /* Cambio de color del borde */
   box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2); /* Sombra de focus personalizada */
   transform: translateY(-2px);   /* Elevación sutil */
-  background: var(--white);      /* Mantiene fondo blanco */
+  background: var(--login-white);      /* Mantiene fondo blanco */
 }
 
 /* Texto placeholder en los inputs */
 .input-group input::placeholder {
-  color: var(--text-gray);       /* Color gris para el placeholder */
+  color: var(--login-text-gray);       /* Color gris para el placeholder */
   opacity: 0.8;                  /* Opacidad reducida */
 }
 
@@ -374,8 +374,8 @@ form {
 /* Botón principal con gradiente y efectos hover */
 button[type="submit"] {
   padding: 1rem 1.5rem;          /* Padding generoso para área de click */
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); /* Gradiente atractivo */
-  color: var(--white);           /* Texto blanco */
+  background: linear-gradient(135deg, var(--login-primary-color), var(--login-secondary-color)); /* Gradiente atractivo */
+  color: var(--login-white);           /* Texto blanco */
   border: none;                  /* Sin borde */
   border-radius: 12px;           /* Bordes redondeados */
   font-size: 1.1rem;             /* Tamaño ligeramente mayor */
@@ -392,7 +392,7 @@ button[type="submit"] {
 button[type="submit"]:hover:not(:disabled) {
   transform: translateY(-3px);   /* Elevación en hover */
   box-shadow: 0 12px 25px rgba(8, 145, 178, 0.5); /* Sombra más intensa */
-  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)); /* Gradiente más oscuro */
+  background: linear-gradient(135deg, var(--login-primary-dark), var(--login-primary-color)); /* Gradiente más oscuro */
 }
 
 /* Estado activo del botón (al hacer click) */
@@ -427,7 +427,7 @@ button[type="submit"]:disabled {
 /* Elemento mostrado durante procesos de carga */
 .loading-indicator {
   text-align: center;            /* Texto centrado */
-  color: var(--primary-color);   /* Color primario para contraste */
+  color: var(--login-primary-color);   /* Color primario para contraste */
   font-weight: 600;              /* Texto semi-bold */
   display: flex;                 /* Layout flexbox */
   align-items: center;           /* Alineación vertical */
@@ -442,7 +442,7 @@ button[type="submit"]:disabled {
   width: 20px;
   height: 20px;
   border: 3px solid rgba(8, 145, 178, 0.3); /* Borde base semi-transparente */
-  border-top: 3px solid var(--primary-color); /* Borde superior sólido */
+  border-top: 3px solid var(--login-primary-color); /* Borde superior sólido */
   border-radius: 50%;            /* Forma circular */
   animation: spin 1s linear infinite; /* Animación de rotación continua */
 }
@@ -454,14 +454,14 @@ button[type="submit"]:disabled {
 .login-container p {
   margin-top: 2rem;              /* Espacio superior generoso */
   text-align: center;            /* Texto centrado */
-  color: var(--text-gray);       /* Color gris secundario */
+  color: var(--login-text-gray);       /* Color gris secundario */
   font-size: 0.9rem;             /* Tamaño ligeramente menor */
   text-shadow: none;             /* Sin sombra */
 }
 
 /* Enlaces dentro del párrafo */
 .login-container p a {
-  color: var(--primary-color);   /* Color primario */
+  color: var(--login-primary-color);   /* Color primario */
   text-decoration: none;         /* Sin subrayado por defecto */
   font-weight: 700;              /* Texto bold */
   transition: all 0.3s ease;     /* Transición suave */
@@ -470,7 +470,7 @@ button[type="submit"]:disabled {
 
 /* Estado hover de los enlaces */
 .login-container p a:hover {
-  color: var(--primary-dark);    /* Color más oscuro en hover */
+  color: var(--login-primary-dark);    /* Color más oscuro en hover */
   text-decoration: underline;    /* Subrayado en hover */
 }
 

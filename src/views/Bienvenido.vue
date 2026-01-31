@@ -71,8 +71,8 @@
             </span>
           </p>
         </div>
-        <div class="welcome-actions">
-          <button @click="refreshData" class="action-btn refresh-btn" :disabled="isRefreshing">
+        <div class="bienvenido-welcome-actions">
+          <button @click="refreshData" class="bienvenido-action-btn bienvenido-refresh-btn" :disabled="isRefreshing">
             <i class="fas fa-sync-alt" :class="{ 'fa-spin': isRefreshing }"></i>
             <span>Actualizar</span>
           </button>
@@ -955,8 +955,8 @@ export default {
 }
 </script>
 
-<style>
-/* Sin scoped - usando namespace .bienvenido-container para evitar conflictos */
+<style scoped>
+/* Con scoped para aislar estilos */
 
 .bienvenido-container .inicio-container {
   padding: 1.5rem;
@@ -1208,12 +1208,12 @@ export default {
   font-weight: 600;
 }
 
-.bienvenido-container .welcome-actions {
+.bienvenido-welcome-actions {
   display: flex;
   gap: 0.5rem;
 }
 
-.bienvenido-container .action-btn {
+.bienvenido-action-btn {
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -1226,17 +1226,17 @@ export default {
   border: none;
 }
 
-.bienvenido-container .refresh-btn {
+.bienvenido-refresh-btn {
   background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
   color: white;
 }
 
-.bienvenido-container .refresh-btn:hover:not(:disabled) {
+.bienvenido-refresh-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
 }
 
-.bienvenido-container .refresh-btn:disabled {
+.bienvenido-refresh-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

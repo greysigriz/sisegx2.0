@@ -26,6 +26,14 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
+  // ✅ NUEVO: Cancelar requests pendientes al cambiar de ruta
+  try {
+    const { cancelRequestsByRoute } = await import('@/services/axios-config');
+    cancelRequestsByRoute(from.path);
+  } catch (error) {
+    console.warn('Error al cancelar requests:', error);
+  }
+
   const publicPages = ['/login', '/register', '/recuperar-password', '/'];
   const authRequired = !publicPages.includes(to.path);
   const isAuthenticated = AuthService.isAuthenticated();
@@ -65,6 +73,17 @@ router.beforeEach(async (to, from, next) => {
     }
 
   next();
+});
+
+// ✅ NUEVO: Hook después de cada navegación para limpieza
+router.afterEach((to, from) => {
+  console.log('✅ Navegación completada:', { from: from.path, to: to.path });
+
+  // Dar tiempo al componente para montarse completamente
+  setTimeout(() => {
+    // Forzar repaint para evitar problemas de CSS
+    document.body.offsetHeight;
+  }, 100);
 });
 
 export default router

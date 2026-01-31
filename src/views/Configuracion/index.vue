@@ -1,62 +1,46 @@
-<!-- C:\xampp\htdocs\SISE\src\views\Configuracion\index.vue -->
+﻿<!-- C:\xampp\htdocs\SISE\src\views\Configuracion\index.vue -->
 <template>
   <div class="configuracion-container">
-    <div class="card">
-      <div class="card-header">
+    <div class="configuracion-card">
+      <div class="configuracion-card-header">
         <h3>Configuración del Sistema</h3>
       </div>
-      <div class="card-body">
-        <p class="welcome-message">Bienvenido al módulo de Configuración</p>
+      <div class="configuracion-card-body">
+        <p class="configuracion-welcome-message">Bienvenido al módulo de Configuración</p>
         <p>Desde aquí podrás administrar las configuraciones del sistema.</p>
 
-        <div class="config-sections">
+        <div class="configuracion-sections">
           <!-- Usuarios -->
-          <div class="config-item" @click="redirectTo('usuarios')">
-            <div class="config-icon">
+          <div class="configuracion-item" @click="redirectTo('usuarios')">
+            <div class="configuracion-icon">
               <font-awesome-icon :icon="['fas', 'user-shield']" />
             </div>
-            <div class="config-details">
+            <div class="configuracion-details">
               <div>
                 <h4>Usuarios</h4>
                 <p>Administrar usuarios</p>
               </div>
-              <div class="arrow-icon">
-                <font-awesome-icon :icon="['fas', 'chevron-right']" />
+              <div class="configuracion-arrow-icon">
+                →
               </div>
             </div>
           </div>
 
           <!-- Roles -->
-          <div class="config-item" @click="redirectTo('roles')">
-            <div class="config-icon">
+          <div class="configuracion-item" @click="redirectTo('roles')">
+            <div class="configuracion-icon">
               <font-awesome-icon :icon="['fas', 'database']" />
             </div>
-            <div class="config-details">
+            <div class="configuracion-details">
               <div>
                 <h4>Roles</h4>
                 <p>Administrar roles</p>
               </div>
-              <div class="arrow-icon">
-                <font-awesome-icon :icon="['fas', 'chevron-right']" />
+              <div class="configuracion-arrow-icon">
+                →
               </div>
             </div>
           </div>
-
-          <!-- Unidades -->
-          <!-- <div class="config-item" @click="redirectTo('unidades/crear')">
-            <div class="config-icon">
-              <font-awesome-icon :icon="['fas', 'building']" />
-            </div>
-            <div class="config-details">
-              <div>
-                <h4>Unidades</h4>
-                <p>Administrar unidades</p>
-              </div>
-              <div class="arrow-icon">
-                <font-awesome-icon :icon="['fas', 'chevron-right']" />
-              </div>
-            </div>
-          </div> -->
 
         </div>
       </div>
@@ -75,47 +59,46 @@ export default {
 }
 </script>
 
-<style>
-/* Estilos sin scoped para asegurar que siempre se apliquen */
+<style scoped>
 .configuracion-container {
   padding: 20px;
 }
 
-.configuracion-container .card {
+.configuracion-card {
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-.configuracion-container .card-header {
+.configuracion-card-header {
   padding: 20px;
-  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%) !important;
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%);
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.configuracion-container .card-header h3 {
+.configuracion-card-header h3 {
   margin: 0;
-  color: white !important;
+  color: white;
   font-size: 18px;
 }
 
-.configuracion-container .card-body {
+.configuracion-card-body {
   padding: 20px;
 }
 
-.configuracion-container .welcome-message {
+.configuracion-welcome-message {
   font-size: 16px;
   font-weight: 500;
   color: #165CB1;
   margin-bottom: 10px;
 }
 
-.configuracion-container .config-sections {
+.configuracion-sections {
   margin-top: 20px;
 }
 
-.configuracion-container .config-item {
+.configuracion-item {
   display: flex;
   align-items: center;
   padding: 15px;
@@ -126,11 +109,11 @@ export default {
   cursor: pointer;
 }
 
-.configuracion-container .config-item:hover {
+.configuracion-item:hover {
   background-color: rgba(22, 97, 177, 0.15);
 }
 
-.configuracion-container .config-icon {
+.configuracion-icon {
   width: 50px;
   height: 50px;
   background-color: #ffffff;
@@ -143,28 +126,51 @@ export default {
   font-size: 20px;
 }
 
-.configuracion-container .config-details {
+.configuracion-details {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.configuracion-container .config-details h4 {
+.configuracion-details h4 {
   margin: 0;
   font-size: 16px;
   color: #333;
   font-weight: 600;
 }
 
-.configuracion-container .config-details p {
+.configuracion-details p {
   margin: 5px 0 0;
   font-size: 14px;
   color: #666;
 }
 
-.configuracion-container .arrow-icon {
+.configuracion-arrow-icon {
   color: #165CB1;
-  font-size: 16px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .configuracion-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .configuracion-item {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .configuracion-icon {
+    margin: 0 0 15px 0;
+  }
+
+  .configuracion-details {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 </style>
+

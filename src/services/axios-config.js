@@ -12,7 +12,41 @@ axios.defaults.timeout = 30000; // 30 segundos de timeout
 let isRedirecting = false;
 let failedQueue = [];
 let isRefreshing = false;
+// ✅ NUEVO: Sistema de cancelación de requests pendientes
+const pendingRequests = new Map();
+const CancelToken = axios.CancelToken;
 
+// Función para generar una clave única para cada request
+function generateRequestKey(config) {
+  const { method, url, params, data } = config;
+  return `${method}:${url}:${JSON.stringify(params)}:${JSON.stringify(data)}`;
+}
+
+// Función para cancelar todos los requests pendientes
+export function cancelAllPendingRequests() {
+  console.log(`🧹 Cancelando ${pendingRequests.size} requests pendientes`);
+  pendingRequests.forEach((cancel, key) => {
+    cancel(`Request cancelado por cambio de ruta: ${key}`);
+  });
+  pendingRequests.clear();
+}
+
+// Función para cancelar requests de una ruta específica
+export function cancelRequestsByRoute(route) {
+  const toCancelCount = Array.from(pendingRequests.keys())
+    .filter(key => key.includes(route))
+    .length;
+
+  if (toCancelCount > 0) {
+    console.log(`🧹 Cancelando ${toCancelCount} requests de la ruta: ${route}`);
+    pendingRequests.forEach((cancel, key) => {
+      if (key.includes(route)) {
+        cancel(`Request cancelado: cambio desde ${route}`);
+        pendingRequests.delete(key);
+      }
+    });
+  }
+}
 // Función para procesar la cola de requests fallidos
 const processQueue = (error, token = null) => {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -29,6 +63,21 @@ const processQueue = (error, token = null) => {
 // Interceptor para manejar requests
 axios.interceptors.request.use(
   (config) => {
+    // ✅ NUEVO: Generar CancelToken para este request
+    const requestKey = generateRequestKey(config);
+
+    // Si ya existe un request idéntico pendiente, cancelarlo
+    if (pendingRequests.has(requestKey)) {
+      const cancel = pendingRequests.get(requestKey);
+      cancel('Request duplicado cancelado');
+      pendingRequests.delete(requestKey);
+    }
+
+    // Crear nuevo CancelToken
+    config.cancelToken = new CancelToken((cancel) => {
+      pendingRequests.set(requestKey, cancel);
+    });
+
     // Solo agregar timestamp para GET requests
     if (config.method === 'get') {
       config.params = {
@@ -59,9 +108,25 @@ axios.interceptors.request.use(
 // Interceptor mejorado para manejar responses
 axios.interceptors.response.use(
   (response) => {
+    // ✅ NUEVO: Remover request de la cola de pendientes al completarse
+    const requestKey = generateRequestKey(response.config);
+    pendingRequests.delete(requestKey);
+
     return response;
   },
   async (error) => {
+    // ✅ NUEVO: Manejar requests cancelados sin mostrar error
+    if (axios.isCancel(error)) {
+      console.log('Request cancelado:', error.message);
+      return Promise.reject({ cancelled: true, message: error.message });
+    }
+
+    // ✅ NUEVO: Remover request de la cola de pendientes en caso de error
+    if (error.config) {
+      const requestKey = generateRequestKey(error.config);
+      pendingRequests.delete(requestKey);
+    }
+
     const originalRequest = error.config;
 
     console.error('Axios Error:', error);

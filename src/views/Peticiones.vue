@@ -1754,12 +1754,16 @@ export default {
             window.$toast.success(response.data.message);
           }
 
-          // Recargar departamentos asignados
+          // ✅ OPTIMIZADO: Solo recargar departamentos asignados, no todas las peticiones
           await cargarDepartamentosAsignados(peticionForm.id);
           departamentosSeleccionados.value = [];
 
-          // Recargar peticiones para actualizar estados
-          await cargarPeticiones();
+          // Actualizar departamentos en la petición local
+          const peticion = peticiones.value.find(p => p.id === peticionForm.id);
+          if (peticion && response.data.departamentos) {
+            peticion.departamentos = response.data.departamentos;
+            aplicarFiltros();
+          }
         }
 
       } catch (error) {
@@ -1798,11 +1802,15 @@ export default {
             window.$toast.success('Asignación eliminada correctamente');
           }
 
-          // Recargar departamentos asignados
+          // ✅ OPTIMIZADO: Solo recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
 
-          // Recargar peticiones para actualizar estados
-          await cargarPeticiones();
+          // Actualizar departamentos en la petición local
+          const peticion = peticiones.value.find(p => p.id === peticionForm.id);
+          if (peticion) {
+            peticion.departamentos = departamentosAsignados.value;
+            aplicarFiltros();
+          }
         }
 
       } catch (error) {
@@ -1834,8 +1842,20 @@ export default {
             window.$toast.success('Estado actualizado correctamente');
           }
 
-          // Recargar departamentos asignados
-          await cargarDepartamentosAsignados(peticionForm.id);
+          // ✅ OPTIMIZADO: Solo actualizar el estado local del departamento
+          const deptAsignado = departamentosAsignados.value.find(d => d.asignacion_id === asignacionId);
+          if (deptAsignado) {
+            deptAsignado.estado_asignacion = nuevoEstado;
+          }
+
+          // También actualizar en la petición local si está cargada
+          const peticionLocal = peticiones.value.find(p => p.id === peticionForm.id);
+          if (peticionLocal && peticionLocal.departamentos) {
+            const dept = peticionLocal.departamentos.find(d => d.asignacion_id === asignacionId);
+            if (dept) {
+              dept.estado_asignacion = nuevoEstado;
+            }
+          }
         }
 
       } catch (error) {
@@ -1896,7 +1916,15 @@ export default {
             window.$toast.success(`Seguimiento asignado correctamente a ${nombreCompleto}`);
           }
 
-          await cargarPeticiones();
+          // ✅ OPTIMIZADO: Actualizar solo la petición local sin recargar todo
+          const peticionLocal = peticiones.value.find(p => p.id === peticion.id);
+          if (peticionLocal) {
+            peticionLocal.usuario_id = usuarioId;
+            peticionLocal.nombre_completo_usuario = nombreCompleto;
+            peticionLocal.nombre_usuario_seguimiento = usuarioLogueado.value?.Nombre;
+            aplicarFiltros();
+          }
+
           peticionActiva.value = null;
         }
 
@@ -1951,8 +1979,14 @@ export default {
           window.$toast.success('Estado actualizado correctamente');
         }
 
+        // ✅ OPTIMIZADO: Actualizar solo el registro local sin recargar todo
+        const peticion = peticiones.value.find(p => p.id === peticionForm.id);
+        if (peticion) {
+          peticion.estado = peticionForm.estado;
+          aplicarFiltros(); // Re-aplicar filtros con datos actuales
+        }
+
         showEstadoModal.value = false;
-        await cargarPeticiones();
       } catch (error) {
         console.error('Error al guardar estado:', error);
         if (window.$toast) {
@@ -1972,8 +2006,15 @@ export default {
           window.$toast.success('Nivel de importancia actualizado correctamente');
         }
 
+        // ✅ OPTIMIZADO: Actualizar solo el registro local sin recargar todo
+        const peticion = peticiones.value.find(p => p.id === peticionForm.id);
+        if (peticion) {
+          peticion.NivelImportancia = parseInt(peticionForm.NivelImportancia);
+          limpiarCacheSemaforo(); // Limpiar cache de semáforo
+          aplicarFiltros(); // Re-aplicar filtros con datos actuales
+        }
+
         showImportanciaModal.value = false;
-        await cargarPeticiones();
       } catch (error) {
         console.error('Error al actualizar nivel de importancia:', error);
         if (window.$toast) {

@@ -198,14 +198,15 @@ onUnmounted(() => {
 /* Estilos globales para el dashboard */
 /* Agregar a tu archivo main.css o como estilos globales */
 
-:root {
+/* Variables CSS específicas SOLO para Dashboard */
+.grafico-container {
   /* Colores principales */
-  --color-primary: #3b82f6;
-  --color-primary-dark: #1e40af;
-  --color-success: #16a34a;
-  --color-warning: #ea580c;
-  --color-danger: #dc2626;
-  --color-info: #0891b2;
+  --dash-color-primary: #3b82f6;
+  --dash-color-primary-dark: #1e40af;
+  --dash-color-success: #16a34a;
+  --dash-color-warning: #ea580c;
+  --dash-color-danger: #dc2626;
+  --dash-color-info: #0891b2;
 
   /* Colores de fondo */
   --bg-primary: #ffffff;

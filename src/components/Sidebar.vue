@@ -247,6 +247,21 @@ export default {
 
     async navigateTo(path) {
       try {
+        // ✅ NUEVO: Evitar navegación si ya está navegando
+        if (this.isNavigating) {
+          console.log('⏳ Navegación en progreso, ignorando click');
+          return;
+        }
+
+        // ✅ NUEVO: Debouncing - evitar clicks demasiado rápidos (< 300ms)
+        const now = Date.now();
+        const timeSinceLastNav = now - this.lastNavigationTime;
+        if (timeSinceLastNav < 300) {
+          console.log('⚡ Navegación demasiado rápida, ignorando');
+          return;
+        }
+        this.lastNavigationTime = now;
+
         // Verificar autenticación antes de navegar
         if (!authService.isAuthenticated()) {
           this.router.push('/login');
@@ -258,14 +273,41 @@ export default {
           return;
         }
 
-        // Navegación directa sin trucos innecesarios
+        // ✅ NUEVO: Marcar que está navegando
+        this.isNavigating = true;
+
+        // ✅ NUEVO: Cancelar todos los requests pendientes antes de navegar
+        const { cancelAllPendingRequests } = await import('@/services/axios-config');
+        cancelAllPendingRequests();
+
+        // ✅ NUEVO: Pequeño delay para dar tiempo a que se cancelen los requests
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Navegación
         await this.$router.push(path);
+
+        // ✅ NUEVO: Esperar a que Vue termine de actualizar el DOM
+        await this.$nextTick();
 
       } catch (error) {
         console.error('Error en navegación:', error);
 
-        // Fallback: recargar la página con la nueva ruta
-        window.location.href = path;
+        // Si el error es de navegación duplicada, ignorarlo
+        if (error.name === 'NavigationDuplicated') {
+          console.log('Navegación duplicada detectada, ignorando');
+          return;
+        }
+
+        // Para otros errores, mostrar mensaje
+        this.showErrorMessage('Error al navegar. Intente nuevamente.');
+      } finally {
+        // ✅ NUEVO: Siempre liberar el flag de navegación después de un tiempo
+        if (this.navigationTimeout) {
+          clearTimeout(this.navigationTimeout);
+        }
+        this.navigationTimeout = setTimeout(() => {
+          this.isNavigating = false;
+        }, 500);
       }
 
       // Ocultar sidebar en móvil después de navegar

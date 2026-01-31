@@ -1,44 +1,44 @@
 <template>
   <div class="roles-container">
     <!-- Estadísticas -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon total">
+    <div class="roles-stats-grid">
+      <div class="roles-stat-card">
+        <div class="roles-stat-icon total">
           <i class="fas fa-shield-alt"></i>
         </div>
-        <div class="stat-info">
-          <p class="stat-value">{{ roles.length }}</p>
-          <p class="stat-label">Total Roles</p>
+        <div class="roles-stat-info">
+          <p class="roles-stat-value">{{ roles.length }}</p>
+          <p class="roles-stat-label">Total Roles</p>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon users">
+      <div class="roles-stat-card">
+        <div class="roles-stat-icon users">
           <i class="fas fa-users"></i>
         </div>
-        <div class="stat-info">
-          <p class="stat-value">{{ rolesConUsuarios }}</p>
-          <p class="stat-label">Con Usuarios</p>
+        <div class="roles-stat-info">
+          <p class="roles-stat-value">{{ rolesConUsuarios }}</p>
+          <p class="roles-stat-label">Con Usuarios</p>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
+    <div class="roles-card">
+      <div class="roles-card-header">
         <h3>Gestión de Roles</h3>
-        <div class="header-actions">
-          <button class="btn-export" @click="exportarRoles" title="Exportar a Excel">
+        <div class="roles-header-actions">
+          <button class="roles-btn-export" @click="exportarRoles" title="Exportar a Excel">
             <i class="fas fa-file-excel"></i> Exportar
           </button>
-          <button class="btn-primary" @click="crearNuevoRol">
+          <button class="roles-btn-primary" @click="crearNuevoRol">
             <i class="fas fa-plus"></i> Nuevo Rol
           </button>
         </div>
       </div>
 
-      <div class="card-body">
+      <div class="roles-card-body">
         <!-- Barra de búsqueda y filtros -->
-        <div class="search-filter-container">
-          <div class="search-box">
+        <div class="roles-search-filter-container">
+          <div class="roles-search-box">
             <i class="fas fa-search"></i>
             <input
               type="text"
@@ -46,79 +46,79 @@
               placeholder="Buscar por nombre o descripción..."
               @input="aplicarFiltros"
             />
-            <button v-if="filtros.busqueda" class="clear-search" @click="limpiarBusqueda">
+            <button v-if="filtros.busqueda" class="roles-clear-search" @click="limpiarBusqueda">
               <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <button class="btn-refresh" @click="cargarDatos" title="Actualizar">
+          <button class="roles-btn-refresh" @click="cargarDatos" title="Actualizar">
             <i class="fas fa-sync-alt" :class="{ 'spinning': loading }"></i>
           </button>
         </div>
 
         <!-- Resultados -->
-        <div class="results-info">
+        <div class="roles-results-info">
           <p>
             Mostrando {{ rolesPaginados.length }} de {{ rolesFiltrados.length }} roles
           </p>
         </div>
 
         <!-- Lista de roles -->
-        <div class="roles-list">
-          <div class="list-header">
-            <div class="header-check">
+        <div class="roles-roles-list">
+          <div class="roles-list-header">
+            <div class="roles-header-check">
               <input
                 type="checkbox"
                 v-model="seleccionarTodos"
                 @change="toggleSeleccionTodos"
               />
             </div>
-            <div @click="ordenarPor('Nombre')" class="sortable">
+            <div @click="ordenarPor('Nombre')" class="roles-sortable">
               Nombre del Rol
               <i class="fas" :class="getSortIcon('Nombre')"></i>
             </div>
             <div>Descripción</div>
-            <div class="text-center">Usuarios</div>
+            <div class="roles-text-center">Usuarios</div>
             <div>Acciones</div>
           </div>
 
-          <div v-if="loading" class="loading-message">
+          <div v-if="loading" class="roles-loading-message">
             <i class="fas fa-spinner fa-spin"></i> Cargando roles...
           </div>
 
-          <div v-else-if="rolesPaginados.length === 0" class="empty-message">
+          <div v-else-if="rolesPaginados.length === 0" class="roles-empty-message">
             <i class="fas fa-shield-alt"></i>
             <p>{{ rolesFiltrados.length === 0 ? 'No hay roles registrados' : 'No se encontraron roles con los filtros aplicados' }}</p>
           </div>
 
-          <div v-else v-for="rol in rolesPaginados" :key="rol.Id" class="rol-item">
-            <div class="rol-check">
+          <div v-else v-for="rol in rolesPaginados" :key="rol.Id" class="roles-rol-item">
+            <div class="roles-rol-check">
               <input
                 type="checkbox"
                 :value="rol.Id"
                 v-model="rolesSeleccionados"
               />
             </div>
-            <div class="rol-info">
-              <p class="rol-nombre">{{ rol.Nombre }}</p>
+            <div class="roles-rol-info">
+              <p class="roles-rol-nombre">{{ rol.Nombre }}</p>
             </div>
-            <div class="rol-info description">
+            <div class="roles-rol-info description">
               <p v-html="rol.Descripcion || 'Sin descripción'"></p>
             </div>
-            <div class="rol-usuarios text-center">
-              <span class="badge-usuarios" :class="{ 'has-users': rol.CantidadUsuarios > 0 }">
+            <div class="roles-rol-usuarios roles-text-center">
+              <span class="roles-badge-usuarios" :class="{ 'has-users': rol.CantidadUsuarios > 0 }">
                 <i class="fas fa-users"></i>
                 {{ rol.CantidadUsuarios || 0 }}
               </span>
             </div>
-            <div class="rol-actions">
-              <button class="action-btn view" @click="verDetalles(rol)" title="Ver detalles">
+            <div class="roles-rol-actions">
+              <button class="roles-action-btn view" @click="verDetalles(rol)" title="Ver detalles">
                 <i class="fas fa-eye"></i>
               </button>
-              <button class="action-btn edit" @click="editarRol(rol)" title="Editar">
+              <button class="roles-action-btn edit" @click="editarRol(rol)" title="Editar">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="action-btn delete" @click="confirmarEliminar(rol)" title="Eliminar">
+              <button class="roles-action-btn delete" @click="confirmarEliminar(rol)" title="Eliminar">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
@@ -127,16 +127,16 @@
 
         <!-- Acciones masivas -->
         <transition name="fade">
-          <div v-if="rolesSeleccionados.length > 0" class="acciones-masivas">
-            <div class="acciones-info">
+          <div v-if="rolesSeleccionados.length > 0" class="roles-acciones-masivas">
+            <div class="roles-acciones-info">
               <i class="fas fa-check-square"></i>
               <span>{{ rolesSeleccionados.length }} seleccionado(s)</span>
             </div>
-            <div class="acciones-buttons">
-              <button class="btn-mass-action cancel" @click="deseleccionarTodos" title="Cancelar selección">
+            <div class="roles-acciones-buttons">
+              <button class="roles-btn-mass-action cancel" @click="deseleccionarTodos" title="Cancelar selección">
                 <i class="fas fa-times-circle"></i>
               </button>
-              <button class="btn-mass-action danger" @click="eliminarSeleccionados" title="Eliminar">
+              <button class="roles-btn-mass-action danger" @click="eliminarSeleccionados" title="Eliminar">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -144,9 +144,9 @@
         </transition>
 
         <!-- Paginación -->
-        <div v-if="rolesFiltrados.length > itemsPorPagina" class="pagination">
+        <div v-if="rolesFiltrados.length > itemsPorPagina" class="roles-pagination">
           <button
-            class="pagination-btn"
+            class="roles-pagination-btn"
             @click="cambiarPagina(paginaActual - 1)"
             :disabled="paginaActual === 1"
           >
@@ -156,7 +156,7 @@
           <button
             v-for="pagina in paginasVisibles"
             :key="pagina"
-            class="pagination-btn"
+            class="roles-pagination-btn"
             :class="{ active: pagina === paginaActual }"
             @click="cambiarPagina(pagina)"
           >
@@ -164,14 +164,14 @@
           </button>
 
           <button
-            class="pagination-btn"
+            class="roles-pagination-btn"
             @click="cambiarPagina(paginaActual + 1)"
             :disabled="paginaActual === totalPaginas"
           >
             <i class="fas fa-chevron-right"></i>
           </button>
 
-          <select v-model.number="itemsPorPagina" @change="cambiarItemsPorPagina" class="items-per-page">
+          <select v-model.number="itemsPorPagina" @change="cambiarItemsPorPagina" class="roles-items-per-page">
             <option :value="10">10 / página</option>
             <option :value="25">25 / página</option>
             <option :value="50">50 / página</option>
@@ -181,17 +181,17 @@
     </div>
 
     <!-- Modal para crear/editar rol -->
-    <div v-if="showModal" class="modal-overlay" @click.self="cancelarAccion">
-      <div class="modal-content">
-        <div class="modal-header">
+    <div v-if="showModal" class="roles-modal-overlay" @click.self="cancelarAccion">
+      <div class="roles-modal-content">
+        <div class="roles-modal-header">
           <h3>{{ modoEdicion ? 'Editar Rol' : 'Nuevo Rol' }}</h3>
-          <button class="close-btn" @click="cancelarAccion">
+          <button class="roles-close-btn" @click="cancelarAccion">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="modal-body">
+        <div class="roles-modal-body">
           <form @submit.prevent="guardarRol">
-            <div class="form-group">
+            <div class="roles-form-group">
               <label for="nombre">Nombre del Rol: *</label>
               <input
                 type="text"
@@ -201,7 +201,7 @@
               />
             </div>
 
-            <div class="form-group">
+            <div class="roles-form-group">
               <label for="descripcion">Descripción:</label>
               <textarea
                 id="descripcion"
@@ -210,11 +210,11 @@
               ></textarea>
             </div>
 
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" @click="cancelarAccion">
+            <div class="roles-form-actions">
+              <button type="button" class="roles-btn-secondary" @click="cancelarAccion">
                 Cancelar
               </button>
-              <button type="submit" class="btn-primary">
+              <button type="submit" class="roles-btn-primary">
                 <i class="fas" :class="modoEdicion ? 'fa-save' : 'fa-plus'"></i>
                 {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
               </button>
@@ -225,51 +225,57 @@
     </div>
 
     <!-- Modal de detalles -->
-    <div v-if="showDetallesModal" class="modal-overlay" @click.self="showDetallesModal = false">
-      <div class="modal-content modal-detalles">
-        <div class="modal-header">
+    <div v-if="showDetallesModal" class="roles-modal-overlay" @click.self="showDetallesModal = false">
+      <div class="roles-modal-content roles-modal-detalles">
+        <div class="roles-modal-header">
           <h3>Detalles del Rol</h3>
-          <button class="close-btn" @click="showDetallesModal = false">
+          <button class="roles-close-btn" @click="showDetallesModal = false">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="modal-body">
-          <div class="detalles-grid" v-if="rolDetalle">
-            <div class="detalle-item">
+        <div class="roles-modal-body">
+          <div class="roles-detalles-grid" v-if="rolDetalle">
+            <div class="roles-detalle-item">
               <label>Nombre:</label>
               <p>{{ rolDetalle.Nombre }}</p>
             </div>
-            <div class="detalle-item">
+            <div class="roles-detalle-item">
               <label>Descripción:</label>
               <p>{{ rolDetalle.Descripcion || 'Sin descripción' }}</p>
             </div>
-            <div class="detalle-item full-width">
+            <div class="roles-detalle-item roles-full-width">
               <label>Usuarios con este rol ({{ rolUsuarios.length }}):</label>
-              <div v-if="rolUsuarios.length > 0" class="usuarios-list-detail">
-                <div v-for="usuario in rolUsuarios" :key="usuario.IdUsuario" class="usuario-chip">
+              <div v-if="loadingDetalles" class="roles-loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Cargando...
+              </div>
+              <div v-else-if="rolUsuarios.length > 0" class="roles-usuarios-list-detail">
+                <div v-for="usuario in rolUsuarios" :key="usuario.IdUsuario" class="roles-usuario-chip">
                   <i class="fas fa-user"></i>
                   {{ usuario.NombreCompleto }}
                 </div>
               </div>
-              <p v-else class="empty-text">No hay usuarios asignados</p>
+              <p v-else class="roles-empty-text">No hay usuarios asignados</p>
             </div>
-            <div class="detalle-item full-width">
+            <div class="roles-detalle-item roles-full-width">
               <label>Permisos asignados ({{ rolPermisos.length }}):</label>
-              <div v-if="rolPermisos.length > 0" class="permisos-list-detail">
-                <div v-for="permiso in rolPermisos" :key="permiso.Codigo" class="permiso-chip">
+              <div v-if="loadingDetalles" class="roles-loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Cargando...
+              </div>
+              <div v-else-if="rolPermisos.length > 0" class="roles-permisos-list-detail">
+                <div v-for="permiso in rolPermisos" :key="permiso.Codigo" class="roles-permiso-chip">
                   <i class="fas fa-shield-alt"></i>
                   {{ permiso.Nombre }}
-                  <span class="permiso-modulo">{{ permiso.Modulo }}</span>
+                  <span class="roles-permiso-modulo">{{ permiso.Modulo }}</span>
                 </div>
               </div>
-              <p v-else class="empty-text">No hay permisos asignados</p>
+              <p v-else class="roles-empty-text">No hay permisos asignados</p>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn-secondary" @click="showDetallesModal = false">
+          <div class="roles-form-actions">
+            <button class="roles-btn-secondary" @click="showDetallesModal = false">
               Cerrar
             </button>
-            <button class="btn-primary" @click="editarDesdeDetalles">
+            <button class="roles-btn-primary" @click="editarDesdeDetalles">
               <i class="fas fa-edit"></i> Editar
             </button>
           </div>
@@ -278,26 +284,26 @@
     </div>
 
     <!-- Modal de confirmación -->
-    <div v-if="showConfirmModal" class="modal-overlay">
-      <div class="modal-content confirm-modal">
-        <div class="modal-header">
+    <div v-if="showConfirmModal" class="roles-modal-overlay">
+      <div class="roles-modal-content roles-confirm-modal">
+        <div class="roles-modal-header">
           <h3>Confirmar {{ tituloAccionMasiva }}</h3>
         </div>
-        <div class="modal-body">
+        <div class="roles-modal-body">
           <div v-if="accionMasiva === 'eliminar'">
             <p>¿Está seguro de que desea <strong>eliminar</strong> {{ rolesSeleccionados.length }} rol(es)?</p>
-            <div class="usuarios-preview">
-              <p class="preview-title">Roles a eliminar:</p>
-              <ul class="usuarios-list-preview">
+            <div class="roles-usuarios-preview">
+              <p class="roles-preview-title">Roles a eliminar:</p>
+              <ul class="roles-usuarios-list-preview">
                 <li v-for="id in rolesSeleccionados.slice(0, 5)" :key="id">
                   {{ obtenerNombreRol(id) }}
                 </li>
-                <li v-if="rolesSeleccionados.length > 5" class="more-items">
+                <li v-if="rolesSeleccionados.length > 5" class="roles-more-items">
                   ... y {{ rolesSeleccionados.length - 5 }} rol(es) más
                 </li>
               </ul>
             </div>
-            <p class="warning-text">
+            <p class="roles-warning-text">
               <i class="fas fa-exclamation-triangle"></i>
               Esta acción no se puede deshacer. Los roles serán eliminados permanentemente del sistema.
             </p>
@@ -305,18 +311,18 @@
 
           <div v-else>
             <p>¿Está seguro de que desea eliminar el rol <strong>{{ rolEliminar?.Nombre }}</strong>?</p>
-            <p class="warning-text" v-if="tieneUsuarios">
+            <p class="roles-warning-text" v-if="tieneUsuarios">
               <i class="fas fa-exclamation-triangle"></i>
               <span v-if="tieneUsuarios">Este rol está asignado a uno o más usuarios. </span>
               <span>La eliminación puede afectar la operación del sistema.</span>
             </p>
           </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" @click="cancelarAccionMasiva">
+          <div class="roles-form-actions">
+            <button type="button" class="roles-btn-secondary" @click="cancelarAccionMasiva">
               <i class="fas fa-times"></i> Cancelar
             </button>
-            <button type="button" class="btn-danger" @click="ejecutarAccionMasiva">
+            <button type="button" class="roles-btn-danger" @click="ejecutarAccionMasiva">
               <i class="fas fa-trash"></i> Eliminar
             </button>
           </div>
@@ -349,6 +355,7 @@ export default {
       rolDetalle: null,
       rolPermisos: [],
       rolUsuarios: [],
+      loadingDetalles: false,
       tieneUsuarios: false,
       backendUrl: import.meta.env.VITE_API_URL,
 
@@ -586,9 +593,18 @@ export default {
     },
     async verDetalles(rol) {
       this.rolDetalle = rol;
-      await this.cargarPermisosRol(rol.Id);
-      await this.cargarUsuariosRol(rol.Id);
+      this.rolPermisos = [];
+      this.rolUsuarios = [];
+      this.loadingDetalles = true;
       this.showDetallesModal = true;
+
+      // Cargar datos en paralelo para mejorar rendimiento
+      await Promise.all([
+        this.cargarPermisosRol(rol.Id),
+        this.cargarUsuariosRol(rol.Id)
+      ]);
+
+      this.loadingDetalles = false;
     },
     async cargarPermisosRol(rolId) {
       try {
@@ -607,11 +623,30 @@ export default {
       try {
         // Obtener usuarios que tienen este rol desde UsuarioRol
         const response = await axios.get(
-          `${this.backendUrl}/usuario-roles.php?action=getUsersByRole&idRol=${rolId}`
+          `${this.backendUrl}/usuario-roles.php?action=getUsersByRole&idRol=${rolId}&_t=${Date.now()}`
         );
         this.rolUsuarios = response.data.usuarios || [];
       } catch (error) {
         console.error('Error al cargar usuarios del rol:', error);
+
+        // Si hay error de conexión a la base de datos, mostrar mensaje amigable
+        if (error.response?.status === 500) {
+          const errorMsg = error.response?.data?.message || 'Error de conexión a la base de datos';
+          console.warn('⚠️ No se pudieron cargar los usuarios del rol:', errorMsg);
+
+          // Mostrar mensaje en la UI pero no bloquear el modal
+          this.$nextTick(() => {
+            const modalContent = document.querySelector('.roles-modal-detalles .roles-modal-content');
+            if (modalContent) {
+              const warningDiv = document.createElement('div');
+              warningDiv.className = 'roles-db-warning';
+              warningDiv.innerHTML = '⚠️ No se pudo conectar a la base de datos para cargar los usuarios';
+              warningDiv.style.cssText = 'background:#fff3cd;color:#856404;padding:10px;border-radius:5px;margin:10px 0;';
+              modalContent.insertBefore(warningDiv, modalContent.firstChild);
+            }
+          });
+        }
+
         this.rolUsuarios = [];
       }
     },
@@ -704,14 +739,14 @@ export default {
 }
 
 /* Stats cards */
-.stats-grid {
+.roles-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.stat-card {
+.roles-stat-card {
   background: white;
   border-radius: 8px;
   padding: 20px;
@@ -722,12 +757,12 @@ export default {
   transition: transform 0.2s;
 }
 
-.stat-card:hover {
+.roles-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.stat-icon {
+.roles-stat-icon {
   width: 50px;
   height: 50px;
   border-radius: 8px;
@@ -738,62 +773,62 @@ export default {
   color: white;
 }
 
-.stat-icon.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.stat-icon.hierarchy { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.stat-icon.users { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
-.stat-icon.subordinates { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+.roles-stat-icon.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.roles-stat-icon.hierarchy { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.roles-stat-icon.users { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+.roles-stat-icon.subordinates { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
 
-.stat-info {
+.roles-stat-info {
   flex: 1;
 }
 
-.stat-value {
+.roles-stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: var(--secondary-color);
+  color: #1e3a8a;
   margin: 0;
 }
 
-.stat-label {
+.roles-stat-label {
   font-size: 14px;
   color: #666;
   margin: 5px 0 0 0;
 }
 
 /* Card */
-.card {
-  background-color: var(--white-color);
+.roles-card {
+  background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-.card-header {
+.roles-card-header {
   padding: 20px;
-  background-color: var(--white-color);
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.card-header h3 {
+.roles-card-header h3 {
   margin: 0;
-  color: var(--secondary-color);
+  color: white !important;
   font-size: 18px;
 }
 
-.card-body {
+.roles-card-body {
   padding: 20px;
 }
 
 /* Header actions */
-.header-actions {
+.roles-header-actions {
   display: flex;
   gap: 10px;
 }
 
-.btn-export {
+.roles-btn-export {
   background: #10b981;
   color: white;
   border: none;
@@ -807,12 +842,12 @@ export default {
   font-size: 14px;
 }
 
-.btn-export:hover {
+.roles-btn-export:hover {
   background: #059669;
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
+.roles-btn-primary {
+  background-color: #1e3a8a;
   color: white;
   border: none;
   border-radius: 6px;
@@ -825,31 +860,31 @@ export default {
   font-size: 14px;
 }
 
-.btn-primary:hover {
-  background-color: var(--secondary-color);
+.roles-btn-primary:hover {
+  background-color: #1e40af;
 }
 
 /* Búsqueda y filtros */
-.search-filter-container {
+.roles-search-filter-container {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }
 
-.search-box {
+.roles-search-box {
   flex: 1;
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.search-box i {
+.roles-search-box i {
   position: absolute;
   left: 15px;
   color: #999;
 }
 
-.search-box input {
+.roles-search-box input {
   width: 100%;
   padding: 12px 45px 12px 45px;
   border: 2px solid #e5e7eb;
@@ -858,13 +893,13 @@ export default {
   transition: all 0.3s;
 }
 
-.search-box input:focus {
+.roles-search-box input:focus {
   outline: none;
-  border-color: var(--primary-color);
+  border-color: #1e3a8a;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.clear-search {
+.roles-clear-search {
   position: absolute;
   right: 10px;
   background: none;
@@ -874,7 +909,7 @@ export default {
   padding: 5px;
 }
 
-.btn-refresh {
+.roles-btn-refresh {
   background: white;
   border: 2px solid #e5e7eb;
   padding: 10px 15px;
@@ -883,12 +918,12 @@ export default {
   transition: all 0.3s;
 }
 
-.btn-refresh:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.roles-btn-refresh:hover {
+  border-color: #1e3a8a;
+  color: #1e3a8a;
 }
 
-.spinning {
+.roles-spinning {
   animation: spin 1s linear infinite;
 }
 
@@ -897,7 +932,7 @@ export default {
 }
 
 /* Resultados */
-.results-info {
+.roles-results-info {
   margin-bottom: 15px;
   font-size: 14px;
   color: #666;
@@ -908,34 +943,34 @@ export default {
   margin-top: 20px;
   border-radius: 8px;
   overflow: hidden;
-  background-color: var(--white-color);
+  background-color: white;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
-.list-header {
+.roles-list-header {
   display: grid;
   grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
-  background-color: rgba(39, 63, 245, 0.926);
+  background-color: rgba(39, 63, 245, 0.926) !important;
   padding: 15px;
   font-weight: 600;
-  color: white;
+  color: white !important;
 }
 
-.list-header > div:last-child {
+.roles-list-header > div:last-child {
   text-align: center;
 }
 
-.text-center {
+.roles-text-center {
   text-align: center;
 }
 
-.header-check {
+.roles-header-check {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sortable {
+.roles-sortable {
   cursor: pointer;
   user-select: none;
   display: flex;
@@ -943,63 +978,63 @@ export default {
   gap: 5px;
 }
 
-.sortable:hover {
+.roles-sortable:hover {
   opacity: 0.7;
 }
 
-.rol-item {
+.roles-rol-item {
   display: grid;
   grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
   padding: 15px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.rol-item:hover {
+.roles-rol-item:hover {
   background-color: rgba(22, 84, 177, 0.05);
 }
 
-.rol-check {
+.roles-rol-check {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.rol-info {
+.roles-rol-info {
   display: flex;
   align-items: center;
 }
 
-.rol-info p {
+.roles-rol-info p {
   margin: 0;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.rol-nombre {
+.roles-rol-nombre {
   font-weight: 600;
-  color: var(--primary-color);
+  color: #1e3a8a;
 }
 
-.rol-info.description {
+.roles-rol-info.description {
   align-items: center;
   min-width: 0;
   overflow: hidden;
 }
 
-.rol-info.description p {
+.roles-rol-info.description p {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
 }
 
-.rol-usuarios {
+.roles-rol-usuarios {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.badge-usuarios {
+.roles-badge-usuarios {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1012,22 +1047,22 @@ export default {
   transition: all 0.3s;
 }
 
-.badge-usuarios.has-users {
+.roles-badge-usuarios.has-users {
   background: #dbeafe;
-  color: var(--primary-color);
+  color: #1e3a8a;
 }
 
-.badge-usuarios i {
+.roles-badge-usuarios i {
   font-size: 11px;
 }
 
-.rol-actions {
+.roles-rol-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
 }
 
-.action-btn {
+.roles-action-btn {
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1036,42 +1071,42 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.action-btn.view {
+.roles-action-btn.view {
   background-color: #8b5cf6;
   color: white;
 }
 
-.action-btn.edit {
+.roles-action-btn.edit {
   background-color: #f0ad4e;
   color: white;
 }
 
-.action-btn.delete {
+.roles-action-btn.delete {
   background-color: #d9534f;
   color: white;
 }
 
-.action-btn:hover {
+.roles-action-btn:hover {
   opacity: 0.8;
 }
 
-.loading-message, .empty-message {
+.roles-loading-message, .roles-empty-message {
   padding: 40px 20px;
   text-align: center;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.empty-message i {
+.roles-empty-message i {
   font-size: 48px;
   color: #ccc;
   margin-bottom: 10px;
 }
 
 /* Acciones masivas */
-.acciones-masivas {
+.roles-acciones-masivas {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -1087,28 +1122,28 @@ export default {
   border: 1px solid rgba(0,0,0,0.08);
 }
 
-.acciones-info {
+.roles-acciones-info {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0 8px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--secondary-color);
+  color: #374151;
   border-right: 1px solid rgba(0,0,0,0.1);
 }
 
-.acciones-info i {
-  color: var(--primary-color);
+.roles-acciones-info i {
+  color: #1e3a8a;
   font-size: 14px;
 }
 
-.acciones-buttons {
+.roles-acciones-buttons {
   display: flex;
   gap: 6px;
 }
 
-.btn-mass-action {
+.roles-btn-mass-action {
   width: 36px;
   height: 36px;
   border: none;
@@ -1121,30 +1156,30 @@ export default {
   transition: all 0.2s;
 }
 
-.btn-mass-action i {
+.roles-btn-mass-action i {
   color: white;
 }
 
-.btn-mass-action.cancel {
+.roles-btn-mass-action.cancel {
   background: #6b7280;
 }
 
-.btn-mass-action.cancel:hover {
+.roles-btn-mass-action.cancel:hover {
   background: #4b5563;
   transform: scale(1.1);
 }
 
-.btn-mass-action.danger {
+.roles-btn-mass-action.danger {
   background: #ef4444;
 }
 
-.btn-mass-action.danger:hover {
+.roles-btn-mass-action.danger:hover {
   background: #dc2626;
   transform: scale(1.1);
 }
 
 /* Paginación */
-.pagination {
+.roles-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1152,7 +1187,7 @@ export default {
   margin-top: 30px;
 }
 
-.pagination-btn {
+.roles-pagination-btn {
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
   background: white;
@@ -1163,23 +1198,23 @@ export default {
   min-width: 40px;
 }
 
-.pagination-btn:hover:not(:disabled) {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
+.roles-pagination-btn:hover:not(:disabled) {
+  border-color: #1e3a8a;
+  color: #1e3a8a;
 }
 
-.pagination-btn.active {
-  background: var(--primary-color);
+.roles-pagination-btn.active {
+  background: #1e3a8a;
   color: white;
-  border-color: var(--primary-color);
+  border-color: #1e3a8a;
 }
 
-.pagination-btn:disabled {
+.roles-pagination-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.items-per-page {
+.roles-items-per-page {
   margin-left: 20px;
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
@@ -1188,7 +1223,7 @@ export default {
 }
 
 /* Modales */
-.modal-overlay {
+.roles-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1201,8 +1236,8 @@ export default {
   z-index: 1000;
 }
 
-.modal-content {
-  background-color: var(--white-color);
+.roles-modal-content {
+  background-color: white;
   border-radius: 8px;
   width: 90%;
   max-width: 600px;
@@ -1210,15 +1245,15 @@ export default {
   overflow-y: auto;
 }
 
-.modal-detalles {
+.roles-modal-detalles {
   max-width: 700px;
 }
 
-.confirm-modal {
+.roles-confirm-modal {
   max-width: 500px;
 }
 
-.modal-header {
+.roles-modal-header {
   padding: 15px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
@@ -1226,35 +1261,35 @@ export default {
   align-items: center;
 }
 
-.modal-header h3 {
+.roles-modal-header h3 {
   margin: 0;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.close-btn {
+.roles-close-btn {
   background: none;
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.modal-body {
+.roles-modal-body {
   padding: 20px;
 }
 
-.form-group {
+.roles-form-group {
   margin-bottom: 15px;
 }
 
-.form-group label {
+.roles-form-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.form-group input, .form-group select, .form-group textarea {
+.roles-form-group input, .roles-form-group select, .roles-form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1262,50 +1297,50 @@ export default {
   font-size: 14px;
 }
 
-.form-actions {
+.roles-form-actions {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.btn-secondary {
+.roles-btn-secondary {
   background-color: #f8f9fa;
-  color: var(--secondary-color);
+  color: #374151;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.btn-danger {
+.roles-btn-danger {
   background-color: #d9534f;
   color: white;
   border: none;
   border-radius: 4px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.detalles-grid {
+.roles-detalles-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.detalle-item {
+.roles-detalle-item {
   padding: 15px;
   background: #f9fafb;
   border-radius: 8px;
 }
 
-.detalle-item.full-width {
+.roles-detalle-item.roles-full-width {
   grid-column: 1 / -1;
 }
 
-.detalle-item label {
+.roles-detalle-item label {
   display: block;
   font-size: 12px;
   color: #666;
@@ -1315,14 +1350,28 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.detalle-item p {
+.roles-loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: #1654b1;
+  font-size: 14px;
+}
+
+.roles-loading-spinner i {
+  font-size: 18px;
+}
+
+.roles-detalle-item p {
   margin: 0;
   font-size: 16px;
-  color: var(--secondary-color);
+  color: #374151;
   font-weight: 500;
 }
 
-.warning-text {
+.roles-warning-text {
   background: #fef3c7;
   border-left: 4px solid #f59e0b;
   padding: 12px;
@@ -1335,12 +1384,12 @@ export default {
   font-size: 14px;
 }
 
-.warning-text i {
+.roles-warning-text i {
   color: #f59e0b;
   font-size: 18px;
 }
 
-.usuarios-preview {
+.roles-usuarios-preview {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 15px;
@@ -1348,14 +1397,14 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
-.preview-title {
+.roles-preview-title {
   font-weight: 600;
-  color: var(--secondary-color);
+  color: #374151;
   margin: 0 0 10px 0;
   font-size: 14px;
 }
 
-.usuarios-list-preview {
+.roles-usuarios-list-preview {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -1363,17 +1412,17 @@ export default {
   overflow-y: auto;
 }
 
-.usuarios-list-preview li {
+.roles-usuarios-list-preview li {
   padding: 8px 12px;
   margin: 4px 0;
   background: white;
   border-radius: 4px;
-  border-left: 3px solid var(--primary-color);
+  border-left: 3px solid #1e3a8a;
   font-size: 13px;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.usuarios-list-preview li.more-items {
+.roles-usuarios-list-preview li.roles-more-items {
   background: #e5e7eb;
   border-left-color: #6b7280;
   font-style: italic;
@@ -1382,16 +1431,16 @@ export default {
 }
 
 /* Detalles de usuarios y permisos */
-.usuarios-list-detail,
-.permisos-list-detail {
+.roles-usuarios-list-detail,
+.roles-permisos-list-detail {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
 }
 
-.usuario-chip,
-.permiso-chip {
+.roles-usuario-chip,
+.roles-permiso-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1400,37 +1449,37 @@ export default {
   border: 1px solid #e5e7eb;
   border-radius: 20px;
   font-size: 13px;
-  color: var(--secondary-color);
+  color: #374151;
   transition: all 0.2s;
 }
 
-.usuario-chip:hover {
+.roles-usuario-chip:hover {
   background: #eff6ff;
-  border-color: var(--primary-color);
+  border-color: #1e3a8a;
 }
 
-.usuario-chip i {
-  color: var(--primary-color);
+.roles-usuario-chip i {
+  color: #1e3a8a;
   font-size: 12px;
 }
 
-.permiso-chip {
+.roles-permiso-chip {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
 }
 
-.permiso-chip:hover {
+.roles-permiso-chip:hover {
   background: #f0fdf4;
   border-color: #10b981;
 }
 
-.permiso-chip i {
+.roles-permiso-chip i {
   color: #10b981;
   font-size: 12px;
 }
 
-.permiso-modulo {
+.roles-permiso-modulo {
   font-size: 11px;
   color: #6b7280;
   font-weight: 600;
@@ -1438,7 +1487,7 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.empty-text {
+.roles-empty-text {
   margin: 10px 0 0 0;
   color: #9ca3af;
   font-style: italic;
@@ -1446,42 +1495,42 @@ export default {
 }
 
 /* Jerarquía */
-.hierarchy-type-selector {
+.roles-hierarchy-type-selector {
   margin-bottom: 20px;
 }
 
-.hierarchy-selector {
+.roles-hierarchy-selector {
   display: flex;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
 }
 
-.hierarchy-btn {
+.roles-hierarchy-btn {
   flex: 1;
   padding: 10px;
   background-color: #f8f9fa;
   border: none;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.hierarchy-btn.active {
-  background-color: var(--primary-color);
+.roles-hierarchy-btn.active {
+  background-color: #1e3a8a;
   color: white;
 }
 
-.hierarchy-container {
+.roles-hierarchy-container {
   margin-top: 15px;
 }
 
-.hierarchy-container h4 {
+.roles-hierarchy-container h4 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: var(--secondary-color);
+  color: #374151;
 }
 
-.role-selection {
+.roles-role-selection {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1489,25 +1538,25 @@ export default {
   padding: 10px;
 }
 
-.role-item {
+.roles-role-item {
   display: flex;
   align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.role-item:last-child {
+.roles-role-item:last-child {
   border-bottom: none;
 }
 
-.role-item input[type="checkbox"] {
+.roles-role-item input[type="checkbox"] {
   margin-right: 10px;
 }
 
-.empty-roles {
+.roles-empty-roles {
   padding: 15px;
   text-align: center;
-  color: var(--secondary-color);
+  color: #374151;
   font-style: italic;
 }
 
@@ -1521,3 +1570,7 @@ export default {
   transform: translateY(10px);
 }
 </style>
+
+
+
+

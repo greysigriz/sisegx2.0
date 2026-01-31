@@ -1,7 +1,7 @@
 <!-- C:\xampp\htdocs\SISE\src\views\MainLayout.vue -->
 <template>
   <div class="app-container">
-   
+
     <Sidebar />
 
 
@@ -12,12 +12,12 @@
         </div>
         <div class="header-actions">
           <div class="date-display">{{ currentDate }}</div>
-          <button class="action-button"><i class="fas fa-bell"></i></button>
-          <button class="action-button"><i class="fas fa-cog"></i></button>
+          <button class="mainlayout-action-button"><i class="fas fa-bell"></i></button>
+          <button class="mainlayout-action-button"><i class="fas fa-cog"></i></button>
         </div>
       </header>
 
- 
+
       <router-view />
     </main>
   </div>
@@ -36,7 +36,7 @@ export default {
   },
   setup() {
     const router = useRouter();
-    
+
     onMounted(() => {
       // Verificar si el usuario está autenticado al cargar el componente
       const userData = localStorage.getItem('user');
@@ -44,7 +44,7 @@ export default {
         router.push('/login');
       }
     });
-    
+
     return { router };
   },
   data() {
@@ -52,7 +52,7 @@ export default {
     const today = new Date();
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const formattedDate = today.toLocaleDateString('es-ES', options);
-    
+
     return {
       currentDate: formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
     };
@@ -68,29 +68,8 @@ export default {
 
 </script>
 
-<style>
-
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-
-:root {
-  --primary-color: #b11623;
-  --secondary-color: #292c37;
-  --dark-color: #000000;
-  --accent-color: #9f111b;
-  --light-color: #cccccc;
-  --background-color: #f5f7fa;
-  --white-color: #ffffff;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
-}
+<style scoped>
+/* Estilos locales de MainLayout - sin duplicar :root global */
 
 .app-container {
   display: flex;
@@ -134,7 +113,7 @@ export default {
   font-size: 14px;
 }
 
-.action-button {
+.mainlayout-action-button {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -149,16 +128,16 @@ export default {
   transition: var(--transition);
 }
 
-.action-button:hover {
+.mainlayout-action-button:hover {
   background-color: var(--light-color);
- 
+
 }
 
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;
   }
-  
+
   .main-content {
     height: auto;
   }

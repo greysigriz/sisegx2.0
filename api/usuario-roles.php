@@ -91,18 +91,22 @@ if($method === 'GET') {
         $idRol = $_GET['idRol'];
 
         try {
+            // Log para debugging
+            error_log("usuario-roles.php: getUsersByRole - idRol: " . $idRol);
+            
             $query = "SELECT 
                         ur.IdUsuario,
                         u.Nombre,
-                        u.ApellidoPaterno,
-                        u.ApellidoMaterno,
-                        CONCAT(u.Nombre, ' ', u.ApellidoPaterno, ' ', u.ApellidoMaterno) as NombreCompleto,
-                        u.Email,
+                        u.ApellidoP,
+                        u.ApellidoM,
+                        u.Usuario,
+                        CONCAT(u.Nombre, ' ', COALESCE(u.ApellidoP, ''), ' ', COALESCE(u.ApellidoM, '')) as NombreCompleto,
+                        u.Puesto,
                         ur.FechaAsignacion
                       FROM UsuarioRol ur
                       JOIN Usuario u ON ur.IdUsuario = u.Id
                       WHERE ur.IdRolSistema = :idRol
-                      ORDER BY u.Nombre, u.ApellidoPaterno";
+                      ORDER BY u.Nombre, u.ApellidoP";
             
             $stmt = $db->prepare($query);
             $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
@@ -113,11 +117,25 @@ if($method === 'GET') {
                 array_push($usuarios, $row);
             }
 
+            error_log("usuario-roles.php: getUsersByRole - Usuarios encontrados: " . count($usuarios));
+            
             http_response_code(200);
             echo json_encode(array("usuarios" => $usuarios));
-        } catch(Exception $e) {
+        } catch(PDOException $e) {
+            error_log("usuario-roles.php: PDOException - " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(array("message" => "Error: " . $e->getMessage()));
+            echo json_encode(array(
+                "message" => "Error de base de datos",
+                "error" => $e->getMessage(),
+                "code" => $e->getCode()
+            ));
+        } catch(Exception $e) {
+            error_log("usuario-roles.php: Exception - " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(array(
+                "message" => "Error: " . $e->getMessage(),
+                "trace" => $e->getTraceAsString()
+            ));
         }
     }
     
