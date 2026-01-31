@@ -29,19 +29,20 @@
 }
 
 /* ========================================
-   RESET CSS BÁSICO
+   RESET CSS BÁSICO - SCOPED PARA LOGIN
    ======================================== */
 /* Eliminar márgenes y padding por defecto, aplicar box-sizing border-box */
-* {
+.login-page *,
+.login-container * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 /* ========================================
-   ESTILOS BASE DEL BODY
+   ESTILOS BASE - SCOPED PARA LOGIN
    ======================================== */
-body {
+.login-page {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;              /* Altura de línea para mejor legibilidad */
   color: var(--login-text-dark);       /* Color de texto principal */
@@ -313,10 +314,10 @@ body {
 }
 
 /* ========================================
-   FORMULARIO PRINCIPAL
+   FORMULARIO PRINCIPAL - SCOPED PARA LOGIN
    ======================================== */
 /* Container del formulario con layout vertical */
-form {
+.login-container form {
   width: 100%;                   /* Ancho completo del contenedor */
   max-width: 400px;              /* Ancho máximo para legibilidad */
   display: flex;
@@ -324,17 +325,17 @@ form {
   gap: 1.5rem;                   /* Espaciado consistente entre elementos */
 }
 /* ========================================
-   GRUPOS DE CAMPOS DE ENTRADA
+   GRUPOS DE CAMPOS DE ENTRADA - SCOPED PARA LOGIN
    ======================================== */
 /* Contenedor para cada campo label + input */
-.input-group {
+.login-container .input-group {
   display: flex;
   flex-direction: column;        /* Label arriba, input abajo */
   gap: 0.5rem;                   /* Espacio pequeño entre label e input */
 }
 
 /* Etiquetas de los campos */
-.input-group label {
+.login-container .input-group label {
   font-weight: 600;              /* Peso semi-bold para destacar */
   color: var(--login-text-dark);       /* Color oscuro para contraste en fondo blanco */
   font-size: 0.875rem;           /* Tamaño ligeramente menor que el texto normal */
@@ -343,7 +344,7 @@ form {
 }
 
 /* Campos de entrada (inputs) */
-.input-group input {
+.login-container .input-group input {
   padding: 1rem 1.25rem;         /* Padding generoso para comodidad */
   border: 2px solid var(--login-border-color); /* Borde gris visible */
   border-radius: 12px;           /* Bordes redondeados modernos */
@@ -354,7 +355,7 @@ form {
 }
 
 /* Estado de focus en los inputs */
-.input-group input:focus {
+.login-container .input-group input:focus {
   outline: none;                 /* Remueve el outline por defecto del navegador */
   border-color: var(--login-primary-color); /* Cambio de color del borde */
   box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.2); /* Sombra de focus personalizada */
@@ -363,16 +364,16 @@ form {
 }
 
 /* Texto placeholder en los inputs */
-.input-group input::placeholder {
+.login-container .input-group input::placeholder {
   color: var(--login-text-gray);       /* Color gris para el placeholder */
   opacity: 0.8;                  /* Opacidad reducida */
 }
 
 /* ========================================
-   BOTÓN DE ENVÍO DEL FORMULARIO
+   BOTÓN DE ENVÍO DEL FORMULARIO - SCOPED PARA LOGIN
    ======================================== */
 /* Botón principal con gradiente y efectos hover */
-button[type="submit"] {
+.login-container button[type="submit"] {
   padding: 1rem 1.5rem;          /* Padding generoso para área de click */
   background: linear-gradient(135deg, var(--login-primary-color), var(--login-secondary-color)); /* Gradiente atractivo */
   color: var(--login-white);           /* Texto blanco */
@@ -389,28 +390,28 @@ button[type="submit"] {
 }
 
 /* Estado hover del botón (cuando no está deshabilitado) */
-button[type="submit"]:hover:not(:disabled) {
+.login-container button[type="submit"]:hover:not(:disabled) {
   transform: translateY(-3px);   /* Elevación en hover */
   box-shadow: 0 12px 25px rgba(8, 145, 178, 0.5); /* Sombra más intensa */
   background: linear-gradient(135deg, var(--login-primary-dark), var(--login-primary-color)); /* Gradiente más oscuro */
 }
 
 /* Estado activo del botón (al hacer click) */
-button[type="submit"]:active {
+.login-container button[type="submit"]:active {
   transform: translateY(-1px);   /* Elevación reducida al presionar */
 }
 
 /* Estado deshabilitado del botón */
-button[type="submit"]:disabled {
+.login-container button[type="submit"]:disabled {
   opacity: 0.6;                  /* Opacidad reducida */
   cursor: not-allowed;           /* Cursor de prohibido */
   transform: none;               /* Sin transformaciones */
 }
 /* ========================================
-   MENSAJES DE ERROR
+   MENSAJES DE ERROR - SCOPED PARA LOGIN
    ======================================== */
 /* Styling para mensajes de error del formulario */
-.error-message {
+.login-container .error-message {
   color: #dc2626;                /* Rojo de error fuerte */
   background: rgba(220, 38, 38, 0.1); /* Fondo rojo semi-transparente */
   border: 1px solid rgba(220, 38, 38, 0.3); /* Borde rojo sutil */
@@ -422,10 +423,10 @@ button[type="submit"]:disabled {
   box-shadow: 0 4px 15px rgba(220, 38, 38, 0.1); /* Sombra sutil */
 }
 /* ========================================
-   INDICADOR DE CARGA
+   INDICADOR DE CARGA - SCOPED PARA LOGIN
    ======================================== */
 /* Elemento mostrado durante procesos de carga */
-.loading-indicator {
+.login-container .loading-indicator {
   text-align: center;            /* Texto centrado */
   color: var(--login-primary-color);   /* Color primario para contraste */
   font-weight: 600;              /* Texto semi-bold */
@@ -437,7 +438,7 @@ button[type="submit"]:disabled {
 }
 
 /* Spinner animado del indicador de carga */
-.loading-indicator::after {
+.login-container .loading-indicator::after {
   content: '';                   /* Contenido vacío */
   width: 20px;
   height: 20px;
@@ -570,7 +571,7 @@ button[type="submit"]:disabled {
     font-size: 1.25rem;          /* Subtítulo más pequeño */
   }
 
-  form {
+  .login-container form {
     max-width: none;             /* Permite que el formulario use todo el ancho */
   }
 }
@@ -594,12 +595,12 @@ button[type="submit"]:disabled {
   }
 
   /* Padding reducido en inputs y botones para móviles */
-  .input-group input,
-  button[type="submit"] {
+  .login-container .input-group input,
+  .login-container button[type="submit"] {
     padding: 0.875rem 1rem;      /* Padding más compacto */
   }
 
-  button[type="submit"] {
+  .login-container button[type="submit"] {
     font-size: 1rem;             /* Tamaño de fuente estándar */
   }
 }

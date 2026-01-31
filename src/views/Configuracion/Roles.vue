@@ -1,44 +1,44 @@
 <template>
-  <div class="roles-container">
+  <div class="usuarios-container">
     <!-- Estadísticas -->
-    <div class="roles-stats-grid">
-      <div class="roles-stat-card">
-        <div class="roles-stat-icon total">
+    <div class="usuarios-stats-grid">
+      <div class="usuarios-stat-card">
+        <div class="usuarios-stat-icon total">
           <i class="fas fa-shield-alt"></i>
         </div>
-        <div class="roles-stat-info">
-          <p class="roles-stat-value">{{ roles.length }}</p>
-          <p class="roles-stat-label">Total Roles</p>
+        <div class="usuarios-stat-info">
+          <p class="usuarios-stat-value">{{ roles.length }}</p>
+          <p class="usuarios-stat-label">Total Roles</p>
         </div>
       </div>
-      <div class="roles-stat-card">
-        <div class="roles-stat-icon users">
+      <div class="usuarios-stat-card">
+        <div class="usuarios-stat-icon active">
           <i class="fas fa-users"></i>
         </div>
-        <div class="roles-stat-info">
-          <p class="roles-stat-value">{{ rolesConUsuarios }}</p>
-          <p class="roles-stat-label">Con Usuarios</p>
+        <div class="usuarios-stat-info">
+          <p class="usuarios-stat-value">{{ rolesConUsuarios }}</p>
+          <p class="usuarios-stat-label">Con Usuarios</p>
         </div>
       </div>
     </div>
 
-    <div class="roles-card">
-      <div class="roles-card-header">
+    <div class="usuarios-card">
+      <div class="usuarios-card-header">
         <h3>Gestión de Roles</h3>
-        <div class="roles-header-actions">
-          <button class="roles-btn-export" @click="exportarRoles" title="Exportar a Excel">
+        <div class="usuarios-header-actions">
+          <button class="usuarios-btn-export" @click="exportarRoles" title="Exportar a Excel">
             <i class="fas fa-file-excel"></i> Exportar
           </button>
-          <button class="roles-btn-primary" @click="crearNuevoRol">
+          <button class="usuarios-btn-primary" @click="crearNuevoRol">
             <i class="fas fa-plus"></i> Nuevo Rol
           </button>
         </div>
       </div>
 
-      <div class="roles-card-body">
+      <div class="usuarios-card-body">
         <!-- Barra de búsqueda y filtros -->
-        <div class="roles-search-filter-container">
-          <div class="roles-search-box">
+        <div class="usuarios-search-filter-container">
+          <div class="usuarios-search-box">
             <i class="fas fa-search"></i>
             <input
               type="text"
@@ -46,79 +46,81 @@
               placeholder="Buscar por nombre o descripción..."
               @input="aplicarFiltros"
             />
-            <button v-if="filtros.busqueda" class="roles-clear-search" @click="limpiarBusqueda">
+            <button v-if="filtros.busqueda" class="usuarios-clear-search" @click="limpiarBusqueda">
               <i class="fas fa-times"></i>
             </button>
           </div>
 
-          <button class="roles-btn-refresh" @click="cargarDatos" title="Actualizar">
-            <i class="fas fa-sync-alt" :class="{ 'spinning': loading }"></i>
-          </button>
+          <div class="usuarios-filtros-refresh-container">
+            <button class="usuarios-btn-refresh" @click="cargarDatos" title="Actualizar">
+              <i class="fas fa-sync-alt" :class="{ 'usuarios-spinning': loading }"></i>
+            </button>
+          </div>
         </div>
 
         <!-- Resultados -->
-        <div class="roles-results-info">
+        <div class="usuarios-results-info">
           <p>
-            Mostrando {{ rolesPaginados.length }} de {{ rolesFiltrados.length }} roles
+            Mostrando <span>{{ rolesPaginados.length }}</span> de <span>{{ rolesFiltrados.length }}</span> roles
           </p>
         </div>
 
         <!-- Lista de roles -->
-        <div class="roles-roles-list">
-          <div class="roles-list-header">
-            <div class="roles-header-check">
+        <div class="usuarios-usuarios-list">
+          <div class="usuarios-list-header">
+            <div>
               <input
                 type="checkbox"
                 v-model="seleccionarTodos"
                 @change="toggleSeleccionTodos"
               />
             </div>
-            <div @click="ordenarPor('Nombre')" class="roles-sortable">
+            <div @click="ordenarPor('Nombre')" class="sortable" style="cursor: pointer;">
               Nombre del Rol
               <i class="fas" :class="getSortIcon('Nombre')"></i>
             </div>
             <div>Descripción</div>
-            <div class="roles-text-center">Usuarios</div>
-            <div>Acciones</div>
+            <div style="text-align: center;">Usuarios</div>
+            <div style="text-align: center;">Acciones</div>
           </div>
 
-          <div v-if="loading" class="roles-loading-message">
+          <div v-if="loading" class="usuarios-loading-message">
             <i class="fas fa-spinner fa-spin"></i> Cargando roles...
           </div>
 
-          <div v-else-if="rolesPaginados.length === 0" class="roles-empty-message">
+          <div v-else-if="rolesPaginados.length === 0" class="usuarios-empty-message">
             <i class="fas fa-shield-alt"></i>
             <p>{{ rolesFiltrados.length === 0 ? 'No hay roles registrados' : 'No se encontraron roles con los filtros aplicados' }}</p>
           </div>
 
-          <div v-else v-for="rol in rolesPaginados" :key="rol.Id" class="roles-rol-item">
-            <div class="roles-rol-check">
+          <div v-else v-for="rol in rolesPaginados" :key="rol.Id" class="usuarios-usuario-item">
+            <div>
               <input
                 type="checkbox"
                 :value="rol.Id"
                 v-model="rolesSeleccionados"
               />
             </div>
-            <div class="roles-rol-info">
-              <p class="roles-rol-nombre">{{ rol.Nombre }}</p>
+            <div class="usuarios-usuario-info">
+              <p class="usuarios-usuario-nombre">{{ rol.Nombre }}</p>
             </div>
-            <div class="roles-rol-info description">
+            <div class="usuarios-usuario-info">
               <p v-html="rol.Descripcion || 'Sin descripción'"></p>
             </div>
-            <div class="roles-rol-usuarios roles-text-center">
-              <span class="roles-badge-usuarios" :class="{ 'has-users': rol.CantidadUsuarios > 0 }">
+            <div style="text-align: center;">
+              <span class="usuarios-badge-rol" :class="{ 'usuarios-badge-sin-rol': rol.CantidadUsuarios === 0 }">
                 <i class="fas fa-users"></i>
                 {{ rol.CantidadUsuarios || 0 }}
               </span>
             </div>
-            <div class="roles-rol-actions">
-              <button class="roles-action-btn view" @click="verDetalles(rol)" title="Ver detalles">
+            <div class="usuarios-usuario-actions">
+              <button class="usuarios-action-btn view" @click="verDetalles(rol)" title="Ver detalles">
                 <i class="fas fa-eye"></i>
               </button>
-              <button class="roles-action-btn edit" @click="editarRol(rol)" title="Editar">
+              <button class="usuarios-action-btn edit" @click="editarRol(rol)" title="Editar">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="roles-action-btn delete" @click="confirmarEliminar(rol)" title="Eliminar">
+              <button class="usuarios-action-btn delete" @click="confirmarEliminar(rol)" title="Eliminar">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
@@ -127,16 +129,16 @@
 
         <!-- Acciones masivas -->
         <transition name="fade">
-          <div v-if="rolesSeleccionados.length > 0" class="roles-acciones-masivas">
-            <div class="roles-acciones-info">
+          <div v-if="rolesSeleccionados.length > 0" class="usuarios-acciones-masivas">
+            <div class="usuarios-acciones-info">
               <i class="fas fa-check-square"></i>
               <span>{{ rolesSeleccionados.length }} seleccionado(s)</span>
             </div>
-            <div class="roles-acciones-buttons">
-              <button class="roles-btn-mass-action cancel" @click="deseleccionarTodos" title="Cancelar selección">
+            <div class="usuarios-acciones-buttons">
+              <button class="usuarios-btn-mass-action cancel" @click="deseleccionarTodos" title="Cancelar selección">
                 <i class="fas fa-times-circle"></i>
               </button>
-              <button class="roles-btn-mass-action danger" @click="eliminarSeleccionados" title="Eliminar">
+              <button class="usuarios-btn-mass-action danger" @click="eliminarSeleccionados" title="Eliminar">
                 <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -144,9 +146,9 @@
         </transition>
 
         <!-- Paginación -->
-        <div v-if="rolesFiltrados.length > itemsPorPagina" class="roles-pagination">
+        <div v-if="rolesFiltrados.length > itemsPorPagina" class="usuarios-pagination">
           <button
-            class="roles-pagination-btn"
+            class="usuarios-pagination-btn"
             @click="cambiarPagina(paginaActual - 1)"
             :disabled="paginaActual === 1"
           >
@@ -156,7 +158,7 @@
           <button
             v-for="pagina in paginasVisibles"
             :key="pagina"
-            class="roles-pagination-btn"
+            class="usuarios-pagination-btn"
             :class="{ active: pagina === paginaActual }"
             @click="cambiarPagina(pagina)"
           >
@@ -164,14 +166,14 @@
           </button>
 
           <button
-            class="roles-pagination-btn"
+            class="usuarios-pagination-btn"
             @click="cambiarPagina(paginaActual + 1)"
             :disabled="paginaActual === totalPaginas"
           >
             <i class="fas fa-chevron-right"></i>
           </button>
 
-          <select v-model.number="itemsPorPagina" @change="cambiarItemsPorPagina" class="roles-items-per-page">
+          <select v-model.number="itemsPorPagina" @change="cambiarItemsPorPagina" class="usuarios-items-per-page">
             <option :value="10">10 / página</option>
             <option :value="25">25 / página</option>
             <option :value="50">50 / página</option>
@@ -181,17 +183,17 @@
     </div>
 
     <!-- Modal para crear/editar rol -->
-    <div v-if="showModal" class="roles-modal-overlay" @click.self="cancelarAccion">
-      <div class="roles-modal-content">
-        <div class="roles-modal-header">
+    <div v-if="showModal" class="usuarios-modal-overlay" @click.self="cancelarAccion">
+      <div class="usuarios-modal-content">
+        <div class="usuarios-modal-header">
           <h3>{{ modoEdicion ? 'Editar Rol' : 'Nuevo Rol' }}</h3>
-          <button class="roles-close-btn" @click="cancelarAccion">
+          <button class="usuarios-close-btn" @click="cancelarAccion">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="roles-modal-body">
+        <div class="usuarios-modal-body">
           <form @submit.prevent="guardarRol">
-            <div class="roles-form-group">
+            <div class="usuarios-form-group">
               <label for="nombre">Nombre del Rol: *</label>
               <input
                 type="text"
@@ -201,7 +203,7 @@
               />
             </div>
 
-            <div class="roles-form-group">
+            <div class="usuarios-form-group">
               <label for="descripcion">Descripción:</label>
               <textarea
                 id="descripcion"
@@ -210,11 +212,11 @@
               ></textarea>
             </div>
 
-            <div class="roles-form-actions">
-              <button type="button" class="roles-btn-secondary" @click="cancelarAccion">
+            <div class="usuarios-form-actions">
+              <button type="button" class="usuarios-btn-secondary" @click="cancelarAccion">
                 Cancelar
               </button>
-              <button type="submit" class="roles-btn-primary">
+              <button type="submit" class="usuarios-btn-primary">
                 <i class="fas" :class="modoEdicion ? 'fa-save' : 'fa-plus'"></i>
                 {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
               </button>
@@ -225,27 +227,27 @@
     </div>
 
     <!-- Modal de detalles -->
-    <div v-if="showDetallesModal" class="roles-modal-overlay" @click.self="showDetallesModal = false">
-      <div class="roles-modal-content roles-modal-detalles">
-        <div class="roles-modal-header">
+    <div v-if="showDetallesModal" class="usuarios-modal-overlay" @click.self="showDetallesModal = false">
+      <div class="usuarios-modal-content usuarios-modal-detalles">
+        <div class="usuarios-modal-header">
           <h3>Detalles del Rol</h3>
-          <button class="roles-close-btn" @click="showDetallesModal = false">
+          <button class="usuarios-close-btn" @click="showDetallesModal = false">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="roles-modal-body">
-          <div class="roles-detalles-grid" v-if="rolDetalle">
-            <div class="roles-detalle-item">
+        <div class="usuarios-modal-body">
+          <div class="usuarios-detalles-grid" v-if="rolDetalle">
+            <div class="usuarios-detalle-item">
               <label>Nombre:</label>
               <p>{{ rolDetalle.Nombre }}</p>
             </div>
-            <div class="roles-detalle-item">
+            <div class="usuarios-detalle-item">
               <label>Descripción:</label>
               <p>{{ rolDetalle.Descripcion || 'Sin descripción' }}</p>
             </div>
-            <div class="roles-detalle-item roles-full-width">
+            <div class="usuarios-detalle-item" style="grid-column: 1 / -1;">
               <label>Usuarios con este rol ({{ rolUsuarios.length }}):</label>
-              <div v-if="loadingDetalles" class="roles-loading-spinner">
+              <div v-if="loadingDetalles" class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i> Cargando...
               </div>
               <div v-else-if="rolUsuarios.length > 0" class="roles-usuarios-list-detail">
@@ -254,28 +256,28 @@
                   {{ usuario.NombreCompleto }}
                 </div>
               </div>
-              <p v-else class="roles-empty-text">No hay usuarios asignados</p>
+              <p v-else class="empty-text">No hay usuarios asignados</p>
             </div>
-            <div class="roles-detalle-item roles-full-width">
+            <div class="usuarios-detalle-item" style="grid-column: 1 / -1;">
               <label>Permisos asignados ({{ rolPermisos.length }}):</label>
-              <div v-if="loadingDetalles" class="roles-loading-spinner">
+              <div v-if="loadingDetalles" class="loading-spinner">
                 <i class="fas fa-spinner fa-spin"></i> Cargando...
               </div>
               <div v-else-if="rolPermisos.length > 0" class="roles-permisos-list-detail">
                 <div v-for="permiso in rolPermisos" :key="permiso.Codigo" class="roles-permiso-chip">
                   <i class="fas fa-shield-alt"></i>
                   {{ permiso.Nombre }}
-                  <span class="roles-permiso-modulo">{{ permiso.Modulo }}</span>
+                  <span class="permiso-modulo">{{ permiso.Modulo }}</span>
                 </div>
               </div>
-              <p v-else class="roles-empty-text">No hay permisos asignados</p>
+              <p v-else class="empty-text">No hay permisos asignados</p>
             </div>
           </div>
-          <div class="roles-form-actions">
-            <button class="roles-btn-secondary" @click="showDetallesModal = false">
+          <div class="usuarios-form-actions">
+            <button class="usuarios-btn-secondary" @click="showDetallesModal = false">
               Cerrar
             </button>
-            <button class="roles-btn-primary" @click="editarDesdeDetalles">
+            <button class="usuarios-btn-primary" @click="editarDesdeDetalles">
               <i class="fas fa-edit"></i> Editar
             </button>
           </div>
@@ -284,26 +286,26 @@
     </div>
 
     <!-- Modal de confirmación -->
-    <div v-if="showConfirmModal" class="roles-modal-overlay">
-      <div class="roles-modal-content roles-confirm-modal">
-        <div class="roles-modal-header">
+    <div v-if="showConfirmModal" class="usuarios-modal-overlay">
+      <div class="usuarios-modal-content confirm-modal">
+        <div class="usuarios-modal-header">
           <h3>Confirmar {{ tituloAccionMasiva }}</h3>
         </div>
-        <div class="roles-modal-body">
+        <div class="usuarios-modal-body">
           <div v-if="accionMasiva === 'eliminar'">
             <p>¿Está seguro de que desea <strong>eliminar</strong> {{ rolesSeleccionados.length }} rol(es)?</p>
-            <div class="roles-usuarios-preview">
-              <p class="roles-preview-title">Roles a eliminar:</p>
-              <ul class="roles-usuarios-list-preview">
+            <div class="usuarios-usuarios-preview">
+              <p class="usuarios-preview-title">Roles a eliminar:</p>
+              <ul class="usuarios-usuarios-list-preview">
                 <li v-for="id in rolesSeleccionados.slice(0, 5)" :key="id">
                   {{ obtenerNombreRol(id) }}
                 </li>
-                <li v-if="rolesSeleccionados.length > 5" class="roles-more-items">
+                <li v-if="rolesSeleccionados.length > 5" class="usuarios-more-items">
                   ... y {{ rolesSeleccionados.length - 5 }} rol(es) más
                 </li>
               </ul>
             </div>
-            <p class="roles-warning-text">
+            <p class="usuarios-warning-text">
               <i class="fas fa-exclamation-triangle"></i>
               Esta acción no se puede deshacer. Los roles serán eliminados permanentemente del sistema.
             </p>
@@ -311,18 +313,18 @@
 
           <div v-else>
             <p>¿Está seguro de que desea eliminar el rol <strong>{{ rolEliminar?.Nombre }}</strong>?</p>
-            <p class="roles-warning-text" v-if="tieneUsuarios">
+            <p class="usuarios-warning-text" v-if="tieneUsuarios">
               <i class="fas fa-exclamation-triangle"></i>
               <span v-if="tieneUsuarios">Este rol está asignado a uno o más usuarios. </span>
               <span>La eliminación puede afectar la operación del sistema.</span>
             </p>
           </div>
 
-          <div class="roles-form-actions">
-            <button type="button" class="roles-btn-secondary" @click="cancelarAccionMasiva">
+          <div class="usuarios-form-actions">
+            <button type="button" class="usuarios-btn-secondary" @click="cancelarAccionMasiva">
               <i class="fas fa-times"></i> Cancelar
             </button>
-            <button type="button" class="roles-btn-danger" @click="ejecutarAccionMasiva">
+            <button type="button" class="usuarios-btn-danger" @click="ejecutarAccionMasiva">
               <i class="fas fa-trash"></i> Eliminar
             </button>
           </div>
@@ -733,20 +735,234 @@ export default {
 </script>
 
 <style scoped>
-/* Usar los mismos estilos que Usuarios.vue */
-.roles-container {
+/* Contenedor principal con márgenes */
+.usuarios-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  background: #f8fafc;
+}
+
+/* Modal y formularios */
+.usuarios-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
   padding: 20px;
 }
 
-/* Stats cards */
-.roles-stats-grid {
+.usuarios-modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.usuarios-modal-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%);
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usuarios-modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.usuarios-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.usuarios-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.usuarios-modal-body {
+  padding: 24px;
+}
+
+/* Formularios */
+.usuarios-form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.roles-stat-card {
+.usuarios-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.usuarios-form-group label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  font-size: 14px;
+  display: block;
+}
+
+.usuarios-form-group input,
+.usuarios-form-group select,
+.usuarios-form-group textarea {
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background: white;
+  color: #374151;
+}
+
+.usuarios-form-group input:focus,
+.usuarios-form-group select:focus,
+.usuarios-form-group textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.usuarios-form-group input:disabled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.usuarios-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.usuarios-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.usuarios-btn-secondary:hover {
+  background: #e5e7eb;
+  border-color: #d1d5db;
+}
+
+.usuarios-btn-primary {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.usuarios-btn-primary:hover {
+  background-color: #1e40af;
+}
+
+.usuarios-btn-danger {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.usuarios-btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+.usuarios-card-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.usuarios-card-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+}
+
+.usuarios-modal-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+}
+
+/* Tarjeta principal con bordes redondeados */
+.usuarios-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.usuarios-card-body {
+  padding: 20px;
+}
+
+/* Estadísticas */
+.usuarios-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 2rem 0 1.5rem 0;
+}
+
+.usuarios-stat-card {
   background: white;
   border-radius: 8px;
   padding: 20px;
@@ -757,12 +973,12 @@ export default {
   transition: transform 0.2s;
 }
 
-.roles-stat-card:hover {
+.usuarios-stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.roles-stat-icon {
+.usuarios-stat-icon {
   width: 50px;
   height: 50px;
   border-radius: 8px;
@@ -773,62 +989,46 @@ export default {
   color: white;
 }
 
-.roles-stat-icon.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.roles-stat-icon.hierarchy { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.roles-stat-icon.users { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
-.roles-stat-icon.subordinates { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+.usuarios-stat-icon.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
 
-.roles-stat-info {
+.usuarios-stat-icon.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.usuarios-stat-icon.inactive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.usuarios-stat-icon.roles {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.usuarios-stat-info {
   flex: 1;
 }
 
-.roles-stat-value {
+.usuarios-stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #1e3a8a;
+  color: #1e293b;
   margin: 0;
 }
 
-.roles-stat-label {
+.usuarios-stat-label {
   font-size: 14px;
   color: #666;
   margin: 5px 0 0 0;
 }
 
-/* Card */
-.roles-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.roles-card-header {
-  padding: 20px;
-  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.roles-card-header h3 {
-  margin: 0;
-  color: white !important;
-  font-size: 18px;
-}
-
-.roles-card-body {
-  padding: 20px;
-}
-
 /* Header actions */
-.roles-header-actions {
+.usuarios-header-actions {
   display: flex;
   gap: 10px;
 }
 
-.roles-btn-export {
+.usuarios-btn-export {
   background: #10b981;
   color: white;
   border: none;
@@ -842,12 +1042,12 @@ export default {
   font-size: 14px;
 }
 
-.roles-btn-export:hover {
+.usuarios-btn-export:hover {
   background: #059669;
 }
 
-.roles-btn-primary {
-  background-color: #1e3a8a;
+.usuarios-btn-primary {
+  background-color: #2563eb;
   color: white;
   border: none;
   border-radius: 6px;
@@ -860,31 +1060,42 @@ export default {
   font-size: 14px;
 }
 
-.roles-btn-primary:hover {
+.usuarios-btn-primary:hover {
   background-color: #1e40af;
 }
 
-/* Búsqueda y filtros */
-.roles-search-filter-container {
+/* Contenedor para filtros y botón refrescar */
+.usuarios-filtros-refresh-container {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.roles-search-box {
-  flex: 1;
+/* búsqueda, filtros y refrescar en una línea horizontal */
+.usuarios-search-filter-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.usuarios-search-box {
+  flex: 2;
   position: relative;
   display: flex;
   align-items: center;
+  min-width: 300px;
 }
 
-.roles-search-box i {
+.usuarios-search-box i {
   position: absolute;
   left: 15px;
   color: #999;
 }
 
-.roles-search-box input {
+.usuarios-search-box input {
   width: 100%;
   padding: 12px 45px 12px 45px;
   border: 2px solid #e5e7eb;
@@ -893,13 +1104,13 @@ export default {
   transition: all 0.3s;
 }
 
-.roles-search-box input:focus {
+.usuarios-search-box input:focus {
   outline: none;
-  border-color: #1e3a8a;
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.roles-clear-search {
+.usuarios-clear-search {
   position: absolute;
   right: 10px;
   background: none;
@@ -909,21 +1120,58 @@ export default {
   padding: 5px;
 }
 
-.roles-btn-refresh {
+.usuarios-btn-filter {
   background: white;
   border: 2px solid #e5e7eb;
-  padding: 10px 15px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  transition: all 0.3s;
+  position: relative;
+  font-size: 14px;
+  color: rgb(151, 148, 148);
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+.usuarios-btn-filter:hover {
+  border-color: #1e293b;
+  color: #1e293b;
+}
+
+.usuarios-filter-badge {
+  background: #1e293b;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.usuarios-btn-refresh {
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 12px 15px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: fit-content;
 }
 
-.roles-btn-refresh:hover {
-  border-color: #1e3a8a;
-  color: #1e3a8a;
+.usuarios-btn-refresh:hover {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
-.roles-spinning {
+.usuarios-spinning {
   animation: spin 1s linear infinite;
 }
 
@@ -932,137 +1180,73 @@ export default {
 }
 
 /* Resultados */
-.roles-results-info {
+.usuarios-results-info {
   margin-bottom: 15px;
   font-size: 14px;
   color: #666;
 }
 
-/* Lista */
-.roles-list {
-  margin-top: 20px;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+.usuarios-results-info span {
+  color: #1e293b;
+  font-weight: 500;
 }
 
-.roles-list-header {
-  display: grid;
-  grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
-  background-color: rgba(39, 63, 245, 0.926) !important;
-  padding: 15px;
-  font-weight: 600;
-  color: white !important;
-}
-
-.roles-list-header > div:last-child {
-  text-align: center;
-}
-
-.roles-text-center {
-  text-align: center;
-}
-
-.roles-header-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.roles-sortable {
-  cursor: pointer;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.roles-sortable:hover {
-  opacity: 0.7;
-}
-
-.roles-rol-item {
-  display: grid;
-  grid-template-columns: 40px 1fr 1.5fr 100px 0.8fr;
-  padding: 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.roles-rol-item:hover {
-  background-color: rgba(22, 84, 177, 0.05);
-}
-
-.roles-rol-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.roles-rol-info {
+.usuarios-usuario-info {
   display: flex;
   align-items: center;
 }
 
-.roles-rol-info p {
+.usuarios-usuario-info p {
   margin: 0;
-  color: #374151;
+  color: #1e293b;
 }
 
-.roles-rol-nombre {
+.usuarios-usuario-nombre {
   font-weight: 600;
-  color: #1e3a8a;
+  color: #1e293b;
 }
 
-.roles-rol-info.description {
-  align-items: center;
-  min-width: 0;
-  overflow: hidden;
+.usuarios-badge-rol {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
 }
 
-.roles-rol-info.description p {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.roles-rol-usuarios {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.roles-badge-usuarios {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
+.usuarios-badge-sin-rol {
   background: #f3f4f6;
   color: #6b7280;
-  border-radius: 20px;
-  font-size: 13px;
+}
+
+.usuarios-badge-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 600;
-  transition: all 0.3s;
+  text-transform: uppercase;
+  display: inline-block;
 }
 
-.roles-badge-usuarios.has-users {
-  background: #dbeafe;
-  color: #1e3a8a;
+.usuarios-badge-status.active {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.roles-badge-usuarios i {
-  font-size: 11px;
+.usuarios-badge-status.inactive {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
-.roles-rol-actions {
+.usuarios-usuario-actions {
   display: flex;
   justify-content: center;
   gap: 10px;
 }
 
-.roles-action-btn {
+.usuarios-action-btn {
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1071,42 +1255,93 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
 }
 
-.roles-action-btn.view {
+.usuarios-action-btn.view {
   background-color: #8b5cf6;
   color: white;
 }
 
-.roles-action-btn.edit {
+.usuarios-action-btn.edit {
   background-color: #f0ad4e;
   color: white;
 }
 
-.roles-action-btn.delete {
+.usuarios-action-btn.toggle {
+  background-color: #06b6d4;
+  color: white;
+}
+
+.usuarios-action-btn.hierarchy {
+  background-color: #5bc0de;
+  color: white;
+}
+
+.usuarios-action-btn.delete {
   background-color: #d9534f;
   color: white;
 }
 
-.roles-action-btn:hover {
+.usuarios-action-btn:hover {
   opacity: 0.8;
 }
 
-.roles-loading-message, .roles-empty-message {
+.usuarios-loading-message,
+.usuarios-empty-message {
   padding: 40px 20px;
   text-align: center;
-  color: #374151;
+  color: #64748b;
 }
 
-.roles-empty-message i {
+.usuarios-empty-message i {
   font-size: 48px;
   color: #ccc;
   margin-bottom: 10px;
 }
 
+/* Lista de usuarios - Tabla principal */
+.usuarios-usuarios-list {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.usuarios-list-header {
+  display: grid;
+  grid-template-columns: 60px 1fr 1.5fr 120px 140px;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  align-items: center;
+}
+
+.usuarios-usuario-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 1.5fr 120px 140px;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
+  transition: background-color 0.2s;
+  font-size: 0.875rem;
+}
+
+.usuarios-usuario-item:last-child {
+  border-bottom: none;
+}
+
+.usuarios-usuario-item:hover {
+  background-color: #f8fafc;
+}
+
 /* Acciones masivas */
-.roles-acciones-masivas {
+.usuarios-acciones-masivas {
   position: fixed;
   bottom: 24px;
   left: 50%;
@@ -1122,28 +1357,32 @@ export default {
   border: 1px solid rgba(0,0,0,0.08);
 }
 
-.roles-acciones-info {
+.usuarios-acciones-info {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 0 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
   border-right: 1px solid rgba(0,0,0,0.1);
 }
 
-.roles-acciones-info i {
-  color: #1e3a8a;
+.usuarios-acciones-info i {
+  color: #2563eb;
   font-size: 14px;
 }
 
-.roles-acciones-buttons {
+.usuarios-acciones-info span {
+  white-space: nowrap;
+}
+
+.usuarios-acciones-buttons {
   display: flex;
   gap: 6px;
 }
 
-.roles-btn-mass-action {
+.usuarios-btn-mass-action {
   width: 36px;
   height: 36px;
   border: none;
@@ -1154,32 +1393,74 @@ export default {
   justify-content: center;
   font-size: 16px;
   transition: all 0.2s;
+  position: relative;
 }
 
-.roles-btn-mass-action i {
+.usuarios-btn-mass-action::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.usuarios-btn-mass-action:hover::before {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+}
+
+.usuarios-btn-mass-action i {
   color: white;
 }
 
-.roles-btn-mass-action.cancel {
+.usuarios-btn-mass-action.cancel {
   background: #6b7280;
 }
 
-.roles-btn-mass-action.cancel:hover {
+.usuarios-btn-mass-action.cancel:hover {
   background: #4b5563;
   transform: scale(1.1);
 }
 
-.roles-btn-mass-action.danger {
+.usuarios-btn-mass-action.success {
+  background: #10b981;
+}
+
+.usuarios-btn-mass-action.success:hover {
+  background: #059669;
+  transform: scale(1.1);
+}
+
+.usuarios-btn-mass-action.warning {
+  background: #f59e0b;
+}
+
+.usuarios-btn-mass-action.warning:hover {
+  background: #d97706;
+  transform: scale(1.1);
+}
+
+.usuarios-btn-mass-action.danger {
   background: #ef4444;
 }
 
-.roles-btn-mass-action.danger:hover {
+.usuarios-btn-mass-action.danger:hover {
   background: #dc2626;
   transform: scale(1.1);
 }
 
-/* Paginación */
-.roles-pagination {
+/* paginación */
+.usuarios-pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1187,7 +1468,7 @@ export default {
   margin-top: 30px;
 }
 
-.roles-pagination-btn {
+.usuarios-pagination-btn {
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
   background: white;
@@ -1198,23 +1479,23 @@ export default {
   min-width: 40px;
 }
 
-.roles-pagination-btn:hover:not(:disabled) {
-  border-color: #1e3a8a;
-  color: #1e3a8a;
+.usuarios-pagination-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 
-.roles-pagination-btn.active {
-  background: #1e3a8a;
+.usuarios-pagination-btn.active {
+  background: #2563eb;
   color: white;
-  border-color: #1e3a8a;
+  border-color: #2563eb;
 }
 
-.roles-pagination-btn:disabled {
+.usuarios-pagination-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
-.roles-items-per-page {
+.usuarios-items-per-page {
   margin-left: 20px;
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
@@ -1223,7 +1504,7 @@ export default {
 }
 
 /* Modales */
-.roles-modal-overlay {
+.usuarios-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -1236,7 +1517,7 @@ export default {
   z-index: 1000;
 }
 
-.roles-modal-content {
+.usuarios-modal-content {
   background-color: white;
   border-radius: 8px;
   width: 90%;
@@ -1245,15 +1526,15 @@ export default {
   overflow-y: auto;
 }
 
-.roles-modal-detalles {
+.usuarios-modal-detalles {
   max-width: 700px;
 }
 
-.roles-confirm-modal {
+.confirm-modal {
   max-width: 500px;
 }
 
-.roles-modal-header {
+.usuarios-modal-header {
   padding: 15px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
@@ -1261,35 +1542,37 @@ export default {
   align-items: center;
 }
 
-.roles-modal-header h3 {
+.usuarios-modal-header h3 {
   margin: 0;
-  color: #374151;
+  color: white;
 }
 
-.roles-close-btn {
+.usuarios-close-btn {
   background: none;
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: #374151;
+  color: white;
 }
 
-.roles-modal-body {
+.usuarios-modal-body {
   padding: 20px;
 }
 
-.roles-form-group {
+.usuarios-form-group {
   margin-bottom: 15px;
 }
 
-.roles-form-group label {
+.usuarios-form-group label {
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
   color: #374151;
 }
 
-.roles-form-group input, .roles-form-group select, .roles-form-group textarea {
+.usuarios-form-group input,
+.usuarios-form-group select,
+.usuarios-form-group textarea {
   width: 100%;
   padding: 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1297,50 +1580,53 @@ export default {
   font-size: 14px;
 }
 
-.roles-form-actions {
+.usuarios-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.usuarios-form-actions {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-.roles-btn-secondary {
+.usuarios-btn-secondary {
   background-color: #f8f9fa;
   color: #374151;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s;
 }
 
-.roles-btn-danger {
+.usuarios-btn-danger {
   background-color: #d9534f;
   color: white;
   border: none;
   border-radius: 4px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.roles-detalles-grid {
+.usuarios-detalles-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.roles-detalle-item {
+.usuarios-detalle-item {
   padding: 15px;
   background: #f9fafb;
   border-radius: 8px;
 }
 
-.roles-detalle-item.roles-full-width {
-  grid-column: 1 / -1;
-}
-
-.roles-detalle-item label {
+.usuarios-detalle-item label {
   display: block;
   font-size: 12px;
   color: #666;
@@ -1350,28 +1636,14 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.roles-loading-spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 20px;
-  color: #1654b1;
-  font-size: 14px;
-}
-
-.roles-loading-spinner i {
-  font-size: 18px;
-}
-
-.roles-detalle-item p {
+.usuarios-detalle-item p {
   margin: 0;
   font-size: 16px;
-  color: #374151;
+  color: #1e293b;
   font-weight: 500;
 }
 
-.roles-warning-text {
+.usuarios-warning-text {
   background: #fef3c7;
   border-left: 4px solid #f59e0b;
   padding: 12px;
@@ -1384,12 +1656,12 @@ export default {
   font-size: 14px;
 }
 
-.roles-warning-text i {
+.usuarios-warning-text i {
   color: #f59e0b;
   font-size: 18px;
 }
 
-.roles-usuarios-preview {
+.usuarios-usuarios-preview {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 15px;
@@ -1397,14 +1669,14 @@ export default {
   border: 1px solid #e5e7eb;
 }
 
-.roles-preview-title {
+.usuarios-preview-title {
   font-weight: 600;
   color: #374151;
   margin: 0 0 10px 0;
   font-size: 14px;
 }
 
-.roles-usuarios-list-preview {
+.usuarios-usuarios-list-preview {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -1412,17 +1684,17 @@ export default {
   overflow-y: auto;
 }
 
-.roles-usuarios-list-preview li {
+.usuarios-usuarios-list-preview li {
   padding: 8px 12px;
   margin: 4px 0;
   background: white;
   border-radius: 4px;
-  border-left: 3px solid #1e3a8a;
+  border-left: 3px solid #2563eb;
   font-size: 13px;
-  color: #374151;
+  color: #1e293b;
 }
 
-.roles-usuarios-list-preview li.roles-more-items {
+.usuarios-usuarios-list-preview li.usuarios-more-items {
   background: #e5e7eb;
   border-left-color: #6b7280;
   font-style: italic;
@@ -1455,11 +1727,11 @@ export default {
 
 .roles-usuario-chip:hover {
   background: #eff6ff;
-  border-color: #1e3a8a;
+  border-color: #2563eb;
 }
 
 .roles-usuario-chip i {
-  color: #1e3a8a;
+  color: #2563eb;
   font-size: 12px;
 }
 
@@ -1479,7 +1751,7 @@ export default {
   font-size: 12px;
 }
 
-.roles-permiso-modulo {
+.permiso-modulo {
   font-size: 11px;
   color: #6b7280;
   font-weight: 600;
@@ -1487,87 +1759,88 @@ export default {
   letter-spacing: 0.5px;
 }
 
-.roles-empty-text {
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: #165CB1;
+  font-size: 14px;
+}
+
+.loading-spinner i {
+  font-size: 18px;
+}
+
+.empty-text {
   margin: 10px 0 0 0;
   color: #9ca3af;
   font-style: italic;
   font-size: 14px;
 }
 
-/* Jerarquía */
-.roles-hierarchy-type-selector {
-  margin-bottom: 20px;
-}
-
-.roles-hierarchy-selector {
-  display: flex;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.roles-hierarchy-btn {
-  flex: 1;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.roles-hierarchy-btn.active {
-  background-color: #1e3a8a;
-  color: white;
-}
-
-.roles-hierarchy-container {
-  margin-top: 15px;
-}
-
-.roles-hierarchy-container h4 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #374151;
-}
-
-.roles-role-selection {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-  padding: 10px;
-}
-
-.roles-role-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.roles-role-item:last-child {
-  border-bottom: none;
-}
-
-.roles-role-item input[type="checkbox"] {
-  margin-right: 10px;
-}
-
-.roles-empty-roles {
-  padding: 15px;
-  text-align: center;
-  color: #374151;
-  font-style: italic;
-}
-
 /* Animaciones */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: all 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .usuarios-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .usuarios-list-header,
+  .usuarios-usuario-item {
+    grid-template-columns: 50px 1fr 100px 120px;
+    font-size: 0.75rem;
+  }
+
+  .usuarios-list-header > div:nth-child(3),
+  .usuarios-usuario-item > div:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .usuarios-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .usuarios-search-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .usuarios-search-box {
+    min-width: unset;
+  }
+
+  .usuarios-list-header,
+  .usuarios-usuario-item {
+    grid-template-columns: 40px 1fr 100px;
+    font-size: 0.75rem;
+  }
+
+  .usuarios-list-header > div:nth-child(3),
+  .usuarios-usuario-item > div:nth-child(3),
+  .usuarios-list-header > div:nth-child(4),
+  .usuarios-usuario-item > div:nth-child(4) {
+    display: none;
+  }
+
+  .usuarios-action-btn {
+    width: 28px;
+    height: 28px;
+  }
 }
 </style>
 

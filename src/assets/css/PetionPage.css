@@ -827,11 +827,11 @@
 }
 
 .petition-page .pulse-animation:not(:disabled) {
-  animation: pulse 2s infinite;
+  animation: pulse 1s ease-in-out 2;
 }
 
 .petition-page .icon-animation {
-  animation: float 3s ease-in-out infinite;
+  animation: float 2s ease-in-out 1;
 }
 
 @keyframes float {
