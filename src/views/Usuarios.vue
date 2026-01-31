@@ -89,10 +89,10 @@
         <div v-if="usuariosFiltrados.length === 0" class="usuarios-empty-state">
           No se encontraron usuarios.
         </div>
-        
-        <div 
-          v-for="(usuario, index) in usuariosPaginados" 
-          :key="usuario.id" 
+
+        <div
+          v-for="(usuario, index) in usuariosPaginados"
+          :key="usuario.id"
           class="usuarios-usuario-item"
         >
           <div class="usuarios-avatar">{{ getInitials(usuario.nombre) }}</div>
@@ -115,15 +115,15 @@
             <span class="usuarios-badge-unidad">{{ usuario.unidad_nombre || 'Sin unidad' }}</span>
           </div>
           <div class="usuarios-action-buttons">
-            <button 
-              class="usuarios-btn-icon usuarios-edit" 
+            <button
+              class="usuarios-btn-icon usuarios-edit"
               @click="editarUsuario(usuario)"
               title="Editar usuario"
             >
               ✏️
             </button>
-            <button 
-              class="usuarios-btn-icon usuarios-delete" 
+            <button
+              class="usuarios-btn-icon usuarios-delete"
               @click="eliminarUsuario(usuario.id)"
               title="Eliminar usuario"
             >
@@ -178,11 +178,11 @@ export default {
     async cargarDatos() {
       try {
         this.loading = true;
-        
+
         // Cargar usuarios, roles, departamentos y divisiones en paralelo
         const [usuariosResponse, rolesResponse, departamentosResponse, divisionesResponse] = await Promise.all([
           fetch('/api/usuarios.php'),
-          fetch('/api/roles.php'), 
+          fetch('/api/roles.php'),
           fetch('/api/dependencias.php'),
           fetch('/api/divisiones.php')
         ]);
@@ -218,22 +218,22 @@ export default {
     filtrarUsuarios() {
       this.usuariosFiltrados = this.usuarios.filter(usuario => {
         let cumpleFiltros = true;
-        
+
         if (this.filtroEstado && usuario.estatus !== this.filtroEstado) {
           cumpleFiltros = false;
         }
-        
+
         if (this.filtroRol && usuario.rol_id != this.filtroRol) {
           cumpleFiltros = false;
         }
-        
+
         if (this.filtroDepartamento && usuario.departamento_id != this.filtroDepartamento) {
           cumpleFiltros = false;
         }
-        
+
         return cumpleFiltros;
       });
-      
+
       this.paginaActual = 1;
     },
 
@@ -266,4 +266,3 @@ export default {
 <style scoped>
 @import '@/assets/css/Usuarios.css';
 </style>
-  

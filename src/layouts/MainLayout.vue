@@ -116,11 +116,11 @@ export default {
   .main-content {
     height: auto;
   }
-  
+
   .mainlayout-page-header {
     padding: 15px;
   }
-  
+
   .mainlayout-page-title {
     font-size: 18px;
   }
