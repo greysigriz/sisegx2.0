@@ -1,221 +1,201 @@
-/* Styles moved from YucatanHeader.vue */
+/* =============================================
+   HEADER – Sistema de Reportes Ciudadanos
+   ============================================= */
+
+/* ---------- Contenedor principal ---------- */
 .yucatan-header {
   background: #ffffff;
   border-bottom: 2px solid #2563eb;
-  padding: 1rem 1.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.header-content {
+/* ---------- Barra superior (Gov + notificaciones) ---------- */
+.top-bar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
+  padding: 0.6rem 1.75rem;
+  background: #f0f4ff;
 }
 
-.header-left {
+.top-bar__brand {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
 }
 
+.top-bar__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #2563eb;
+}
+
+.top-bar__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e3a8a;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Divider entre zonas ---------- */
+.header-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #c7d9f8 20%, #c7d9f8 80%, transparent 100%);
+}
+
+/* ---------- Zona central: título + buscador ---------- */
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.75rem 1.5rem;
+}
+
+/* ---------- Títulos ---------- */
 .titles {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.2rem;
+  text-align: center;
 }
 
 .main-title {
-  font-size: 1.5rem;
+  font-size: 1.85rem;
   font-weight: 700;
   color: #1e3a8a;
   margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.title-accent {
+  color: #2563eb;
 }
 
 .subtitle {
-  font-size: 0.875rem;
-  color: #2563eb;
+  font-size: 0.9rem;
+  color: #64748b;
   margin: 0;
   font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-/* Buscador */
-.search-wrapper {
+/* ---------- Buscador / Municipio ---------- */
+.select-wrapper {
   position: relative;
 }
 
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1rem;
-  height: 1rem;
-  color: #3b82f6;
-  pointer-events: none;
-}
-
-.search-input {
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  border: 2px solid #93c5fd;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  width: 16rem;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.search-input:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #3b82f6;
-}
-
-.search-input::placeholder {
-  color: #9ca3af;
-}
-
-/* Suggestions dropdown for combobox */
-.combobox { position: relative; }
-.suggestions {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #e6edf8;
-    box-shadow: 0 8px 20px rgba(2,6,23,0.08);
-    border-radius: 8px;
-    max-height: 220px;
-    overflow: auto;
-    z-index: 50;
-    padding: 0.25rem 0;
-}
-.suggestion-item {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    color: #0f172a;
-    cursor: pointer;
-}
-.suggestion-item:hover,
-.suggestion-item.highlighted {
-    background: #eff6ff;
-}
-
-/* Selector de Municipio */
-.select-wrapper {
-    position: relative;
-}
-
-/* Combobox de municipio combinado */
 .municipality-combobox {
-    position: relative;
+  position: relative;
+  width: 28rem;
 }
 
 .municipality-combobox .search-icon {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1rem;
-    height: 1rem;
-    color: #3b82f6;
-    pointer-events: none;
-    z-index: 1;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #3b82f6;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .municipality-combobox .search-input {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+  width: 100%;
+  padding: 0.75rem 2.6rem 0.75rem 2.7rem;
+  border: 2px solid #c7d9f8;
+  border-radius: 2rem;           /* pill */
+  font-size: 1rem;
+  background: #f7faff;
+  color: #1e3a8a;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+
+.municipality-combobox .search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  background: #ffffff;
+}
+
+.municipality-combobox .search-input::placeholder {
+  color: #94a3b8;
 }
 
 .municipality-combobox .select-arrow {
-    cursor: pointer;
-    pointer-events: auto;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #3b82f6;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 1;
 }
 
+/* ---------- Dropdown sugerencias ---------- */
 .municipality-combobox .suggestions {
-    position: absolute;
-    top: calc(100% + 0.35rem);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #e6edf8;
-    box-shadow: 0 8px 20px rgba(2,6,23,0.08);
-    border-radius: 8px;
-    max-height: 220px;
-    overflow: auto;
-    z-index: 50;
-    padding: 0.25rem 0;
-    list-style: none;
-    margin: 0;
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e8f4;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.09);
+  border-radius: 0.75rem;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 0.3rem 0;
+  list-style: none;
+  margin: 0;
 }
 
 .municipality-combobox .suggestion-item {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    color: #0f172a;
-    cursor: pointer;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background 0.12s;
 }
 
 .municipality-combobox .suggestion-item:hover,
 .municipality-combobox .suggestion-item.highlighted {
-    background: #eff6ff;
+  background: #eff6ff;
 }
 
 .municipality-combobox .suggestion-all {
-    font-weight: 500;
-    color: #2563eb;
-    border-bottom: 1px solid #e6edf8;
+  font-weight: 600;
+  color: #2563eb;
+  border-bottom: 1px solid #e6edf8;
 }
 
-.municipality-select {
-    appearance: none;
-    padding: 0.5rem 2.5rem 0.5rem 1rem;
-    border: 2px solid #3b82f6;
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    background: #ffffff;
-    color: #1e3a8a;
-    cursor: pointer;
-    min-width: 12rem;
-    outline: none;
-    transition: box-shadow 0.2s;
-}
-
-.municipality-select:focus {
-    box-shadow: 0 0 0 2px #3b82f6;
-}
-
-.select-arrow {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1rem;
-    height: 1rem;
-    color: #3b82f6;
-    pointer-events: none;
-}
-
-/* Botón de Notificaciones */
+/* ---------- Botón Notificaciones ---------- */
 .notification-btn {
-    position: relative;
-    padding: 0.5rem;
-    background: transparent;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    color: #2563eb;
-    transition: background-color 0.2s;
+  position: relative;
+  padding: 0.45rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: #2563eb;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .notification-btn:hover {
-  background-color: #eff6ff;
+  background-color: #dbeafe;
 }
 
 .notification-btn svg {
@@ -225,37 +205,38 @@
 
 .notification-badge {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 0.5rem;
-  height: 0.5rem;
-  background: #3b82f6;
-  border-radius: 50%;
+  top: 0.2rem;
+  right: 0.2rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  line-height: 1.1rem;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px solid #f0f4ff;   /* separa del fondo top-bar */
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-right {
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+@media (max-width: 600px) {
+  .municipality-combobox {
     width: 100%;
-    flex-wrap: wrap;
+    max-width: 22rem;
   }
 
-  .search-input {
-    width: 100%;
-  }
-
-  .municipality-select {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
   .main-title {
-    font-size: 1.125rem;
+    font-size: 1.4rem;
+  }
+
+  .header-center {
+    padding: 1rem 1rem 1.2rem;
+  }
+
+  .top-bar {
+    padding: 0.5rem 1rem;
   }
 }

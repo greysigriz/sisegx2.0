@@ -9,7 +9,7 @@
     <!-- Tendencia Temporal (gráfico de línea/área) -->
     <AreaChart />
     <!-- Estadísticas rápidas (movidas arriba, horizontal) -->
-    <div class="analytics-card full-width">
+    <!-- <div class="analytics-card full-width">
       <div class="stats-summary horizontal">
         <h3 class="stats-title">Resumen Ejecutivo</h3>
         <div class="stat-item">
@@ -29,7 +29,7 @@
           <span class="stat-value positive">+15%</span>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Sección de Análisis Principal: 3 columnas -->
     <div class="analytics-grid">
@@ -117,4 +117,6 @@ export default {
   }
 }
 </script>
+
+<style src="@/assets/css/Dashboard.css"></style>
 
