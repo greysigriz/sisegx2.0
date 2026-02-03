@@ -1,7 +1,7 @@
 /* Contenedor principal del gráfico de área */
 .area-chart-wrapper {
     /* Espaciado interno: 32px arriba/abajo, 1.25rem izquierda/derecha */
-    padding: 32px 1.25rem;
+    padding: 35px 1.30rem;
     /* Fondo: gradiente de blanco a gris claro formando un ángulo de 145 grados */
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     /* Bordes redondeados de 20px para un efecto moderno */
@@ -48,46 +48,27 @@
 
 /* Encabezado del gráfico: contiene título y leyenda */
 .area-chart-header {
-    /* Flexbox para alinear elementos en fila */
-    display: flex;
-    /* Alinea verticalmente al centro */
-    align-items: center;
-    /* Distribuye el espacio: título a la izquierda, leyenda a la derecha */
-    justify-content: space-between;
-    /* Espaciado de 24px entre título y leyenda */
-    gap: 24px;
-    /* Margen inferior de 12px */
-    margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* Centra horizontalmente */
+  justify-content: center;
+  text-align: center;    /* Centra el texto */
+  margin-bottom: 1rem;
 }
 
-/* Estilo del título del gráfico */
 .area-chart-title {
-    /* Tamaño de fuente grande: 24px */
-    font-size: 24px;
-    /* Texto en negrita */
-    font-weight: 700;
-    /* Color azul oscuro */
-    color: #1E40AF;
-    /* Fuente sans-serif moderna */
-    font-family: "Inter", "Segoe UI", sans-serif;
-    /* Sin margen para mejor control de espaciado */
-    margin: 0;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2563eb;
+  text-align: center;    /* Centra el texto */
 }
 
-/* Contenedor de la leyenda del gráfico */
 .area-chart-legend {
-    /* Remueve los puntos de lista predeterminados */
-    list-style: none;
-    /* Flexbox para alinear items en fila */
-    display: flex;
-    /* Espaciado de 12px entre cada item */
-    gap: 12px;
-    /* Sin espaciado interno predeterminado */
-    padding: 0;
-    /* Sin margen predeterminado */
-    margin: 0;
-    /* Alinea verticalmente todos los items al centro */
-    align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: center; /* Centra los filtros */
+  margin-top: 0.5rem;
 }
 
 /* Estilo individual de cada elemento en la leyenda */
@@ -221,4 +202,10 @@
         /* Aumentar altura a 800px para móviles (mejor legibilidad en pantalla pequeña) */
         height: 800px;
     }
+}
+
+@media (max-width: 600px) {
+  .area-chart-legend {
+    flex-wrap: wrap;
+  }
 }

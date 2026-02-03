@@ -49,7 +49,7 @@ onMounted(() => {
       borderRadius: 12,
       textStyle: {
         color: '#1F2937',
-        fontSize: 13,
+        fontSize: 20,
         fontFamily: '"Inter", "Segoe UI", sans-serif'
       },
       boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
@@ -93,7 +93,7 @@ onMounted(() => {
     },
     // legend moved to DOM header; keep no legend in option
     toolbox: {
-      right: 20,
+      right: 30,
       top: 20,
       feature: {
         saveAsImage: {
@@ -115,7 +115,7 @@ onMounted(() => {
       left: '2%',
       right: '2%',
       bottom: '8%',
-      top: '25%',
+      top: '1%',
       containLabel: true
     },
     xAxis: [
@@ -133,7 +133,7 @@ onMounted(() => {
           color: '#6B7280',
           fontSize: 13,
           fontFamily: '"Inter", "Segoe UI", sans-serif',
-          fontWeight: 500
+          fontWeight: 50
         },
         axisTick: {
           show: false

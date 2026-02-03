@@ -37,13 +37,11 @@
       <div class="analytics-card full-width">
         <BarChart />
       </div>
-
       <!-- Columna 2: Distribución por Categoría -->
       <div class="analytics-card">
         <PieChart />
       </div>
     </div>
-
     <!-- Línea de Reportes (Tendencia por Estado) -->
     <Reportes />
 

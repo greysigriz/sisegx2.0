@@ -14,17 +14,17 @@
   max-width: 1600px;
 }
 
-.analytics-card {
+/* .analytics-card {
   background: white;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e7eb;
-}
+} */
 
-.analytics-card.full-width {
+/* .analytics-card.full-width {
   grid-column: 1;
-}
+} */
 
 /* Resumen Estadístico */
 .stats-summary {

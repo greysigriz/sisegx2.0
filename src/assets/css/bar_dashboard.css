@@ -1,20 +1,65 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Contenedor principal: mismo diseño que .area-chart-wrapper
+   ══════════════════════════════════════════════════════════════════════════ */
 .chart-wrapper {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  /* Espaciado interno: 32px arriba/abajo, 1.25rem izquierda/derecha */
+  padding: 32px 1.25rem;
+  /* Fondo: gradiente de blanco a gris claro formando un ángulo de 145 grados */
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  /* Bordes redondeados de 20px para un efecto moderno */
+  border-radius: 20px;
+  /* Margen exterior: 2rem arriba/abajo, auto izquierda/derecha (centra horizontalmente) */
+  margin: 2rem auto;
+  /* Sombra múltiple: sombra grande, sombra media y borde luminoso azul sutil */
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(59, 130, 246, 0.05);
+  /* Borde de 1px en gris claro para delimitar el contenedor */
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  /* Posicionamiento relativo para permitir elementos posicionados dentro */
+  position: relative;
+  /* Oculta cualquier contenido que se desborde del contenedor */
+  overflow: hidden;
+  /* Flexbox para organizar contenido verticalmente */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  /* Fuente del contenedor */
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
+/* Barra de color superior — igual que .area-chart-wrapper::before */
+.chart-wrapper::before {
+  /* Crea un elemento pseudo (barra de color) sin contenido visible */
+  content: '';
+  /* Posicionamiento absoluto para colocar la barra en la parte superior */
+  position: absolute;
+  /* Inicia desde la esquina superior izquierda */
+  top: 0;
+  left: 0;
+  /* Se extiende hasta el borde derecho */
+  right: 0;
+  /* Altura de la barra superior: 4px */
+  height: 4px;
+  /* Gradiente de color azul (de oscuro a claro) */
+  background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
+  /* Redondea solo las esquinas superiores */
+  border-radius: 20px 20px 0 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Encabezado del gráfico
+   ══════════════════════════════════════════════════════════════════════════ */
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  /* Margen inferior aumentado para separación */
+  margin-bottom: 12px;
   width: 100%;
+  /* Espaciado entre título y selector */
+  gap: 24px;
 }
 
 .chart-header-left {
@@ -27,12 +72,20 @@
   align-items: flex-start;
 }
 
+/* Título: mismo estilo que .area-chart-title */
 .chart-title {
-  font-size: 1.25rem;
+  /* Tamaño de fuente grande: 24px */
+  font-size: 24px;
+  /* Texto en negrita */
   font-weight: 700;
-  color: #1e3a8a;
+  /* Color azul oscuro */
+  color: #1E40AF;
+  /* Fuente sans-serif moderna */
+  font-family: "Inter", "Segoe UI", sans-serif;
+  /* Sin margen para mejor control de espaciado */
   margin: 0 0 4px 0;
   padding: 0;
+  align-items: center;
 }
 
 .chart-description {
@@ -46,20 +99,24 @@
   flex-shrink: 0;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Selector de filtro (Top 10/15/Todos)
+   ══════════════════════════════════════════════════════════════════════════ */
 .top-filter-select {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.875rem;
   color: #1e293b;
   background-color: white;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.5rem center;
+  font-weight: 500;
 }
 
 .top-filter-select:hover {
@@ -71,6 +128,9 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Contenedor del gráfico de barras
+   ══════════════════════════════════════════════════════════════════════════ */
 .bar-chart {
   width: 100%;
   min-height: 600px;
@@ -78,7 +138,9 @@
   align-self: flex-start;
 }
 
-/* ECharts tooltip styles */
+/* ══════════════════════════════════════════════════════════════════════════
+   Estilos del tooltip de ECharts
+   ══════════════════════════════════════════════════════════════════════════ */
 .echarts-tooltip {
   padding: 8px;
 }
@@ -92,7 +154,7 @@
   color: #64748b;
 }
 
-/* Visual progress bar and usage of CSS variables set by the tooltip formatter */
+/* Variables CSS para barra de progreso visual en tooltip */
 .echarts-tooltip {
   --count: 0;
   --percent: 0%;
@@ -110,10 +172,45 @@
   content: " ";
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Mensaje de error de API
+   ══════════════════════════════════════════════════════════════════════════ */
+.api-error {
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  color: #9f1239;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 12px 0;
+  font-size: 13px;
+  width: 100%;
+}
+
+.api-error pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 8px 0 0 0;
+  color: #7f1d1d;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Responsive: tablets y móviles (max-width: 768px)
+   ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
+  .chart-wrapper {
+    /* Reducir padding en pantallas pequeñas */
+    padding: 20px;
+    /* Reducir margen */
+    margin: 16px;
+  }
+
   .chart-header {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .chart-title {
+    font-size: 20px;
   }
 
   .top-filter-select {
@@ -123,19 +220,4 @@
   .bar-chart {
     min-height: 480px;
   }
-}
-.api-error {
-  background: #fff7f7;
-  border: 1px solid #fecaca;
-  color: #9f1239;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin: 12px 0;
-  font-size: 13px;
-}
-.api-error pre {
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 8px 0 0 0;
-  color: #7f1d1d;
 }
