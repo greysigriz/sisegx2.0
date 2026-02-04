@@ -420,4 +420,405 @@ Navegador → http://50.21.181.205/api/proxy-clasificacion.php?path=clasificacio
 
 ---
 
-*Última actualización: Enero 2026*
+## 🔒 Configuración de SSL/HTTPS
+
+### 🎯 **Opción 1: Let's Encrypt (RECOMENDADO - GRATUITO)**
+
+Let's Encrypt es el método más sencillo y gratuito para obtener certificados SSL válidos.
+
+#### **Paso 1: Instalar Certbot**
+
+```bash
+# Conectar al VPS
+ssh root@50.21.181.205
+
+# Actualizar paquetes
+sudo apt update
+
+# Instalar Certbot y plugin de Apache
+sudo apt install certbot python3-certbot-apache -y
+```
+
+#### **Paso 2: Configurar dominio (REQUIERE DOMINIO REAL)**
+
+⚠️ **IMPORTANTE:** Let's Encrypt requiere un **dominio real** apuntando al VPS. No funciona solo con IP.
+
+Si tienes un dominio (ej: `misitio.com`), primero debes:
+
+1. **Configurar DNS:** Apunta tu dominio a la IP `50.21.181.205`
+2. **Esperar propagación:** Puede tomar hasta 24 horas
+
+**Verificar que el dominio apunte correctamente:**
+```bash
+# Desde tu computadora local
+nslookup tu-dominio.com
+# Debe mostrar: Address: 50.21.181.205
+```
+
+#### **Paso 3: Configurar Apache Virtual Host**
+
+```bash
+# Crear configuración para tu dominio
+sudo nano /etc/apache2/sites-available/sisee.conf
+```
+
+**Contenido del archivo:**
+```apache
+<VirtualHost *:80>
+    ServerName tu-dominio.com
+    ServerAlias www.tu-dominio.com
+    DocumentRoot /var/www/sisee/dist
+    
+    # Configuración para Vue.js SPA
+    <Directory "/var/www/sisee/dist">
+        AllowOverride All
+        Require all granted
+        FallbackResource /index.html
+    </Directory>
+    
+    # Proxy para API PHP
+    Alias /api /var/www/sisee/api
+    <Directory "/var/www/sisee/api">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/sisee_error.log
+    CustomLog ${APACHE_LOG_DIR}/sisee_access.log combined
+</VirtualHost>
+```
+
+**Activar el sitio:**
+```bash
+# Habilitar el sitio
+sudo a2ensite sisee.conf
+
+# Deshabilitar sitio por defecto
+sudo a2dissite 000-default.conf
+
+# Habilitar mod_rewrite si no está activo
+sudo a2enmod rewrite
+
+# Reiniciar Apache
+sudo systemctl restart apache2
+
+# Verificar que Apache esté funcionando
+sudo systemctl status apache2
+```
+
+#### **Paso 4: Obtener certificado SSL**
+
+```bash
+# REEMPLAZA 'tu-dominio.com' por tu dominio real
+sudo certbot --apache -d tu-dominio.com -d www.tu-dominio.com
+
+# Seguir las instrucciones:
+# 1. Ingresa tu email
+# 2. Acepta términos (Y)
+# 3. Decide sobre compartir email (Y/N)
+# 4. Certbot configurará automáticamente Apache
+```
+
+**✅ Si todo sale bien, verás:**
+```
+Congratulations! You have successfully enabled HTTPS on https://tu-dominio.com
+```
+
+#### **Paso 5: Verificar renovación automática**
+
+```bash
+# Probar renovación (sin aplicar cambios)
+sudo certbot renew --dry-run
+
+# Ver cuándo expira el certificado
+sudo certbot certificates
+
+# Programar renovación automática (ya debería estar configurado)
+sudo systemctl status certbot.timer
+```
+
+#### **Paso 6: Actualizar configuración del proyecto**
+
+```bash
+# Actualizar .env para usar HTTPS
+cd /var/www/sisee
+echo 'VITE_API_URL=https://tu-dominio.com/api' > .env
+echo 'VITE_BACKEND_URL=https://tu-dominio.com/api/proxy-clasificacion.php' >> .env
+
+# Recompilar frontend
+npm run build
+
+# Verificar configuración
+cat .env
+```
+
+---
+
+### 🎯 **Opción 2: Solo IP (Certificado Autofirmado)**
+
+Si **NO tienes dominio**, puedes crear un certificado autofirmado. ⚠️ **Los navegadores mostrarán advertencia de seguridad.**
+
+#### **Crear certificado autofirmado:**
+
+```bash
+# Crear directorio para certificados
+sudo mkdir -p /etc/ssl/private
+
+# Generar certificado (válido por 365 días)
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/sisee-selfsigned.key \
+    -out /etc/ssl/certs/sisee-selfsigned.crt
+
+# Durante la generación, ingresar:
+# Country Name: MX
+# State: Tu Estado
+# City: Tu Ciudad
+# Organization: Tu Organización
+# Organizational Unit: IT Department
+# Common Name: 50.21.181.205  (⚠️ IMPORTANTE: usar la IP)
+# Email: tu-email@dominio.com
+```
+
+#### **Configurar Apache para SSL:**
+
+```bash
+# Habilitar SSL
+sudo a2enmod ssl
+
+# Crear configuración SSL
+sudo nano /etc/apache2/sites-available/sisee-ssl.conf
+```
+
+**Contenido:**
+```apache
+<VirtualHost *:443>
+    ServerName 50.21.181.205
+    DocumentRoot /var/www/sisee/dist
+    
+    # Configuración SSL
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/sisee-selfsigned.crt
+    SSLCertificateKeyFile /etc/ssl/private/sisee-selfsigned.key
+    
+    # Configuración para Vue.js SPA
+    <Directory "/var/www/sisee/dist">
+        AllowOverride All
+        Require all granted
+        FallbackResource /index.html
+    </Directory>
+    
+    # Proxy para API PHP
+    Alias /api /var/www/sisee/api
+    <Directory "/var/www/sisee/api">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/sisee_ssl_error.log
+    CustomLog ${APACHE_LOG_DIR}/sisee_ssl_access.log combined
+</VirtualHost>
+
+# Redirigir HTTP a HTTPS
+<VirtualHost *:80>
+    ServerName 50.21.181.205
+    Redirect permanent / https://50.21.181.205/
+</VirtualHost>
+```
+
+**Activar SSL:**
+```bash
+# Habilitar sitio SSL
+sudo a2ensite sisee-ssl.conf
+
+# Reiniciar Apache
+sudo systemctl restart apache2
+
+# Verificar que esté escuchando en puerto 443
+sudo ss -tulnp | grep :443
+```
+
+#### **Actualizar configuración del proyecto:**
+
+```bash
+# Actualizar .env para usar HTTPS
+cd /var/www/sisee
+echo 'VITE_API_URL=https://50.21.181.205/api' > .env
+echo 'VITE_BACKEND_URL=https://50.21.181.205/api/proxy-clasificacion.php' >> .env
+
+# Recompilar frontend
+npm run build
+```
+
+---
+
+### 🔧 **Comandos de Verificación SSL**
+
+```bash
+# Verificar certificado SSL
+openssl s_client -connect 50.21.181.205:443 -servername 50.21.181.205 < /dev/null
+
+# Ver detalles del certificado
+openssl x509 -in /etc/ssl/certs/sisee-selfsigned.crt -text -noout
+
+# Verificar que Apache esté escuchando en 443
+sudo netstat -tulnp | grep :443
+
+# Ver logs de errores SSL
+sudo tail -f /var/log/apache2/sisee_ssl_error.log
+
+# Probar HTTPS
+curl -k https://50.21.181.205/
+```
+
+---
+
+### 🔥 **Comando TODO EN UNO - SSL Autofirmado**
+
+```bash
+ssh root@50.21.181.205 "
+# Crear certificado autofirmado
+sudo mkdir -p /etc/ssl/private
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/sisee-selfsigned.key \
+  -out /etc/ssl/certs/sisee-selfsigned.crt \
+  -subj '/C=MX/ST=Yucatan/L=Merida/O=SISEE/OU=IT/CN=50.21.181.205/emailAddress=admin@sisee.local'
+
+# Habilitar SSL
+sudo a2enmod ssl
+
+# Configurar Virtual Host SSL
+cat > /etc/apache2/sites-available/sisee-ssl.conf << 'EOF'
+<VirtualHost *:443>
+    ServerName 50.21.181.205
+    DocumentRoot /var/www/sisee/dist
+    
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/sisee-selfsigned.crt
+    SSLCertificateKeyFile /etc/ssl/private/sisee-selfsigned.key
+    
+    <Directory \"/var/www/sisee/dist\">
+        AllowOverride All
+        Require all granted
+        FallbackResource /index.html
+    </Directory>
+    
+    Alias /api /var/www/sisee/api
+    <Directory \"/var/www/sisee/api\">
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog \${APACHE_LOG_DIR}/sisee_ssl_error.log
+    CustomLog \${APACHE_LOG_DIR}/sisee_ssl_access.log combined
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName 50.21.181.205
+    Redirect permanent / https://50.21.181.205/
+</VirtualHost>
+EOF
+
+# Activar sitio SSL
+sudo a2ensite sisee-ssl.conf
+sudo a2dissite 000-default.conf
+
+# Reiniciar Apache
+sudo systemctl restart apache2
+
+# Actualizar .env para HTTPS
+cd /var/www/sisee
+echo 'VITE_API_URL=https://50.21.181.205/api' > .env
+echo 'VITE_BACKEND_URL=https://50.21.181.205/api/proxy-clasificacion.php' >> .env
+
+# Reconstruir frontend
+npm run build
+
+echo '=== VERIFICACIÓN SSL ==='
+sudo ss -tulnp | grep :443
+curl -k -I https://50.21.181.205/ | head -5
+"
+```
+
+---
+
+### ⚠️ **Problemas Comunes SSL**
+
+#### **1. Apache no inicia después de configurar SSL**
+
+```bash
+# Ver errores específicos
+sudo apache2ctl configtest
+
+# Ver logs detallados
+sudo journalctl -u apache2.service -f
+
+# Verificar sintaxis de archivos de configuración
+sudo apache2ctl -S
+```
+
+#### **2. Certificado no válido o expirado**
+
+```bash
+# Verificar validez del certificado
+openssl x509 -in /etc/ssl/certs/sisee-selfsigned.crt -dates -noout
+
+# Regenerar si está expirado
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/sisee-selfsigned.key \
+    -out /etc/ssl/certs/sisee-selfsigned.crt \
+    -subj '/C=MX/ST=Yucatan/L=Merida/O=SISEE/OU=IT/CN=50.21.181.205'
+```
+
+#### **3. Mixed Content (HTTP en página HTTPS)**
+
+```bash
+# Asegurar que .env use HTTPS en todas las URLs
+cd /var/www/sisee
+cat .env
+
+# Debe mostrar:
+# VITE_API_URL=https://50.21.181.205/api
+# VITE_BACKEND_URL=https://50.21.181.205/api/proxy-clasificacion.php
+
+# Si está mal, corregir y recompilar
+echo 'VITE_API_URL=https://50.21.181.205/api' > .env
+echo 'VITE_BACKEND_URL=https://50.21.181.205/api/proxy-clasificacion.php' >> .env
+npm run build
+```
+
+#### **4. Let's Encrypt falla**
+
+```bash
+# Ver logs detallados
+sudo journalctl -u certbot.service -f
+
+# Verificar que el dominio apunte correctamente
+nslookup tu-dominio.com
+
+# Verificar que Apache esté respondiendo en puerto 80
+curl -I http://tu-dominio.com
+
+# Limpiar certificados fallidos y reintentar
+sudo certbot delete --cert-name tu-dominio.com
+sudo certbot --apache -d tu-dominio.com
+```
+
+---
+
+### 📋 **Checklist SSL**
+
+- [ ] ✅ **Opción A:** Dominio configurado apuntando a 50.21.181.205
+- [ ] ✅ **Opción A:** Let's Encrypt instalado y certificado obtenido
+- [ ] ✅ **Opción B:** Certificado autofirmado creado
+- [ ] ✅ Apache configurado para SSL (puerto 443)
+- [ ] ✅ Redirección de HTTP a HTTPS configurada
+- [ ] ✅ `.env` actualizado con URLs HTTPS
+- [ ] ✅ Frontend recompilado: `npm run build`
+- [ ] ✅ SSL funciona: https://50.21.181.205 (o tu dominio)
+- [ ] ✅ Login funciona con HTTPS
+- [ ] ✅ Clasificador funciona con HTTPS
+- [ ] ✅ No hay errores Mixed Content en consola del navegador
+
+---
+
+*Última actualización: Febrero 2026*

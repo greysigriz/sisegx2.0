@@ -5,7 +5,7 @@
         <i class="fas fa-history"></i>
         <h2>Actividad Reciente</h2>
       </div>
-      <div class="header-right">
+      <div class="header-left">
         <button @click="prevSlide" class="carousel-control" :disabled="currentIndex === 0">
           <i class="fas fa-chevron-left"></i>
         </button>
