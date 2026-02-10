@@ -476,9 +476,9 @@ export default {
         // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
         let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '')
         urlRelativa = urlRelativa.replace(/^\//, '') // Quitar barra inicial si existe
-        
+
         console.log('📁 Ruta relativa extraída:', urlRelativa)
-        
+
         // Descargar usando el endpoint PHP (axios usa baseURL automáticamente)
         // withCredentials: false para evitar conflicto con CORS wildcard
         // skipAuthToken: true para no enviar header de autenticación
@@ -504,7 +504,7 @@ export default {
         link.href = blobUrl
         link.download = nombreArchivo
         link.style.display = 'none'
-        
+
         // Agregar al DOM, hacer clic y remover
         document.body.appendChild(link)
         link.click()
@@ -524,7 +524,7 @@ export default {
         console.error('❌ Error al descargar imagen:', error)
         console.error('Detalles del error:', error.response?.data)
         console.error('URL solicitada:', error.config?.url)
-        
+
         // Mostrar mensaje más específico
         const mensaje = error.response?.data?.message || error.message || 'Error desconocido'
         alert(`Error al descargar: ${mensaje}`)
@@ -553,15 +553,15 @@ export default {
 
     const onImageError = (e) => {
       console.error('Error loading image:', e.target.src)
-      
+
       // Evitar bucle infinito de errores
       if (e.target.hasAttribute('data-error-handled')) {
         return
       }
-      
+
       // Marcar que ya se manejó el error
       e.target.setAttribute('data-error-handled', 'true')
-      
+
       // Usar un SVG placeholder simple
       const placeholderSvg = `data:image/svg+xml;base64,${btoa(`
         <svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -571,7 +571,7 @@ export default {
           </text>
         </svg>
       `)}`
-      
+
       e.target.src = placeholderSvg
     }
 

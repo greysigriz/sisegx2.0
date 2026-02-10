@@ -65,7 +65,7 @@ axios.interceptors.request.use(
   (config) => {
     // ✅ NUEVO: Excluir endpoint de imágenes del sistema anti-duplicados
     const isImageEndpoint = config.url && config.url.includes('imagenes.php');
-    
+
     if (!isImageEndpoint) {
       // ✅ NUEVO: Generar CancelToken para este request (excepto imágenes)
       const requestKey = generateRequestKey(config);
@@ -115,7 +115,7 @@ axios.interceptors.response.use(
   (response) => {
     // ✅ NUEVO: Solo remover de la cola si no es endpoint de imágenes
     const isImageEndpoint = response.config.url && response.config.url.includes('imagenes.php');
-    
+
     if (!isImageEndpoint) {
       const requestKey = generateRequestKey(response.config);
       pendingRequests.delete(requestKey);

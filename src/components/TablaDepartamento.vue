@@ -1320,10 +1320,10 @@ export default {
         // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
         let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '');
         urlRelativa = urlRelativa.replace(/^\//, ''); // Quitar barra inicial si existe
-        
+
         // Construir URL del endpoint de descarga
         const downloadUrl = `${backendUrl}/descargar-imagen.php?archivo=${encodeURIComponent(urlRelativa)}&nombre=${encodeURIComponent(nombreArchivo)}`;
-        
+
         console.log('📦 URL de descarga:', downloadUrl);
 
         // Descargar usando el endpoint PHP
@@ -1345,7 +1345,7 @@ export default {
         link.href = blobUrl;
         link.download = nombreArchivo;
         link.style.display = 'none';
-        
+
         // Agregar al DOM, hacer clic y remover
         document.body.appendChild(link);
         link.click();
@@ -1366,10 +1366,10 @@ export default {
       } catch (error) {
         console.error('❌ Error al descargar imagen:', error);
         console.error('Detalles del error:', error.response?.data);
-        
+
         // Mostrar mensaje más específico
         const mensaje = error.response?.data?.message || error.message || 'Error desconocido';
-        
+
         if (window.$toast) {
           window.$toast.error(`Error: ${mensaje}`);
         } else {
