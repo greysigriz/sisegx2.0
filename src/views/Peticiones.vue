@@ -173,117 +173,84 @@
 
               <!-- ✅ OPTIMIZADO: Usar v-show en lugar de v-else para mejor rendimiento -->
               <div v-show="!loading && peticionesFiltradas.length > 0" v-for="peticion in peticionesPaginadas" :key="peticion.id" class="peticion-item">
-                <div class="peticion-acciones" :ref="el => { if (el) accionesRefs[peticion.id] = el }">
-                  <button
-                    :class="['action-btn', 'menu', { active: peticionActiva === peticion.id }]"
-                    @click.stop="toggleAccionesMenu(peticion, $event)"
-                    :title="peticionActiva === peticion.id ? 'Cerrar menú' : 'Mostrar acciones'"
-                  >
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-
-                  <!-- Overlay para cerrar el dropdown -->
-                  <div
-                    v-if="peticionActiva === peticion.id"
-                    class="dropdown-overlay"
-                    @click="cerrarMenuAcciones"
-                  ></div>
-
-                  <div
-                    v-if="peticionActiva === peticion.id"
-                    class="acciones-dropdown show"
-                    :style="dropdownStyle"
-                  >
-                    <!-- ✅ ACTUALIZADO: Botones condicionalmente deshabilitados -->
+                <!-- Columna Acciones con Diseño de Badges -->
+                <div class="peticion-acciones">
+                  <div class="acciones-badges">
                     <button
-                      class="dropdown-item"
+                      class="accion-badge edit-badge"
                       :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
                       :disabled="!puedeEditarPeticion(peticion)"
-                      @click="puedeEditarPeticion(peticion) && (editarPeticion(peticion), cerrarMenuAcciones())"
-                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede editar esta petición' : 'Editar petición'"
+                      @click.stop="puedeEditarPeticion(peticion) && editarPeticion(peticion)"
+                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede editar' : 'Editar petición'"
                     >
-                      <i class="fas fa-edit"></i> Editar
+                      <i class="fas fa-edit"></i>
+                      <span>Edit</span>
                     </button>
-
                     <button
-                      class="dropdown-item"
-                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
-                      :disabled="!puedeEditarPeticion(peticion)"
-                      @click="puedeEditarPeticion(peticion) && (cambiarEstado(peticion), cerrarMenuAcciones())"
-                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar el estado' : 'Cambiar estado'"
+                      class="accion-badge seguimiento-badge"
+                      @click.stop="seguimiento(peticion)"
+                      :title="esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento'"
                     >
-                      <i class="fas fa-tasks"></i> Cambiar Estado
-                    </button>
-
-                    <!-- ✅ El botón de seguimiento siempre está disponible -->
-                    <button class="dropdown-item" @click="seguimiento(peticion); cerrarMenuAcciones()">
-                      <i class="fas fa-clipboard-list"></i>
-                      {{ esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento' }}
-                    </button>
-
-                    <button
-                      class="dropdown-item"
-                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
-                      :disabled="!puedeEditarPeticion(peticion)"
-                      @click="puedeEditarPeticion(peticion) && (cambiarImportancia(peticion), cerrarMenuAcciones())"
-                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede cambiar la importancia' : 'Cambiar importancia'"
-                    >
-                      <i class="fas fa-star"></i> Cambiar Importancia
-                    </button>
-
-                    <button
-                      class="dropdown-item"
-                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
-                      :disabled="!puedeEditarPeticion(peticion)"
-                      @click="puedeEditarPeticion(peticion) && (gestionarDepartamentos(peticion), cerrarMenuAcciones())"
-                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede gestionar departamentos' : 'Gestionar departamentos'"
-                    >
-                      <i class="fas fa-building"></i> Gestionar Departamentos
+                      <i class="fas fa-user-check"></i>
+                      <span>Track</span>
                     </button>
                   </div>
                 </div>
 
-                <div class="peticion-info">
+                <!-- Columna Folio -->
+                <div class="peticion-folio" @click="abrirDetallesPeticion(peticion)">
                   <span class="folio-badge">{{ peticion.folio }}</span>
                 </div>
 
-                <div class="peticion-info">
-                  <span class="nombre-peticion">{{ peticion.nombre }}</span>
+                <!-- Columna Nombre -->
+                <div class="peticion-nombre" @click="abrirDetallesPeticion(peticion)">
+                  <span class="nombre-peticion nombre-clickable" :title="'Ver detalles de: ' + peticion.nombre">{{ peticion.nombre }}</span>
                 </div>
 
-                <div class="peticion-info">
+                <!-- Columna Teléfono -->
+                <div class="peticion-telefono" @click="abrirDetallesPeticion(peticion)">
                   <span class="telefono">{{ peticion.telefono }}</span>
                 </div>
 
-                <div class="peticion-info">
+                <!-- Columna Localidad -->
+                <div class="peticion-localidad" @click="abrirDetallesPeticion(peticion)">
                   <span class="localidad">{{ peticion.localidad }}</span>
                 </div>
 
-                <div class="peticion-info">
+                <!-- Columna Estado - Clickeable para cambiar estado -->
+                <div class="peticion-estado estado-clickeable"
+                     @click.stop="puedeEditarPeticion(peticion) ? cambiarEstado(peticion) : null"
+                     :class="{ 'clickeable': puedeEditarPeticion(peticion), 'no-clickeable': !puedeEditarPeticion(peticion) }"
+                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar estado' : 'Solo el usuario asignado puede cambiar el estado'">
                   <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
                     {{ peticion.estado }}
                   </span>
+                  <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit estado-edit-icon"></i>
                 </div>
 
-                <div class="peticion-info departamentos-info">
-                  <!-- ✅ NUEVO: Botón simple para ver departamentos -->
-                  <div v-if="!peticion.departamentos || peticion.departamentos.length === 0" class="sin-departamentos">
-                    <span class="departamentos-resumen sin-asignar">Sin asignar</span>
+                <!-- Columna Departamentos -->
+                <div class="peticion-departamentos" @click.stop>
+                  <div v-if="!peticion.departamentos || peticion.departamentos.length === 0"
+                       class="departamentos-badge sin-asignar-badge"
+                       @click="mostrarMenuDepartamentos(peticion)"
+                       title="Click para opciones de departamentos">
+                    <span class="badge-text">Sin asignar</span>
+                    <i class="fas fa-cog badge-icon"></i>
                   </div>
-                  <div v-else class="departamentos-con-boton">
-                    <button
-                      @click="abrirModalDepartamentosEstados(peticion)"
-                      class="btn-ver-departamentos"
-                      :title="`Ver estados de ${peticion.departamentos.length} departamento(s)`"
-                    >
-                      <i class="fas fa-building"></i>
-                      {{ peticion.departamentos.length }} Dept.
-                      <i class="fas fa-eye"></i>
-                    </button>
+                  <div v-else class="departamentos-badge con-asignaciones-badge"
+                       @click="mostrarMenuDepartamentos(peticion)"
+                       title="Click para opciones de departamentos">
+                    <i class="fas fa-building badge-icon-left"></i>
+                    <span class="badge-text">{{ peticion.departamentos.length }}</span>
+                    <i class="fas fa-cog badge-icon"></i>
                   </div>
                 </div>
 
-                <div class="peticion-info prioridad-semaforo">
+                <!-- Columna Prioridad/Semáforo - Clickeable para cambiar importancia -->
+                <div class="peticion-prioridad prioridad-clickeable"
+                     @click.stop="puedeEditarPeticion(peticion) ? cambiarImportancia(peticion) : null"
+                     :class="{ 'clickeable': puedeEditarPeticion(peticion), 'no-clickeable': !puedeEditarPeticion(peticion) }"
+                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar prioridad' : 'Solo el usuario asignado puede cambiar la prioridad'">
                   <div class="indicadores-container">
                     <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`"
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
@@ -295,9 +262,11 @@
                       <i :class="obtenerIconoSeguimiento(peticion)"></i>
                     </div>
                   </div>
+                  <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit prioridad-edit-icon"></i>
                 </div>
 
-                <div class="peticion-info">
+                <!-- Columna Fecha Registro -->
+                <div class="peticion-fecha" @click="abrirDetallesPeticion(peticion)">
                   <span class="fecha-registro">{{ formatearFecha(peticion.fecha_registro) }}</span>
                 </div>
               </div>
@@ -398,6 +367,61 @@
             >
               <i class="fas fa-angle-double-right"></i>
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de opciones para departamentos -->
+    <div v-if="showMenuDepartamentos" class="modal-overlay" @click.self="cancelarAccion">
+      <div class="modal-content modal-opciones-departamentos">
+        <div class="modal-header">
+          <h3>
+            <i class="fas fa-building"></i>
+            Opciones de Departamentos
+          </h3>
+          <button class="close-btn" @click="cancelarAccion">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="peticion-info">
+            <strong>Petición:</strong> {{ peticionSeleccionadaMenu?.nombre || 'Sin nombre' }}
+          </p>
+
+          <div class="opciones-departamentos">
+            <button
+              v-if="peticionSeleccionadaMenu?.departamentos?.length > 0"
+              @click="verEstadosDepartamentos"
+              class="btn-opcion btn-ver-estados"
+              title="Ver historial y estados de departamentos">
+              <div class="opcion-content">
+                <i class="fas fa-eye"></i>
+                <div class="opcion-text">
+                  <span class="opcion-titulo">Ver Estados</span>
+                  <span class="opcion-descripcion">Historial y seguimiento</span>
+                </div>
+              </div>
+            </button>
+
+            <button
+              v-if="puedeEditarPeticion(peticionSeleccionadaMenu)"
+              @click="gestionarDepartamentosMenu"
+              class="btn-opcion btn-gestionar"
+              title="Asignar o modificar departamentos">
+              <div class="opcion-content">
+                <i class="fas fa-cog"></i>
+                <div class="opcion-text">
+                  <span class="opcion-titulo">{{ (!peticionSeleccionadaMenu?.departamentos || peticionSeleccionadaMenu?.departamentos.length === 0) ? 'Asignar' : 'Gestionar' }}</span>
+                  <span class="opcion-descripcion">{{ (!peticionSeleccionadaMenu?.departamentos || peticionSeleccionadaMenu?.departamentos.length === 0) ? 'Asignar departamentos' : 'Modificar asignaciones' }}</span>
+                </div>
+              </div>
+            </button>
+
+            <div v-if="!puedeEditarPeticion(peticionSeleccionadaMenu)" class="sin-permisos">
+              <i class="fas fa-lock"></i>
+              <span>Solo el usuario asignado puede gestionar departamentos</span>
+            </div>
           </div>
         </div>
       </div>
@@ -610,7 +634,9 @@
               </h4>
 
               <div v-if="departamentosAsignados.length === 0" class="no-departamentos">
-                <i class="fas fa-info-circle"></i> No hay departamentos asignados
+                <i class="fas fa-building"></i>
+                <div class="mensaje">No hay departamentos asignados</div>
+                <div class="descripcion">Esta petición aún no ha sido asignada a ningún departamento</div>
               </div>
 
               <div v-else class="departamentos-asignados-list">
@@ -867,6 +893,17 @@
                 <div class="historial-motivo">
                   <strong>Motivo:</strong> {{ cambio.motivo }}
                 </div>
+                <!-- ✅ NUEVO: Imágenes del cambio de estado -->
+                <div v-if="cambio.id" class="historial-imagenes">
+                  <h6><i class="fas fa-images"></i> Imágenes del cambio</h6>
+                  <ImageGallery
+                    :entidad-tipo="'historial_cambio'"
+                    :entidad-id="cambio.id"
+                    :readonly="true"
+                    :show-upload="false"
+                    :compact="true"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -878,15 +915,280 @@
         </div>
       </div>
     </div>
+
+    <!-- ✅ Modal Detalles Completos de Petición -->
+    <div v-if="showDetallesPeticionModal" class="modal-overlay" @click.self="cerrarDetallesPeticion">
+      <div class="modal-content modal-detalles-peticion">
+        <div class="modal-header modal-detalles-header">
+          <h3>
+            <i class="fas fa-file-alt"></i>
+            Detalles de Petición - {{ peticionDetalles.folio }}
+          </h3>
+          <div class="header-actions">
+            <button type="button" class="btn-print" @click="imprimirPeticion" title="Imprimir PDF">
+              <i class="fas fa-print"></i>
+              Imprimir/PDF
+            </button>
+            <button class="close-btn" @click="cerrarDetallesPeticion">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body modal-detalles-body">
+          <!-- Información principal -->
+          <div class="detalles-grid">
+            <div class="detalle-seccion info-principal">
+              <h4><i class="fas fa-info-circle"></i> Información Principal</h4>
+              <div class="detalle-item">
+                <span class="label">Folio:</span>
+                <span class="valor">{{ peticionDetalles.folio || 'No asignado' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Nombre:</span>
+                <span class="valor">{{ peticionDetalles.nombre || 'Sin nombre' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Teléfono:</span>
+                <span class="valor">{{ peticionDetalles.telefono || 'No especificado' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Dirección:</span>
+                <span class="valor">{{ peticionDetalles.direccion || 'No especificada' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Localidad:</span>
+                <span class="valor">{{ peticionDetalles.localidad || 'No especificada' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Red Social:</span>
+                <span class="valor">{{ peticionDetalles.red_social || 'No especificada' }}</span>
+              </div>
+            </div>
+
+            <div class="detalle-seccion info-estado">
+              <h4><i class="fas fa-flag"></i> Estado y Prioridad</h4>
+              <div class="detalle-item">
+                <span class="label">Estado:</span>
+                <span class="valor estado-badge" :class="`estado-${(peticionDetalles.estado || '').toLowerCase().replace(/\s+/g, '-')}`">
+                  {{ peticionDetalles.estado || 'Sin estado' }}
+                </span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Prioridad:</span>
+                <span class="valor prioridad-badge" :class="`prioridad-${peticionDetalles.NivelImportancia}`">
+                  {{ obtenerTextoNivelImportancia(peticionDetalles.NivelImportancia) }}
+                </span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Fecha Registro:</span>
+                <span class="valor">{{ formatearFechaCompleta(peticionDetalles.fecha_registro) }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Usuario Seguimiento:</span>
+                <span class="valor">{{
+                  tieneUsuarioAsignado(peticionDetalles) ?
+                    (peticionDetalles.nombre_completo_usuario || peticionDetalles.nombre_usuario_seguimiento || 'Usuario asignado') :
+                    'Sin asignar'
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="detalle-seccion descripcion-completa">
+            <h4><i class="fas fa-file-text"></i> Descripción</h4>
+            <div class="descripcion-contenido">
+              {{ peticionDetalles.descripcion || 'Sin descripción' }}
+            </div>
+          </div>
+
+          <!-- Departamentos asignados -->
+          <div class="detalle-seccion departamentos-info">
+            <h4><i class="fas fa-building"></i> Departamentos Asignados</h4>
+            <div v-if="!peticionDetalles.departamentos || peticionDetalles.departamentos.length === 0" class="no-departamentos">
+              <i class="fas fa-building"></i>
+              <div class="mensaje">Sin departamentos asignados</div>
+              <div class="descripcion">Esta petición aún no ha sido derivada a ningún departamento</div>
+            </div>
+            <div v-else class="departamentos-lista">
+              <div v-for="dept in peticionDetalles.departamentos" :key="dept.id" class="departamento-item">
+                <div class="dept-info">
+                  <h5>{{ dept.nombre_unidad }}</h5>
+                  <span class="dept-estado" :class="`dept-estado-${dept.estado_asignacion?.toLowerCase()}`">
+                    {{ dept.estado_asignacion || 'Sin estado' }}
+                  </span>
+                </div>
+                <div class="dept-fecha">
+                  {{ formatearFecha(dept.fecha_asignacion) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Imágenes de la petición -->
+          <div class="detalle-seccion imagenes-peticion">
+            <h4><i class="fas fa-images"></i> Imágenes de la Petición</h4>
+            <div class="galeria-contenedor">
+              <ImageGallery
+                :entidad-tipo="'peticion'"
+                :entidad-id="peticionDetalles.id"
+                :readonly="true"
+                :show-upload="false"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarDetallesPeticion">
+            <i class="fas fa-times"></i>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Modal Detalles Completos de Petición -->
+    <div v-if="showDetallesPeticionModal" class="modal-overlay" @click.self="cerrarDetallesPeticion">
+      <div class="modal-content modal-detalles-peticion">
+        <div class="modal-header modal-detalles-header">
+          <h3>
+            <i class="fas fa-file-alt"></i>
+            Detalles de Petición - {{ peticionDetalles.folio }}
+          </h3>
+          <div class="header-actions">
+
+            <button class="close-btn" @click="cerrarDetallesPeticion">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body modal-detalles-body">
+          <!-- Información principal -->
+          <div class="detalles-grid">
+            <div class="detalle-seccion info-principal">
+              <h4><i class="fas fa-info-circle"></i> Información Principal</h4>
+              <div class="detalle-item">
+                <span class="label">Folio:</span>
+                <span class="valor">{{ peticionDetalles.folio || 'No asignado' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Nombre:</span>
+                <span class="valor">{{ peticionDetalles.nombre || 'Sin nombre' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Teléfono:</span>
+                <span class="valor">{{ peticionDetalles.telefono || 'No especificado' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Dirección:</span>
+                <span class="valor">{{ peticionDetalles.direccion || 'No especificada' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Localidad:</span>
+                <span class="valor">{{ peticionDetalles.localidad || 'No especificada' }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Red Social:</span>
+                <span class="valor">{{ peticionDetalles.red_social || 'No especificada' }}</span>
+              </div>
+            </div>
+
+            <div class="detalle-seccion info-estado">
+              <h4><i class="fas fa-flag"></i> Estado y Prioridad</h4>
+              <div class="detalle-item">
+                <span class="label">Estado:</span>
+                <span class="valor estado-badge" :class="`estado-${(peticionDetalles.estado || '').toLowerCase().replace(/\\s+/g, '-')}`">
+                  {{ peticionDetalles.estado || 'Sin estado' }}
+                </span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Prioridad:</span>
+                <span class="valor prioridad-badge" :class="`prioridad-${peticionDetalles.NivelImportancia}`">
+                  {{ obtenerTextoNivelImportancia(peticionDetalles.NivelImportancia) }}
+                </span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Fecha Registro:</span>
+                <span class="valor">{{ formatearFechaCompleta(peticionDetalles.fecha_registro) }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="label">Usuario Seguimiento:</span>
+                <span class="valor">{{
+                  tieneUsuarioAsignado(peticionDetalles) ?
+                    (peticionDetalles.nombre_completo_usuario || peticionDetalles.nombre_usuario_seguimiento || 'Usuario asignado') :
+                    'Sin asignar'
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="detalle-seccion descripcion-completa">
+            <h4><i class="fas fa-file-text"></i> Descripción</h4>
+            <div class="descripcion-contenido">
+              {{ peticionDetalles.descripcion || 'Sin descripción' }}
+            </div>
+          </div>
+
+          <!-- Departamentos asignados -->
+          <div class="detalle-seccion departamentos-info">
+            <h4><i class="fas fa-building"></i> Departamentos Asignados</h4>
+            <div v-if="!peticionDetalles.departamentos || peticionDetalles.departamentos.length === 0" class="no-departamentos">
+              <i class="fas fa-building"></i>
+              <div class="mensaje">Sin departamentos asignados</div>
+              <div class="descripcion">Esta petición aún no ha sido derivada a ningún departamento</div>
+            </div>
+            <div v-else class="departamentos-lista">
+              <div v-for="dept in peticionDetalles.departamentos" :key="dept.id" class="departamento-item">
+                <div class="dept-info">
+                  <h5>{{ dept.nombre_unidad }}</h5>
+                  <span class="dept-estado" :class="`dept-estado-${dept.estado_asignacion?.toLowerCase()}`">
+                    {{ dept.estado_asignacion || 'Sin estado' }}
+                  </span>
+                </div>
+                <div class="dept-fecha">
+                  {{ formatearFecha(dept.fecha_asignacion) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Imágenes de la petición -->
+          <div class="detalle-seccion imagenes-peticion">
+            <h4><i class="fas fa-images"></i> Imágenes de la Petición</h4>
+            <div class="galeria-contenedor">
+              <ImageGallery
+                :entidad-tipo="'peticion'"
+                :entidad-id="peticionDetalles.id"
+                :readonly="true"
+                :show-upload="false"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" @click="cerrarDetallesPeticion">
+            <i class="fas fa-times"></i>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import ImageGallery from '@/components/ImageGallery.vue';
 
 export default {
   name: 'GestionPeticiones',
+  components: {
+    ImageGallery
+  },
   setup() {
     const loading = ref(true);
     const peticiones = ref([]);
@@ -895,6 +1197,8 @@ export default {
     const showEditModal = ref(false);
     const showEstadoModal = ref(false);
     const showDepartamentosModal = ref(false);
+    const showMenuDepartamentos = ref(false);
+    const peticionSeleccionadaMenu = ref(null);
     const showImportanciaModal = ref(false);
     const peticionActiva = ref(null);
     const usuarioLogueado = ref(null);
@@ -1729,6 +2033,24 @@ export default {
       showDepartamentosModal.value = true;
     };
 
+    // Función para mostrar menú de opciones de departamentos
+    const mostrarMenuDepartamentos = (peticion) => {
+      peticionSeleccionadaMenu.value = peticion;
+      showMenuDepartamentos.value = true;
+    };
+
+    // Función para ver estados desde el menú
+    const verEstadosDepartamentos = () => {
+      showMenuDepartamentos.value = false;
+      abrirModalDepartamentosEstados(peticionSeleccionadaMenu.value);
+    };
+
+    // Función para gestionar desde el menú
+    const gestionarDepartamentosMenu = () => {
+      showMenuDepartamentos.value = false;
+      gestionarDepartamentos(peticionSeleccionadaMenu.value);
+    };
+
     // Función para asignar departamentos seleccionados
     const asignarDepartamentos = async () => {
       if (departamentosSeleccionados.value.length === 0) {
@@ -2098,6 +2420,7 @@ export default {
       showEditModal.value = false;
       showEstadoModal.value = false;
       showDepartamentosModal.value = false;
+      showMenuDepartamentos.value = false;
       showImportanciaModal.value = false;
     };
 
@@ -2268,6 +2591,10 @@ export default {
     const historialDeptCambios = ref([]);
     const loadingHistorialDept = ref(false);
 
+    // ✅ NUEVO: Variables para modal de detalles de petición
+    const showDetallesPeticionModal = ref(false);
+    const peticionDetalles = ref({});
+
     // ✅ NUEVA: Función para abrir historial de departamento
     const abrirHistorialDepartamento = async (peticion, departamento) => {
       historialPeticionSeleccionada.value = peticion;
@@ -2321,6 +2648,18 @@ export default {
       return texto.substring(0, maxLength) + '...';
     };
 
+    // ✅ NUEVA: Función para abrir modal de detalles de petición
+    const abrirDetallesPeticion = (peticion) => {
+      peticionDetalles.value = { ...peticion };
+      showDetallesPeticionModal.value = true;
+    };
+
+    // ✅ NUEVA: Función para cerrar modal de detalles
+    const cerrarDetallesPeticion = () => {
+      showDetallesPeticionModal.value = false;
+      peticionDetalles.value = {};
+    };
+
     return {
       loading,
 
@@ -2330,6 +2669,8 @@ export default {
       showEditModal,
       showEstadoModal,
       showDepartamentosModal,
+      showMenuDepartamentos,
+      peticionSeleccionadaMenu,
       showImportanciaModal,
       peticionForm,
       filtros,
@@ -2362,6 +2703,9 @@ export default {
       cambiarImportancia,
       seguimiento,
       gestionarDepartamentos,
+      mostrarMenuDepartamentos,
+      verEstadosDepartamentos,
+      gestionarDepartamentosMenu,
       asignarDepartamentos,
       eliminarDepartamentoAsignado,
       cambiarEstadoAsignacion,
@@ -2433,6 +2777,12 @@ export default {
       cerrarHistorialDepartamento,
       truncarTexto,
       formatearFechaCompleta,
+
+      // ✅ Modal de detalles de petición
+      showDetallesPeticionModal,
+      peticionDetalles,
+      abrirDetallesPeticion,
+      cerrarDetallesPeticion,
     };
   }
 };
@@ -2539,6 +2889,253 @@ export default {
 .peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
   color: white !important;
   background: transparent !important;
+}
+
+/* ✅ ESTILOS PARA FILAS DE LA TABLA CON GRID CONSISTENTE */
+.peticiones-container .peticion-item {
+  display: grid !important;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  align-items: center !important;
+  padding: 0.75rem 0 !important;
+  border-bottom: 1px solid #e9ecef !important;
+  transition: all 0.2s ease !important;
+  min-width: 1410px !important;
+  gap: 1rem !important;
+  background: white;
+}
+
+.peticiones-container .peticion-item:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ✅ ESTILOS ESPECÍFICOS PARA CADA COLUMNA */
+.peticiones-container .peticion-acciones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.peticiones-container .peticion-folio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-folio:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-nombre {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-nombre:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-telefono {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-telefono:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-localidad {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-localidad:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-estado {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-estado:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-departamentos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+}
+
+.peticiones-container .peticion-prioridad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-prioridad:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+.peticiones-container .peticion-fecha {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 1rem;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.peticiones-container .peticion-fecha:hover {
+  background: rgba(0, 116, 217, 0.1);
+  border-radius: 6px;
+}
+
+/* ✅ AJUSTES PARA CONTENIDO DE COLUMNAS */
+.peticiones-container .folio-badge {
+  background: linear-gradient(135deg, #0074D9, #0056b3);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.peticiones-container .nombre-peticion {
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.peticiones-container .telefono,
+.peticiones-container .localidad {
+  font-size: 13px;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peticiones-container .indicadores-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.peticiones-container .fecha-registro {
+  font-size: 12px;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+/* ✅ NUEVO: Estilos para items de la tabla con grid consistente */
+.peticiones-container .peticion-item {
+  display: grid !important;
+  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  align-items: center !important;
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid #e9ecef !important;
+  transition: all 0.2s ease !important;
+  min-width: 1410px !important;
+  gap: 0 !important;
+}
+
+.peticiones-container .peticion-item:hover {
+  background-color: #f8f9fa !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ✅ NUEVO: Estilos específicos para cada columna */
+.peticiones-container .peticion-acciones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.peticiones-container .peticion-folio {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.peticiones-container .peticion-nombre {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.peticiones-container .peticion-telefono {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.peticiones-container .peticion-localidad {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.peticiones-container .peticion-estado {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.peticiones-container .peticion-departamentos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.peticiones-container .peticion-prioridad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.peticiones-container .peticion-fecha {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
 }
 
 /* Estilos para el header con título y municipio */
@@ -2753,5 +3350,668 @@ export default {
     font-size: 11px;
     padding: 5px 12px;
   }
+}
+
+/* Estilos para nombre clickeable */
+.peticiones-container .nombre-clickable {
+  cursor: pointer;
+  color: #0074D9;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border-bottom: 1px dotted transparent;
+}
+
+.peticiones-container .nombre-clickable:hover {
+  color: #0056b3;
+  border-bottom-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Estilos para modal de opciones de departamentos */
+.peticiones-container .modal-opciones-departamentos {
+  max-width: 500px;
+  width: 90vw;
+  max-height: 80vh;
+}
+
+.peticiones-container .modal-opciones-departamentos .modal-body {
+  padding: 1.5rem;
+}
+
+.peticiones-container .peticion-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #0074D9;
+  font-size: 14px;
+  color: #495057;
+}
+
+.peticiones-container .opciones-departamentos {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.peticiones-container .btn-opcion {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.peticiones-container .btn-opcion:hover {
+  border-color: #0074D9;
+  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.15);
+  transform: translateY(-2px);
+}
+
+.peticiones-container .btn-ver-estados {
+  border-color: #28a745;
+}
+
+.peticiones-container .btn-ver-estados:hover {
+  border-color: #1e7e34;
+  background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+}
+
+.peticiones-container .btn-gestionar {
+  border-color: #ffc107;
+}
+
+.peticiones-container .btn-gestionar:hover {
+  border-color: #e0a800;
+  background: linear-gradient(135deg, #fffbf0, #fff3cd);
+}
+
+.peticiones-container .opcion-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.peticiones-container .opcion-content i {
+  font-size: 1.5rem;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.peticiones-container .btn-ver-estados .opcion-content i {
+  color: #28a745;
+}
+
+.peticiones-container .btn-gestionar .opcion-content i {
+  color: #ffc107;
+}
+
+.peticiones-container .opcion-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.peticiones-container .opcion-titulo {
+  font-weight: 600;
+  font-size: 16px;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.peticiones-container .opcion-descripcion {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.peticiones-container .sin-permisos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem;
+  background: #fff5f5;
+  border: 2px dashed #dc3545;
+  border-radius: 8px;
+  color: #721c24;
+  font-size: 14px;
+}
+
+.peticiones-container .sin-permisos i {
+  color: #dc3545;
+  font-size: 1.2rem;
+}
+
+/* Responsive para modal de opciones */
+@media (max-width: 768px) {
+  .peticiones-container .modal-opciones-departamentos {
+    width: 95vw;
+    max-width: none;
+  }
+
+  .peticiones-container .opcion-content {
+    gap: 0.75rem;
+  }
+
+  .peticiones-container .opcion-titulo {
+    font-size: 15px;
+  }
+
+  .peticiones-container .opcion-descripcion {
+    font-size: 12px;
+  }
+}
+
+/* Estilos para modal de detalles de petición */
+.peticiones-container .modal-detalles-peticion {
+  max-width: 1000px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.peticiones-container .modal-detalles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #0074D9, #0056b3);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.peticiones-container .modal-detalles-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+}
+
+.peticiones-container .header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.peticiones-container .modal-detalles-body {
+  padding: 2rem;
+  background: #f8f9fa;
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+.peticiones-container .detalles-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.peticiones-container .detalle-seccion {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.peticiones-container .detalle-seccion h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #495057;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 0.5rem;
+}
+
+.peticiones-container .detalle-item {
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.peticiones-container .detalle-item .label {
+  font-weight: 600;
+  color: #6c757d;
+  min-width: 120px;
+  margin-right: 1rem;
+}
+
+.peticiones-container .detalle-item .valor {
+  color: #495057;
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  white-space: pre-wrap;
+}
+
+.peticiones-container .descripcion-completa {
+  grid-column: 1 / -1;
+}
+
+.peticiones-container .descripcion-contenido {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #0074D9;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  font-size: 15px;
+  color: #495057;
+}
+
+.peticiones-container .departamentos-info {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+}
+
+.peticiones-container .departamentos-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+/* Estilos para cuando no hay departamentos */
+.peticiones-container .no-departamentos {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  color: #6c757d;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.peticiones-container .no-departamentos i {
+  font-size: 2rem;
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+  color: #adb5bd;
+}
+
+.peticiones-container .no-departamentos .mensaje {
+  font-weight: 500;
+  color: #6c757d;
+}
+
+.peticiones-container .no-departamentos .descripcion {
+  font-size: 12px;
+  color: #adb5bd;
+  margin-top: 0.25rem;
+}
+
+.peticiones-container .departamento-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #6c757d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.peticiones-container .dept-info h5 {
+  margin: 0 0 0.5rem 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.peticiones-container .dept-estado {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #6c757d;
+  color: white;
+}
+
+.peticiones-container .dept-estado-pendiente { background: #ffc107; color: #212529; }
+.peticiones-container .dept-estado-aceptado { background: #28a745; }
+.peticiones-container .dept-estado-rechazado { background: #dc3545; }
+.peticiones-container .dept-estado-procesando { background: #17a2b8; }
+
+.peticiones-container .dept-fecha {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: right;
+}
+
+.peticiones-container .imagenes-peticion {
+  grid-column: 1 / -1;
+}
+
+.peticiones-container .galeria-contenedor {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 2px dashed #dee2e6;
+}
+
+.peticiones-container .estado-badge,
+.peticiones-container .prioridad-badge {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.peticiones-container .prioridad-1 { background: #dc3545; color: white; }
+.peticiones-container .prioridad-2 { background: #fd7e14; color: white; }
+.peticiones-container .prioridad-3 { background: #ffc107; color: #212529; }
+.peticiones-container .prioridad-4 { background: #28a745; color: white; }
+.peticiones-container .prioridad-5 { background: #6c757d; color: white; }
+
+/* Estilos para imágenes en historial */
+.peticiones-container .historial-imagenes {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #17a2b8;
+}
+
+.peticiones-container .historial-imagenes h6 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #495057;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Responsive para modal de detalles */
+@media (max-width: 768px) {
+  .peticiones-container .modal-detalles-peticion {
+    width: 98vw;
+    max-height: 95vh;
+  }
+
+  .peticiones-container .detalles-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .peticiones-container .modal-detalles-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .peticiones-container .header-actions {
+    justify-content: space-between;
+  }
+
+  .peticiones-container .detalle-item {
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+    word-wrap: break-word;
+  }
+
+  .peticiones-container .detalle-item .label {
+    min-width: auto;
+    margin-right: 0;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* Estilos para badges de acciones */
+.peticiones-container .acciones-badges {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.peticiones-container .accion-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+  min-height: 24px;
+}
+
+.peticiones-container .edit-badge {
+  color: #0074D9;
+  border-color: #0074D9;
+}
+
+.peticiones-container .edit-badge:hover {
+  background: linear-gradient(135deg, #0074D9, #0056b3);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 116, 217, 0.3);
+}
+
+.peticiones-container .seguimiento-badge {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.peticiones-container .seguimiento-badge:hover {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+.peticiones-container .accion-badge.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #6c757d;
+  border-color: #dee2e6;
+}
+
+.peticiones-container .accion-badge.disabled:hover {
+  background: white;
+  transform: none;
+  box-shadow: none;
+  color: #6c757d;
+  border-color: #dee2e6;
+}
+
+.peticiones-container .accion-badge i {
+  font-size: 9px;
+}
+
+.peticiones-container .accion-badge span {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Responsive para badges de acciones */
+@media (max-width: 768px) {
+  .peticiones-container .acciones-badges {
+    gap: 4px;
+  }
+
+  .peticiones-container .accion-badge {
+    padding: 3px 6px;
+    font-size: 9px;
+    gap: 3px;
+    min-height: 20px;
+  }
+
+  .peticiones-container .accion-badge i,
+  .peticiones-container .accion-badge span {
+    font-size: 8px;
+  }
+
+  .peticiones-container .accion-badge span {
+    display: none; /* Ocultar texto en móvil, solo mostrar iconos */
+  }
+}
+
+/* Estilos para badges de departamentos */
+.peticiones-container .departamentos-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid;
+  min-height: 28px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.peticiones-container .sin-asignar-badge {
+  background: linear-gradient(135deg, #fff5f5, #ffe9e9);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.peticiones-container .sin-asignar-badge:hover {
+  background: linear-gradient(135deg, #ffe9e9, #ffcccb);
+  border-color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2);
+}
+
+.peticiones-container .con-asignaciones-badge {
+  background: linear-gradient(135deg, #f8fff8, #e8f5e8);
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.peticiones-container .con-asignaciones-badge:hover {
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-color: #1e7e34;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
+}
+
+.peticiones-container .badge-text {
+  font-weight: 600;
+}
+
+.peticiones-container .badge-icon,
+.peticiones-container .badge-icon-left {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.peticiones-container .badge-icon {
+  margin-left: 2px;
+}
+
+.peticiones-container .badge-icon-left {
+  margin-right: 2px;
+}
+
+/* Responsive para acciones y departamentos */
+@media (max-width: 768px) {
+  .peticiones-container .acciones-compact {
+    gap: 2px;
+  }
+
+  .peticiones-container .accion-table-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .peticiones-container .departamentos-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
+    min-height: 24px;
+  }
+
+  .peticiones-container .badge-icon,
+  .peticiones-container .badge-icon-left {
+    font-size: 9px;
+  }
+}
+
+/* Estilos para columnas clickeables */
+.peticiones-container .estado-clickeable.clickeable,
+.peticiones-container .prioridad-clickeable.clickeable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 4px 8px;
+  position: relative;
+}
+
+.peticiones-container .estado-clickeable.clickeable:hover,
+.peticiones-container .prioridad-clickeable.clickeable:hover {
+  background-color: #f0f8ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.15);
+}
+
+.peticiones-container .estado-clickeable.no-clickeable,
+.peticiones-container .prioridad-clickeable.no-clickeable {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Iconos de edición */
+.peticiones-container .estado-edit-icon,
+.peticiones-container .prioridad-edit-icon {
+  font-size: 12px;
+  margin-left: 8px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.peticiones-container .estado-clickeable.clickeable:hover .estado-edit-icon,
+.peticiones-container .prioridad-clickeable.clickeable:hover .prioridad-edit-icon {
+  opacity: 1;
+}
+
+.peticiones-container .departamentos-lista {
+  grid-template-columns: 1fr;
 }
 </style>

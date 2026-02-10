@@ -442,48 +442,32 @@
             </div>
           </div>
 
-          <!-- Imagen de la petición (Opcional) -->
+          <!-- Imágenes de la petición (Opcional) -->
           <div
             class="form-group"
             v-motion-fade-visible-once
             :initial="{ opacity: 0, x: -30 }"
             :enter="{ opacity: 1, x: 0, transition: { duration: 800, delay: 950 } }"
           >
-            <label for="imagen">
-              <font-awesome-icon icon="fa-solid fa-image" />
-              Imagen de la petición
+            <label>
+              <font-awesome-icon icon="fa-solid fa-camera" /> Imágenes del problema
               <span class="optional-badge">Opcional</span>
             </label>
-            <div class="image-upload-container">
-              <input
-                type="file"
-                id="imagen"
-                ref="imageInput"
-                accept="image/*"
-                @change="handleImageChange"
-                class="image-input"
-              />
-              <label for="imagen" class="image-upload-label">
-                <font-awesome-icon icon="fa-solid fa-cloud-upload-alt" class="upload-icon" />
-                <span v-if="!selectedImage">Haga clic para seleccionar una imagen</span>
-                <span v-else>Cambiar imagen</span>
-              </label>
-
-              <div v-if="imagePreview" class="image-preview-container">
-                <img :src="imagePreview" alt="Vista previa" class="image-preview" />
-                <button type="button" @click="removeImage" class="remove-image-btn">
-                  <font-awesome-icon icon="fa-solid fa-times-circle" />
-                  Eliminar imagen
-                </button>
-                <div class="image-info">
-                  <font-awesome-icon icon="fa-solid fa-file-image" />
-                  {{ selectedImage.name }} ({{ formatFileSize(selectedImage.size) }})
-                </div>
-              </div>
-            </div>
+            <ImageUpload
+              ref="imageUploadRef"
+              title="Subir Imágenes del Problema"
+              :max-images="3"
+              :max-size-m-b="10"
+              entidad-tipo="peticion"
+              :entidad-id="null"
+              :auto-upload="false"
+              :initial-images="[]"
+              @images-changed="onImagesChanged"
+              @upload-error="onImageUploadError"
+            />
             <div class="help-text">
               <font-awesome-icon icon="fa-solid fa-info-circle" />
-              Puede adjuntar una foto que ayude a ilustrar su petición (máximo 5MB)
+              Puede adjuntar hasta 3 imágenes que muestren el problema reportado (máximo 10MB por imagen)
             </div>
           </div>
 
@@ -646,9 +630,13 @@
 
 <script>
 import { ref, computed, onMounted, nextTick } from "vue";
+import ImageUpload from '@/components/ImageUpload.vue';
 
 export default {
   name: "PetitionPage",
+  components: {
+    ImageUpload
+  },
   setup() {
     // -----------------------
     // State
@@ -679,8 +667,8 @@ export default {
     const isClassifying = ref(false);
     const lastClassification = ref(null);
     const selectedClassification = ref(null);
-    const selectedImage = ref(null);
-    const imagePreview = ref(null);
+    const selectedImages = ref([]);
+    const imageUploadRef = ref(null);
 
     // Manual classification
     const showManualClassification = ref(false);
@@ -997,7 +985,25 @@ export default {
         if (responseData.success) {
           generatedFolio.value = responseData.folio || "FOLIO-ERROR";
           lastClassification.value = selectedClassification.value;
-          successMessage.value = "¡Petición enviada exitosamente!";
+
+          // Subir imágenes si la petición se guardó correctamente
+          if (responseData.id && selectedImages.value.length > 0) {
+            console.log('📤 Subiendo imágenes para petición ID:', responseData.id);
+            const imageUploadResult = await uploadPetitionImages(responseData.id);
+
+            if (!imageUploadResult.success) {
+              console.warn('⚠️ Error al subir imágenes:', imageUploadResult.error);
+              // No interrumpir el flujo, solo mostrar advertencia
+              successMessage.value = "¡Petición enviada exitosamente! (Algunas imágenes no se pudieron subir)";
+            } else {
+              successMessage.value = "¡Petición enviada exitosamente!";
+              if (imageUploadResult.imagenes && imageUploadResult.imagenes.length > 0) {
+                console.log('📸 Imágenes subidas:', imageUploadResult.imagenes.length);
+              }
+            }
+          } else {
+            successMessage.value = "¡Petición enviada exitosamente!";
+          }
 
           console.log("✅ Petición guardada. Folio:", generatedFolio.value, "Division ID:", responseData.division_id);
           await scrollToSuccessMessage();
@@ -1040,8 +1046,12 @@ export default {
       successMessage.value = "";
       errorMessage.value = "";
       generatedFolio.value = "";
-      selectedImage.value = null;
-      imagePreview.value = null;
+      selectedImages.value = [];
+
+      // Limpiar componente de imágenes
+      if (imageUploadRef.value) {
+        imageUploadRef.value.clearImages();
+      }
 
       nextTick(() => {
         const formElement = document.querySelector(".form-container");
@@ -1136,6 +1146,62 @@ export default {
     });
 
     // -----------------------
+    // Métodos de imágenes
+    // -----------------------
+    const onImagesChanged = (images) => {
+      selectedImages.value = images;
+      console.log('📸 Imágenes cambiadas:', images);
+    };
+
+    const onImageUploadError = (error) => {
+      console.error('❌ Error al subir imágenes:', error);
+      errorMessage.value = `Error al subir imágenes: ${error.message || 'Error desconocido'}`;
+    };
+
+    // Subir imágenes después de crear la petición
+    const uploadPetitionImages = async (peticionId) => {
+      if (!selectedImages.value || selectedImages.value.length === 0) {
+        return { success: true, message: 'No hay imágenes para subir' };
+      }
+
+      try {
+        console.log('📤 Iniciando upload de imágenes para petición ID:', peticionId);
+
+        const formData = new FormData();
+        formData.append('entidad_tipo', 'peticion');
+        formData.append('entidad_id', peticionId.toString());
+
+        // Agregar archivos al FormData
+        selectedImages.value.forEach((image, index) => {
+          if (image.file) {
+            formData.append('imagenes[]', image.file);
+            console.log(`📎 Agregando imagen ${index + 1}: ${image.file.name} (${image.file.size} bytes)`);
+          }
+        });
+
+        // Usar axios en lugar de fetch para consistencia
+        const axios = (await import('axios')).default;
+        const response = await axios.post('imagenes.php', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        const result = response.data;
+
+        if (result.success) {
+          console.log('✅ Imágenes subidas correctamente:', result.imagenes?.length || 0, 'archivos');
+          return { success: true, imagenes: result.imagenes };
+        } else {
+          throw new Error(result.message || 'Error al subir imágenes');
+        }
+      } catch (error) {
+        console.error('❌ Error subiendo imágenes:', error);
+        return { success: false, error: error.message };
+      }
+    };
+
+    // -----------------------
     // Expose to template
     // -----------------------
     return {
@@ -1153,8 +1219,8 @@ export default {
       municipiosYucatan,
       isLoadingMunicipios,
       municipioError,
-      selectedImage,
-      imagePreview,
+      selectedImages,
+      imageUploadRef,
 
       // Computed
       canSubmit,
@@ -1168,48 +1234,8 @@ export default {
         formData.value.telefono = cleanValue;
         validateField("telefono", cleanValue);
       },
-      handleImageChange: (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          // Validar tamaño (máximo 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            errorMessage.value = "La imagen no debe superar los 5MB";
-            event.target.value = "";
-            return;
-          }
-
-          // Validar tipo de archivo
-          if (!file.type.startsWith("image/")) {
-            errorMessage.value = "Solo se permiten archivos de imagen";
-            event.target.value = "";
-            return;
-          }
-
-          selectedImage.value = file;
-
-          // Crear preview
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            imagePreview.value = e.target.result;
-          };
-          reader.readAsDataURL(file);
-
-          errorMessage.value = "";
-        }
-      },
-      removeImage: () => {
-        selectedImage.value = null;
-        imagePreview.value = null;
-        const input = document.getElementById("imagen");
-        if (input) input.value = "";
-      },
-      formatFileSize: (bytes) => {
-        if (bytes === 0) return "0 Bytes";
-        const k = 1024;
-        const sizes = ["Bytes", "KB", "MB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
-      },
+      onImagesChanged,
+      onImageUploadError,
       onMunicipioChange,
       onDescriptionChange,
       testClassification,

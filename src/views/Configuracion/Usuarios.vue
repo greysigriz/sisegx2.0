@@ -2610,7 +2610,7 @@ export default {
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: #1e293b;
+  color: #ffffff;
 }
 
 .usuarios-modal-body {

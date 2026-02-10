@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba API de Imágenes - SISEE</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Prueba del Sistema de Imágenes - SISEE</h1>
+    
+    <div class="section">
+        <h2>📤 Subir Imágenes de Petición</h2>
+        <form id="uploadForm">
+            <div>
+                <label for="entidadTipo">Tipo de Entidad:</label>
+                <select id="entidadTipo">
+                    <option value="peticion">Petición</option>
+                    <option value="historial_cambio">Historial de Cambio</option>
+                </select>
+            </div>
+            <br>
+            <div>
+                <label for="entidadId">ID de Entidad:</label>
+                <input type="number" id="entidadId" value="1" min="1">
+            </div>
+            <br>
+            <div class="upload-area">
+                <input type="file" id="imageFiles" multiple accept="image/*">
+                <p>Selecciona hasta 3 imágenes (máximo 10MB cada una)</p>
+            </div>
+            <button type="submit">Subir Imágenes</button>
+        </form>
+        <div id="uploadResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>📋 Listar Imágenes</h2>
+        <div>
+            <label for="listTipo">Tipo:</label>
+            <select id="listTipo">
+                <option value="peticion">Petición</option>
+                <option value="historial_cambio">Historial de Cambio</option>
+            </select>
+            <label for="listId">ID:</label>
+            <input type="number" id="listId" value="1" min="1">
+            <button onclick="listarImagenes()">Listar Imágenes</button>
+        </div>
+        <div id="listResult"></div>
+    </div>
+    
+    <div class="section">
+        <h2>🗑️ Eliminar Imagen</h2>
+        <div>
+            <label for="deleteId">ID de Imagen:</label>
+            <input type="number" id="deleteId" min="1">
+            <button onclick="eliminarImagen()">Eliminar Imagen</button>
+        </div>
+        <div id="deleteResult"></div>
+    </div>
+
+    <script>
+        const API_URL = '/SISEE/api/imagenes.php';
+        
+        // Función para mostrar resultados
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${isError ? 'error' : 'success'}">${message}</div>`;
+        }
+        
+        // Subir imágenes
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const files = document.getElementById('imageFiles').files;
+            const entidadTipo = document.getElementById('entidadTipo').value;
+            const entidadId = document.getElementById('entidadId').value;
+            
+            if (files.length === 0) {
+                showResult('uploadResult', 'Selecciona al menos una imagen', true);
+                return;
+            }
+            
+            if (files.length > 3) {
+                showResult('uploadResult', 'Máximo 3 imágenes permitidas', true);
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('entidad_tipo', entidadTipo);
+            formData.append('entidad_id', entidadId);
+            
+            for (let file of files) {
+                formData.append('imagenes[]', file);
+            }
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    let message = `✅ ${result.message}<br>`;
+                    if (result.imagenes && result.imagenes.length > 0) {
+                        message += `<strong>Imágenes subidas:</strong><br>`;
+                        result.imagenes.forEach(img => {
+                            message += `- ${img.filename_original} (ID: ${img.id})<br>`;
+                        });
+                    }
+                    if (result.errores && result.errores.length > 0) {
+                        message += `<strong>Errores:</strong><br>`;
+                        result.errores.forEach(error => {
+                            message += `- ${error}<br>`;
+                        });
+                    }
+                    showResult('uploadResult', message);
+                } else {
+                    showResult('uploadResult', `❌ Error: ${result.message}`, true);
+                }
+            } catch (error) {
+                showResult('uploadResult', `❌ Error de conexión: ${error.message}`, true);
+            }
+        });
+        
+        // Listar imágenes
+        async function listarImagenes() {
+            const tipo = document.getElementById('listTipo').value;
+            const id = document.getElementById('listId').value;
+            
+            if (!id) {
+                showResult('listResult', 'Ingresa un ID válido', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}?entidad_tipo=${tipo}&entidad_id=${id}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    let message = `📊 Total: ${result.total} imágenes<br><br>`;
+                    
+                    if (result.imagenes && result.imagenes.length > 0) {
+                        result.imagenes.forEach(img => {
+                            message += `
+                                <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                                    <strong>ID:</strong> ${img.id}<br>
+                                    <strong>Nombre:</strong> ${img.filename_original}<br>
+                                    <strong>Tamaño:</strong> ${formatFileSize(img.file_size)}<br>
+                                    <strong>Dimensiones:</strong> ${img.width}×${img.height}<br>
+                                    <strong>Subida:</strong> ${new Date(img.fecha_subida).toLocaleString()}<br>
+                                    <strong>Usuario:</strong> ${img.usuario_nombre || 'N/A'}<br>
+                                    <img src="${img.url_acceso}" class="image-preview" alt="${img.filename_original}" 
+                                         onerror="this.style.display='none';">
+                                </div>
+                            `;
+                        });
+                    } else {
+                        message += 'No se encontraron imágenes para esta entidad.';
+                    }
+                    
+                    showResult('listResult', message);
+                } else {
+                    showResult('listResult', `❌ Error: ${result.message}`, true);
+                }
+            } catch (error) {
+                showResult('listResult', `❌ Error de conexión: ${error.message}`, true);
+            }
+        }
+        
+        // Eliminar imagen
+        async function eliminarImagen() {
+            const id = document.getElementById('deleteId').value;
+            
+            if (!id) {
+                showResult('deleteResult', 'Ingresa un ID de imagen válido', true);
+                return;
+            }
+            
+            if (!confirm('¿Estás seguro de que deseas eliminar esta imagen?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imagen_id: parseInt(id)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('deleteResult', `✅ ${result.message}`);
+                    document.getElementById('deleteId').value = '';
+                } else {
+                    showResult('deleteResult', `❌ Error: ${result.message}`, true);
+                }
+            } catch (error) {
+                showResult('deleteResult', `❌ Error de conexión: ${error.message}`, true);
+            }
+        }
+        
+        // Utilidades
+        function formatFileSize(bytes) {
+            if (!bytes) return 'N/A';
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

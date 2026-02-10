@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Imágenes - Debugging</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 2px dashed #ddd; 
+            border-radius: 8px; 
+        }
+        .debug { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-left: 4px solid #007bff; 
+            font-family: monospace; 
+            font-size: 12px; 
+        }
+        .error { border-left-color: #dc3545; background: #fff5f5; }
+        .success { border-left-color: #28a745; background: #f5fff5; }
+        .warning { border-left-color: #ffc107; background: #fffbf0; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .disabled { background: #6c757d !important; cursor: not-allowed !important; }
+        input[type="file"] { margin: 10px 0; }
+        .preview { 
+            display: flex; 
+            gap: 10px; 
+            margin: 10px 0; 
+            flex-wrap: wrap; 
+        }
+        .preview img { 
+            width: 100px; 
+            height: 100px; 
+            object-fit: cover; 
+            border-radius: 4px; 
+            border: 2px solid #ddd; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Test Completo de Imágenes</h1>
+        
+        <div class="section">
+            <h3>1. Test Conexión API</h3>
+            <button onclick="testAPI()">Probar API</button>
+            <div id="apiResult" class="debug"></div>
+        </div>
+        
+        <div class="section">
+            <h3>2. Test Upload Real</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div>
+                    <label for="images">Seleccionar imágenes:</label>
+                    <input type="file" id="images" name="imagenes[]" multiple accept="image/*" onchange="previewImages()">
+                </div>
+                <div id="preview" class="preview"></div>
+                <div style="margin: 10px 0;">
+                    <label for="entidad_tipo">Tipo de entidad:</label>
+                    <select id="entidad_tipo" name="entidad_tipo" required>
+                        <option value="peticion">Petición</option>
+                        <option value="historial_cambio">Historial de Cambio</option>
+                    </select>
+                </div>
+                <div style="margin: 10px 0;">
+                    <label for="entidad_id">ID de entidad:</label>
+                    <input type="number" id="entidad_id" name="entidad_id" value="1" required>
+                </div>
+                <button type="submit">Subir Imágenes</button>
+            </form>
+            <div id="uploadResult" class="debug"></div>
+        </div>
+        
+        <div class="section">
+            <h3>3. Verificar en Base de Datos</h3>
+            <button onclick="checkDatabase()">Revisar BD</button>
+            <div id="dbResult" class="debug"></div>
+        </div>
+        
+        <div class="section">
+            <h3>4. Listar Imágenes Existentes</h3>
+            <button onclick="listImages()">Listar Todas las Imágenes</button>
+            <div id="listResult" class="debug"></div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedImageIds = [];
+        
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const className = type === 'error' ? 'debug error' : 
+                             type === 'success' ? 'debug success' : 
+                             type === 'warning' ? 'debug warning' : 'debug';
+            
+            container.innerHTML += `<div class="${className}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function clearLog(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+        
+        async function testAPI() {
+            clearLog('apiResult');
+            log('apiResult', '🔄 Probando conexión con API...', 'info');
+            
+            try {
+                const response = await fetch('/SISEE/api/imagenes.php', {
+                    method: 'POST',
+                    body: new FormData()
+                });
+                
+                log('apiResult', `Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const responseText = await response.text();
+                log('apiResult', `Response: ${responseText}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        log('apiResult', `JSON válido: ${JSON.stringify(data, null, 2)}`, 'success');
+                    } catch (e) {
+                        log('apiResult', `Response no es JSON válido: ${responseText}`, 'warning');
+                    }
+                }
+                
+            } catch (error) {
+                log('apiResult', `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+        
+        function previewImages() {
+            const input = document.getElementById('images');
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            
+            Array.from(input.files).forEach((file, index) => {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.title = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                preview.appendChild(img);
+                
+                log('uploadResult', `📷 Archivo seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`, 'info');
+            });
+        }
+        
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            clearLog('uploadResult');
+            
+            const formData = new FormData();
+            const files = document.getElementById('images').files;
+            const entidadTipo = document.getElementById('entidad_tipo').value;
+            const entidadId = document.getElementById('entidad_id').value;
+            
+            if (files.length === 0) {
+                log('uploadResult', '❌ No se seleccionaron archivos', 'error');
+                return;
+            }
+            
+            // Agregar archivos
+            Array.from(files).forEach(file => {
+                formData.append('imagenes[]', file);
+            });
+            formData.append('entidad_tipo', entidadTipo);
+            formData.append('entidad_id', entidadId);
+            
+            log('uploadResult', `🔄 Subiendo ${files.length} archivo(s) para ${entidadTipo} ID ${entidadId}...`, 'info');
+            
+            try {
+                const response = await fetch('/SISEE/api/imagenes.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                log('uploadResult', `📡 Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                const responseText = await response.text();
+                log('uploadResult', `📄 Response Text: ${responseText}`, 'info');
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        log('uploadResult', `✅ Success: ${JSON.stringify(data, null, 2)}`, 'success');
+                        
+                        if (data.imagenes && Array.isArray(data.imagenes)) {
+                            uploadedImageIds = data.imagenes.map(img => img.id);
+                            log('uploadResult', `📝 IDs guardados: ${uploadedImageIds.join(', ')}`, 'success');
+                        }
+                        
+                        // Auto-verificar en la BD después del upload
+                        setTimeout(checkDatabase, 1000);
+                        
+                    } catch (e) {
+                        log('uploadResult', `❌ Error parseando JSON: ${e.message}`, 'error');
+                        log('uploadResult', `Response raw: ${responseText}`, 'error');
+                    }
+                } else {
+                    log('uploadResult', `❌ Error HTTP: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                log('uploadResult', `❌ Error de red: ${error.message}`, 'error');
+            }
+        });
+        
+        async function checkDatabase() {
+            clearLog('dbResult');
+            log('dbResult', '🔄 Verificando base de datos...', 'info');
+            
+            try {
+                const response = await fetch('/SISEE/verificar-bd.php');
+                const text = await response.text();
+                
+                if (response.ok) {
+                    log('dbResult', `📊 Estado de la BD:\n${text}`, 'success');
+                } else {
+                    log('dbResult', `❌ Error verificando BD: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                log('dbResult', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function listImages() {
+            clearLog('listResult');
+            log('listResult', '🔄 Listando imágenes...', 'info');
+            
+            try {
+                const response = await fetch('/SISEE/api/imagenes.php?entidad_tipo=peticion&entidad_id=1');
+                const responseText = await response.text();
+                
+                log('listResult', `📡 Status: ${response.status}`, response.ok ? 'success' : 'error');
+                log('listResult', `Response: ${responseText}`, 'info');
+                
+                if (response.ok) {
+                    try {
+                        const data = JSON.parse(responseText);
+                        if (data.imagenes && data.imagenes.length > 0) {
+                            log('listResult', `📸 Encontradas ${data.imagenes.length} imágenes:`, 'success');
+                            data.imagenes.forEach(img => {
+                                log('listResult', `  ID ${img.id}: ${img.filename_original} (${img.file_size} bytes) - ${img.fecha_subida}`, 'info');
+                            });
+                        } else {
+                            log('listResult', '📭 No se encontraron imágenes', 'warning');
+                        }
+                    } catch (e) {
+                        log('listResult', `❌ Error parseando respuesta: ${e.message}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log('listResult', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test inicial
+        window.addEventListener('load', function() {
+            setTimeout(testAPI, 500);
+            setTimeout(checkDatabase, 1000);
+        });
+    </script>
+</body>
+</html>

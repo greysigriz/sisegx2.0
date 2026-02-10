@@ -63,23 +63,28 @@ const processQueue = (error, token = null) => {
 // Interceptor para manejar requests
 axios.interceptors.request.use(
   (config) => {
-    // ✅ NUEVO: Generar CancelToken para este request
-    const requestKey = generateRequestKey(config);
+    // ✅ NUEVO: Excluir endpoint de imágenes del sistema anti-duplicados
+    const isImageEndpoint = config.url && config.url.includes('imagenes.php');
+    
+    if (!isImageEndpoint) {
+      // ✅ NUEVO: Generar CancelToken para este request (excepto imágenes)
+      const requestKey = generateRequestKey(config);
 
-    // Si ya existe un request idéntico pendiente, cancelarlo
-    if (pendingRequests.has(requestKey)) {
-      const cancel = pendingRequests.get(requestKey);
-      cancel('Request duplicado cancelado');
-      pendingRequests.delete(requestKey);
+      // Si ya existe un request idéntico pendiente, cancelarlo
+      if (pendingRequests.has(requestKey)) {
+        const cancel = pendingRequests.get(requestKey);
+        cancel('Request duplicado cancelado');
+        pendingRequests.delete(requestKey);
+      }
+
+      // Crear nuevo CancelToken
+      config.cancelToken = new CancelToken((cancel) => {
+        pendingRequests.set(requestKey, cancel);
+      });
     }
 
-    // Crear nuevo CancelToken
-    config.cancelToken = new CancelToken((cancel) => {
-      pendingRequests.set(requestKey, cancel);
-    });
-
-    // Solo agregar timestamp para GET requests
-    if (config.method === 'get') {
+    // Solo agregar timestamp para GET requests no-imagen
+    if (config.method === 'get' && !isImageEndpoint) {
       config.params = {
         ...config.params,
         _t: Date.now()
@@ -108,9 +113,13 @@ axios.interceptors.request.use(
 // Interceptor mejorado para manejar responses
 axios.interceptors.response.use(
   (response) => {
-    // ✅ NUEVO: Remover request de la cola de pendientes al completarse
-    const requestKey = generateRequestKey(response.config);
-    pendingRequests.delete(requestKey);
+    // ✅ NUEVO: Solo remover de la cola si no es endpoint de imágenes
+    const isImageEndpoint = response.config.url && response.config.url.includes('imagenes.php');
+    
+    if (!isImageEndpoint) {
+      const requestKey = generateRequestKey(response.config);
+      pendingRequests.delete(requestKey);
+    }
 
     return response;
   },
@@ -121,10 +130,13 @@ axios.interceptors.response.use(
       return Promise.reject({ cancelled: true, message: error.message });
     }
 
-    // ✅ NUEVO: Remover request de la cola de pendientes en caso de error
+    // ✅ NUEVO: Solo remover de la cola si no es endpoint de imágenes y hay config
     if (error.config) {
-      const requestKey = generateRequestKey(error.config);
-      pendingRequests.delete(requestKey);
+      const isImageEndpoint = error.config.url && error.config.url.includes('imagenes.php');
+      if (!isImageEndpoint) {
+        const requestKey = generateRequestKey(error.config);
+        pendingRequests.delete(requestKey);
+      }
     }
 
     const originalRequest = error.config;

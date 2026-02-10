@@ -40,7 +40,13 @@ import {
   faTimes,
   faInfoCircle,
   faExclamationTriangle,
-  faMapMarkerAlt        // para los municipios
+  faMapMarkerAlt,       // para los municipios
+  // Iconos para ImageGallery
+  faExpand,
+  faDownload,
+  faTrash,
+  faChevronLeft,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
@@ -69,7 +75,13 @@ library.add(
   faTimes,
   faInfoCircle,
   faExclamationTriangle,
-  faMapMarkerAlt
+  faMapMarkerAlt,
+  // Iconos para ImageGallery
+  faExpand,
+  faDownload,
+  faTrash,
+  faChevronLeft,
+  faChevronRight
 )
 
 const app = createApp(App)

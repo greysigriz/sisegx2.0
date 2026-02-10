@@ -1,0 +1,15 @@
+# Configuración de acceso para uploads de SISEE
+Options -Indexes
+
+# Permitir acceso a imágenes
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|bmp)$">
+    Order allow,deny
+    Allow from all
+    Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+# Denegar acceso a otros archivos
+<FilesMatch "\.(php|txt|sql|log)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>

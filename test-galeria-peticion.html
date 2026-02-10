@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba ImageGallery - Petición</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Prueba ImageGallery con Petición</h1>
+
+        <div class="test-section">
+            <h3>Test 1: Verificar imágenes de petición ID 1</h3>
+            <p>Deberías ver las imágenes que subiste para la petición con ID 1.</p>
+            <p><strong>URL que debe funcionar:</strong> <code>/SISEE/api/imagenes.php?entidad_tipo=peticion&entidad_id=1</code></p>
+            <div id="galleryTest"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: API Direct Call</h3>
+            <button onclick="testDirectAPI()">Probar API Directa</button>
+            <div id="apiResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Base de Datos</h3>
+            <button onclick="testDB()">Verificar BD</button>
+            <div id="dbResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test de la API directa
+        async function testDirectAPI() {
+            const result = document.getElementById('apiResult');
+            result.innerHTML = '<p>🔄 Probando API...</p>';
+
+            try {
+                // ✅ CORREGIDO: Usar la ruta correcta que funciona
+                const response = await fetch('/SISEE/api/imagenes.php?entidad_tipo=peticion&entidad_id=1');
+                const data = await response.json();
+
+                result.innerHTML = `
+                    <h4>📡 Respuesta de la API:</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+                if (data.success && data.imagenes?.length > 0) {
+                    result.innerHTML += `
+                        <h4>✅ Imágenes encontradas:</h4>
+                        <ul>
+                            ${data.imagenes.map(img =>
+                                `<li><strong>${img.filename_original}</strong><br>
+                                 📂 Archivo: ${img.filename_storage}<br>
+                                 🔗 URL: ${img.url_acceso}<br>
+                                 📊 Tamaño: ${img.file_size} bytes<br>
+                                 📅 Fecha: ${img.fecha_subida}</li>`
+                            ).join('')}
+                        </ul>
+                    `;
+
+                    // ✅ NUEVO: Probar que las imágenes se pueden cargar
+                    result.innerHTML += '<h4>🖼️ Probando cargar imágenes:</h4>';
+                    data.imagenes.forEach(img => {
+                        result.innerHTML += `
+                            <div style="margin: 10px 0; border: 1px solid #ddd; padding: 10px;">
+                                <p><strong>${img.filename_original}</strong></p>
+                                <img src="${img.url_acceso}" alt="${img.filename_original}"
+                                     style="max-width: 200px; max-height: 150px;"
+                                     onload="this.style.border='2px solid green'"
+                                     onerror="this.style.border='2px solid red'; this.alt='❌ Error cargando imagen'">
+                            </div>
+                        `;
+                    });
+                } else {
+                    result.innerHTML += `<p>⚠️ No se encontraron imágenes para la petición ID 1</p>`;
+                    result.innerHTML += `<p><strong>Datos devueltos:</strong> ${JSON.stringify(data)}</p>`;
+                }
+
+            } catch (error) {
+                result.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Test de la base de datos
+        async function testDB() {
+            const result = document.getElementById('dbResult');
+            result.innerHTML = '<p>🔄 Verificando BD...</p>';
+
+            try {
+                const response = await fetch('/SISEE/verificar-bd.php');
+                const text = await response.text();
+                result.innerHTML = `<pre>${text}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-ejecutar tests al cargar
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                testDirectAPI();
+                testDB();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

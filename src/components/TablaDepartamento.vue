@@ -121,7 +121,7 @@
             <div class="tabla-scroll-container">
               <div class="tabla-contenido">
                 <!-- Header -->
-                <div class="list-header" style="grid-template-columns: 120px 180px 1fr 200px 160px 150px 180px;">
+                <div class="list-header" style="grid-template-columns: 120px 180px 1fr 200px 160px 150px 220px;">
                   <div>Folio</div>
                   <div>Localidad</div>
                   <div>Descripción del Problema</div>
@@ -136,7 +136,7 @@
                   v-for="peticion in peticionesPaginadas"
                   :key="peticion.asignacion_id"
                   class="peticion-item"
-                  style="grid-template-columns: 120px 180px 1fr 200px 160px 150px 180px;"
+                  style="grid-template-columns: 120px 180px 1fr 200px 160px 150px 220px;"
                 >
                 <div class="peticion-info">
                   <span class="folio-badge">{{ peticion.folio }}</span>
@@ -167,6 +167,11 @@
                   </span>
                 </div>
                 <div class="peticion-acciones">
+                  <button @click="abrirModalDetalles(peticion)" class="action-btn"
+                          style="background: linear-gradient(135deg, #17a2b8, #138496); margin-right: 0.5rem;"
+                          title="Ver Detalles">
+                    <i class="fas fa-info-circle"></i>
+                  </button>
                   <button @click="abrirModalCambioEstado(peticion)" class="action-btn menu" title="Cambiar Estado">
                     <i class="fas fa-edit"></i>
                   </button>
@@ -333,6 +338,30 @@
             <label>Motivo del cambio *</label>
             <textarea v-model="motivoCambio" rows="4" placeholder="Explica el motivo del cambio de estado..." required></textarea>
           </div>
+
+          <!-- Componente para subir imágenes -->
+          <div class="form-group">
+            <label>
+              <i class="fas fa-camera"></i> Imágenes del progreso
+              <span class="optional-badge">Opcional</span>
+            </label>
+            <ImageUpload
+              ref="imageUploadEstadoRef"
+              title="Subir Imágenes del Progreso"
+              :max-images="3"
+              :max-size-m-b="10"
+              entidad-tipo="historial_cambio"
+              :entidad-id="0"
+              :auto-upload="false"
+              :initial-images="[]"
+              @images-changed="onImagenesEstadoChanged"
+              @upload-error="onImageUploadError"
+            />
+            <div class="help-text">
+              <i class="fas fa-info-circle"></i>
+              Puede adjuntar hasta 3 imágenes que documenten el progreso del cambio de estado
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button @click="cerrarModalEstado" class="btn-secondary">
@@ -340,6 +369,111 @@
           </button>
           <button @click="guardarCambioEstado" class="btn-primary" :disabled="!nuevoEstado || !motivoCambio">
             <i class="fas fa-save"></i> Guardar Cambio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Detalles de Petición -->
+    <div v-if="mostrarModalDetalles" class="modal-overlay" @click.self="cerrarModalDetalles">
+      <div class="modal-content modal-detalles">
+        <div class="modal-header">
+          <h3><i class="fas fa-info-circle"></i> Detalles de la Petición</h3>
+          <button @click="cerrarModalDetalles" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detalles-grid">
+            <div class="detalle-item">
+              <label><i class="fas fa-hashtag"></i> Folio:</label>
+              <span class="folio-badge">{{ peticionSeleccionada.folio }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-map-marker-alt"></i> Localidad:</label>
+              <span>{{ peticionSeleccionada.localidad }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-user"></i> Nombre del Solicitante:</label>
+              <span>{{ peticionSeleccionada.nombre }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-phone"></i> Teléfono:</label>
+              <span>{{ peticionSeleccionada.telefono || 'No proporcionado' }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-hashtag"></i> Red Social:</label>
+              <span>{{ peticionSeleccionada.red_social || 'No proporcionado' }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-exclamation-circle"></i> Nivel de Importancia:</label>
+              <div :class="['nivel-importancia', `nivel-${peticionSeleccionada.NivelImportancia}`]">
+                {{ obtenerEtiquetaNivelImportancia(peticionSeleccionada.NivelImportancia) }}
+              </div>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-tag"></i> Estado Actual:</label>
+              <span :class="['estado-badge', `estado-${peticionSeleccionada.estado_departamento.toLowerCase().replace(/ /g, '-')}`]">
+                {{ peticionSeleccionada.estado_departamento }}
+              </span>
+            </div>
+            <div class="detalle-item" v-if="peticionSeleccionada.fecha_creacion">
+              <label><i class="fas fa-calendar-plus"></i> Fecha de Creación:</label>
+              <span>{{ formatearFechaCompleta(peticionSeleccionada.fecha_creacion) }}</span>
+            </div>
+            <div class="detalle-item">
+              <label><i class="fas fa-calendar-check"></i> Fecha de Asignación:</label>
+              <span>{{ formatearFechaCompleta(peticionSeleccionada.fecha_asignacion) }}</span>
+            </div>
+          </div>
+
+          <div class="descripcion-completa-container">
+            <h4><i class="fas fa-comment-alt"></i> Descripción del Problema:</h4>
+            <div class="descripcion-texto">
+              {{ peticionSeleccionada.descripcion }}
+            </div>
+          </div>
+
+          <!-- Dirección si está disponible -->
+          <div v-if="peticionSeleccionada.direccion" class="direccion-container">
+            <h4><i class="fas fa-map-marker-alt"></i> Dirección:</h4>
+            <div class="direccion-texto">
+              {{ peticionSeleccionada.direccion }}
+            </div>
+          </div>
+
+          <!-- Imágenes de la petición -->
+          <div class="imagenes-peticion-container">
+            <h4><i class="fas fa-images"></i> Imágenes de la Petición</h4>
+
+            <div v-if="cargandoImagenesPeticion" class="loading-imagenes">
+              <i class="fas fa-spinner fa-spin"></i> Cargando imágenes...
+            </div>
+
+            <div v-else-if="imagenesPeticion.length === 0" class="no-imagenes">
+              <i class="fas fa-image"></i> No hay imágenes adjuntas a esta petición
+            </div>
+
+            <div v-else class="imagenes-grid">
+              <div v-for="imagen in imagenesPeticion" :key="imagen.id" class="imagen-item">
+                <img :src="imagen.url_acceso || imagen.ruta_imagen"
+                     :alt="imagen.nombre_archivo"
+                     @click="abrirImagenCompleta(imagen)"
+                     @error="(e) => onImageError(e, imagen)"
+                     class="imagen-thumbnail"
+                     :title="imagen.nombre_archivo">
+                <div class="imagen-info">
+                  <small>{{ imagen.nombre_archivo }}</small>
+                  <small>{{ formatearFecha(imagen.fecha_subida) }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="cerrarModalDetalles" class="btn-secondary">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+          <button @click="abrirModalHistorial(peticionSeleccionada)" class="btn-primary">
+            <i class="fas fa-history"></i> Ver Historial
           </button>
         </div>
       </div>
@@ -393,6 +527,28 @@
                 <div class="historial-motivo">
                   <strong>Motivo:</strong> {{ cambio.motivo }}
                 </div>
+
+                <!-- Imágenes del historial -->
+                <div v-if="cambio.imagenes && cambio.imagenes.length > 0" class="historial-imagenes">
+                  <h5><i class="fas fa-images"></i> Imágenes del progreso:</h5>
+                  <div class="imagenes-grid">
+                    <div v-for="imagen in cambio.imagenes" :key="imagen.id" class="imagen-item">
+                      <img :src="imagen.url_acceso || imagen.ruta_imagen"
+                           :alt="imagen.nombre_archivo"
+                           @click="abrirImagenCompleta(imagen)"
+                           @error="(e) => onImageError(e, imagen)"\n                           class="imagen-thumbnail"
+                           :title="imagen.nombre_archivo">
+                      <div class="imagen-info">
+                        <small>{{ imagen.nombre_archivo }}</small>
+                        <small>{{ formatearFecha(imagen.fecha_subida) }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="cambio.cargandoImagenes" class="loading-imagenes">
+                  <i class="fas fa-spinner fa-spin"></i> Cargando imágenes...
+                </div>
               </div>
             </div>
           </div>
@@ -404,6 +560,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Imagen Completa -->
+    <div v-if="mostrarModalImagen" class="modal-overlay" @click.self="cerrarModalImagen">
+      <div class="modal-content modal-imagen">
+        <div class="modal-header">
+          <h3><i class="fas fa-image"></i> {{ imagenSeleccionada.nombre_archivo }}</h3>
+          <button @click="cerrarModalImagen" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body modal-imagen-body">
+          <img :src="imagenSeleccionada.ruta_imagen || imagenSeleccionada.url_acceso"
+               :alt="imagenSeleccionada.nombre_archivo"
+               @error="(e) => onImageError(e, imagenSeleccionada)"
+               class="imagen-completa">
+          <div class="imagen-detalles">
+            <p><strong>Fecha de subida:</strong> {{ formatearFechaCompleta(imagenSeleccionada.fecha_subida) }}</p>
+            <p v-if="imagenSeleccionada.tamano_kb"><strong>Tamaño:</strong> {{ Math.round(imagenSeleccionada.tamano_kb / 1024 * 100) / 100 }} MB</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="cerrarModalImagen" class="btn-secondary">
+            <i class="fas fa-times"></i> Cerrar
+          </button>
+          <a :href="imagenSeleccionada.ruta_imagen || imagenSeleccionada.url_acceso"
+             :download="imagenSeleccionada.nombre_archivo"
+             class="btn-primary">
+            <i class="fas fa-download"></i> Descargar
+          </a>
+        </div>
+      </div>
+    </div>
   </div>
   </div>
 </template>
@@ -411,9 +597,13 @@
 <script>
 import axios from 'axios';
 import { ref, onMounted, watch, computed, reactive } from 'vue';
+import ImageUpload from '@/components/ImageUpload.vue';
 
 export default {
   name: 'TablaDepartamento',
+  components: {
+    ImageUpload
+  },
   setup() {
     const backendUrl = import.meta.env.VITE_API_URL;
     const peticiones = ref([]);
@@ -504,11 +694,94 @@ export default {
     const peticionSeleccionada = ref({});
     const nuevoEstado = ref('');
     const motivoCambio = ref('');
+    const imageUploadEstadoRef = ref(null);
+    const imagenesEstado = ref([]);
+
+    // Modal Detalles
+    const mostrarModalDetalles = ref(false);
+    const imagenesPeticion = ref([]);
+    const cargandoImagenesPeticion = ref(false);
 
     // Modal Historial
     const mostrarModalHistorial = ref(false);
     const historialSeleccionado = ref([]);
     const historialCargando = ref(false);
+
+    // Modal Imagen
+    const mostrarModalImagen = ref(false);
+    const imagenSeleccionada = ref({});
+
+    // -----------------------
+    // Métodos de imágenes
+    // -----------------------
+    const onImagenesEstadoChanged = (images) => {
+      imagenesEstado.value = images;
+      console.log('📸 Imágenes de estado cambiadas:', images);
+    };
+
+    const onImageUploadError = (error) => {
+      console.error('❌ Error al subir imágenes:', error);
+      if (window.$toast) {
+        window.$toast.error(`Error al subir imágenes: ${error.message || 'Error desconocido'}`);
+      }
+    };
+
+    // Subir imágenes después de crear el cambio de estado
+    const uploadHistorialImages = async (historialId) => {
+      if (!imagenesEstado.value || imagenesEstado.value.length === 0) {
+        return { success: true, message: 'No hay imágenes para subir' };
+      }
+
+      if (!historialId || historialId === 0) {
+        console.error('❌ historialId inválido:', historialId);
+        return { success: false, error: 'ID de historial inválido' };
+      }
+
+      try {
+        console.log('📤 Subiendo imágenes para historial ID:', historialId);
+
+        const formData = new FormData();
+        formData.append('entidad_tipo', 'historial_cambio');
+        formData.append('entidad_id', historialId.toString());
+
+        // Agregar token de autenticación si está disponible
+        const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        if (token) {
+          formData.append('token', token);
+        }
+
+        // Agregar usuario logueado para autenticación
+        if (usuarioLogueado.value?.Id) {
+          formData.append('usuario_id', usuarioLogueado.value.Id.toString());
+        }
+
+        // Agregar archivos al FormData
+        imagenesEstado.value.forEach((image, index) => {
+          if (image.file) {
+            formData.append('imagenes[]', image.file);
+            console.log(`📎 Agregando imagen ${index + 1}:`, image.file.name);
+          }
+        });
+
+        const response = await fetch(`${backendUrl}/imagenes.php`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include' // Incluir cookies de sesión
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('✅ Imágenes subidas correctamente:', result.imagenes);
+          return { success: true, imagenes: result.imagenes };
+        } else {
+          throw new Error(result.message || 'Error al subir imágenes');
+        }
+      } catch (error) {
+        console.error('❌ Error subiendo imágenes:', error);
+        return { success: false, error: error.message };
+      }
+    };
 
     // ✅ NUEVA: Función para obtener usuario logueado
     const obtenerUsuarioLogueado = async () => {
@@ -737,12 +1010,32 @@ export default {
       loading.value = true;
       console.log('🔄 Cargando peticiones para departamento:', departamentoActual.value.id);
       try {
+        const timestamp = Date.now();
+        const url = `${backendUrl}/departamentos_peticiones.php?departamento_id=${departamentoActual.value.id}&_t=${timestamp}`;
+        console.log('🌐 URL completa:', url);
+
         const res = await axios.get(`${backendUrl}/departamentos_peticiones.php`, {
-          params: { departamento_id: departamentoActual.value.id }
+          params: {
+            departamento_id: departamentoActual.value.id,
+            _t: timestamp  // Cache buster
+          }
         });
+
+        console.log('📦 Respuesta completa del servidor:', res);
+        console.log('📦 res.data:', res.data);
+        console.log('📦 res.data.success:', res.data.success);
+        console.log('📦 res.data.records:', res.data.records);
+
         peticiones.value = res.data.records || [];
         console.log('✅ Peticiones cargadas desde API:', peticiones.value.length);
         console.log('📄 Datos cargados:', peticiones.value);
+
+        if (peticiones.value.length === 0) {
+          console.warn('⚠️ No se recibieron peticiones del backend');
+          console.warn('⚠️ Verificar si el departamento tiene peticiones asignadas');
+          console.warn('⚠️ Departamento ID:', departamentoActual.value.id);
+        }
+
         aplicarFiltros(); // ✅ NUEVO: Aplicar filtros después de cargar
       } catch (error) {
         console.error('Error cargando peticiones:', error);
@@ -780,39 +1073,195 @@ export default {
       peticionSeleccionada.value = {};
       nuevoEstado.value = '';
       motivoCambio.value = '';
+      imagenesEstado.value = [];
+
+      // Limpiar componente de imágenes
+      if (imageUploadEstadoRef.value) {
+        imageUploadEstadoRef.value.clearImages();
+      }
     };
 
-    // ✅ MODIFICADA: guardarCambioEstado con usuario logueado real
+    // Cargar imágenes de la petición
+    const cargarImagenesPeticion = async (peticionId) => {
+      try {
+        console.log('🖼️ Cargando imágenes para petición ID:', peticionId);
+
+        const response = await axios.get(`${backendUrl}/imagenes.php`, {
+          params: {
+            entidad_tipo: 'peticion',
+            entidad_id: peticionId
+          }
+        });
+
+        console.log('📥 Respuesta de imágenes de petición:', response.data);
+
+        if (response.data.success && response.data.imagenes) {
+          console.log('✅ Imágenes de petición cargadas:', response.data.imagenes.length);
+          return response.data.imagenes;
+        } else {
+          console.log('ℹ️ No hay imágenes para la petición ID:', peticionId);
+          return [];
+        }
+      } catch (error) {
+        console.error('❌ Error cargando imágenes de la petición:', error);
+        if (error.response) {
+          console.error('📝 Detalles del error:', error.response.data);
+        }
+        return [];
+      }
+    };
+
+    // Funciones del modal de detalles
+    const abrirModalDetalles = async (peticion) => {
+      peticionSeleccionada.value = { ...peticion };
+      mostrarModalDetalles.value = true;
+
+      // Cargar imágenes de la petición
+      cargandoImagenesPeticion.value = true;
+      imagenesPeticion.value = await cargarImagenesPeticion(peticion.peticion_id);
+      cargandoImagenesPeticion.value = false;
+    };
+
+    const cerrarModalDetalles = () => {
+      mostrarModalDetalles.value = false;
+      peticionSeleccionada.value = {};
+      imagenesPeticion.value = [];
+    };
+
+    // ✅ MODIFICADA: guardarCambioEstado con usuario logueado real y manejo de imágenes
     const guardarCambioEstado = async () => {
       if (!nuevoEstado.value || !motivoCambio.value) {
-        alert('Completa todos los campos requeridos');
+        if (window.$toast) {
+          window.$toast.warning('Completa todos los campos requeridos');
+        } else {
+          alert('Completa todos los campos requeridos');
+        }
         return;
       }
 
       try {
-        const res = await axios.put(`${backendUrl}/departamentos_peticiones.php`, {
+        console.log('💾 Guardando cambio de estado para asignación:', peticionSeleccionada.value.asignacion_id);
+        console.log('👤 Usuario logueado:', usuarioLogueado.value?.Id);
+
+        const requestData = {
           asignacion_id: peticionSeleccionada.value.asignacion_id,
           estado_nuevo: nuevoEstado.value,
           motivo: motivoCambio.value,
-          usuario_id: usuarioLogueado.value?.Id || 1 // ✅ USAR ID real del usuario
-        });
+          usuario_id: usuarioLogueado.value?.Id || 1
+        };
+
+        console.log('📤 Datos enviados al backend:', requestData);
+
+        const res = await axios.put(`${backendUrl}/departamentos_peticiones.php`, requestData);
+
+        console.log('📝 Respuesta del servidor:', res.data);
+        console.log('🆔 Tipo de historial_id:', typeof res.data.historial_id, 'Valor:', res.data.historial_id);
 
         if (res.data.success) {
-          if (window.$toast) {
-            window.$toast.success('Estado actualizado correctamente');
-          } else {
-            alert('Estado actualizado correctamente');
+          let historialId = res.data.historial_id;
+
+          // Convertir historial_id a número si viene como string
+          if (typeof historialId === 'string') {
+            historialId = parseInt(historialId, 10);
+            console.log('🔄 historial_id convertido a número:', historialId);
           }
+
+          console.log('🆔 ID del historial procesado:', historialId, 'Tipo:', typeof historialId);
+          console.log('📷 Cantidad de imágenes:', imagenesEstado.value.length);
+
+          // Verificar si el historial se creó correctamente
+          if (!historialId || historialId <= 0 || isNaN(historialId)) {
+            console.warn('⚠️ historial_id inválido:', historialId);
+            console.warn('🔍 Posibles causas:');
+            console.warn('  - El backend no está creando el registro de historial');
+            console.warn('  - Error en la base de datos');
+            console.warn('  - Problema en el endpoint del backend');
+
+            if (imagenesEstado.value.length > 0) {
+              if (window.$toast) {
+                window.$toast.warning('Estado actualizado pero no se pudieron guardar las imágenes (error en historial)');
+              } else {
+                alert('Estado actualizado pero no se pudieron guardar las imágenes');
+              }
+            } else {
+              if (window.$toast) {
+                window.$toast.success('Estado actualizado correctamente');
+              } else {
+                alert('Estado actualizado correctamente');
+              }
+            }
+          } else if (imagenesEstado.value.length > 0) {
+            // Solo intentar subir imágenes si hay historial_id válido
+            console.log('📤 Subiendo imágenes para cambio de estado ID:', historialId);
+            const imageUploadResult = await uploadHistorialImages(historialId);
+
+            if (!imageUploadResult.success) {
+              console.warn('⚠️ Error al subir imágenes:', imageUploadResult.error);
+              if (window.$toast) {
+                window.$toast.warning(`Estado actualizado (Error en imágenes: ${imageUploadResult.error})`);
+              } else {
+                alert(`Estado actualizado (Error en imágenes: ${imageUploadResult.error})`);
+              }
+            } else {
+              if (window.$toast) {
+                window.$toast.success('Estado e imágenes actualizados correctamente');
+              } else {
+                alert('Estado e imágenes actualizados correctamente');
+              }
+              if (imageUploadResult.imagenes && imageUploadResult.imagenes.length > 0) {
+                console.log('📸 Imágenes subidas exitosamente:', imageUploadResult.imagenes.length);
+              }
+            }
+          } else {
+            if (window.$toast) {
+              window.$toast.success('Estado actualizado correctamente');
+            } else {
+              alert('Estado actualizado correctamente');
+            }
+          }
+
           cerrarModalEstado();
           await cargarPeticiones();
+        } else {
+          throw new Error(res.data.message || 'Error al actualizar el estado');
         }
       } catch (error) {
-        console.error('Error actualizando estado:', error);
+        console.error('❌ Error actualizando estado:', error);
         if (window.$toast) {
-          window.$toast.error('Error al actualizar el estado');
+          window.$toast.error(`Error al actualizar el estado: ${error.message}`);
         } else {
-          alert('Error al actualizar el estado');
+          alert(`Error al actualizar el estado: ${error.message}`);
         }
+      }
+    };
+
+    // Cargar imágenes del historial
+    const cargarImagenesHistorial = async (historialId) => {
+      try {
+        console.log('🖼️ Cargando imágenes para historial ID:', historialId);
+
+        const response = await axios.get(`${backendUrl}/imagenes.php`, {
+          params: {
+            entidad_tipo: 'historial_cambio',
+            entidad_id: historialId
+          }
+        });
+
+        console.log('📥 Respuesta de imágenes:', response.data);
+
+        if (response.data.success && response.data.imagenes) {
+          console.log('✅ Imágenes cargadas:', response.data.imagenes.length);
+          return response.data.imagenes;
+        } else {
+          console.log('ℹ️ No hay imágenes para el historial ID:', historialId);
+          return [];
+        }
+      } catch (error) {
+        console.error('❌ Error cargando imágenes del historial:', error);
+        if (error.response) {
+          console.error('📝 Detalles del error:', error.response.data);
+        }
+        return [];
       }
     };
 
@@ -820,6 +1269,28 @@ export default {
       peticionSeleccionada.value = { ...peticion };
       historialSeleccionado.value = peticion.historial || [];
       mostrarModalHistorial.value = true;
+
+      // Si se cerró el modal de detalles, también lo cerramos
+      if (mostrarModalDetalles.value) {
+        mostrarModalDetalles.value = false;
+      }
+
+      // Cargar imágenes para cada entrada del historial
+      if (historialSeleccionado.value.length > 0) {
+        console.log('🔄 Cargando imágenes para', historialSeleccionado.value.length, 'entradas de historial');
+
+        await Promise.all(
+          historialSeleccionado.value.map(async (cambio) => {
+            cambio.cargandoImagenes = true;
+            console.log('📷 Cargando imágenes para cambio ID:', cambio.id);
+            cambio.imagenes = await cargarImagenesHistorial(cambio.id);
+            cambio.cargandoImagenes = false;
+            console.log('✅ Imágenes cargadas para cambio ID:', cambio.id, '- Total:', cambio.imagenes.length);
+          })
+        );
+
+        console.log('🎯 Todas las imágenes cargadas');
+      }
     };
 
     const cerrarModalHistorial = () => {
@@ -828,21 +1299,51 @@ export default {
       historialSeleccionado.value = [];
     };
 
+    // Funciones del modal de imagen
+    const abrirImagenCompleta = (imagen) => {
+      imagenSeleccionada.value = imagen;
+      mostrarModalImagen.value = true;
+    };
+
+    const cerrarModalImagen = () => {
+      mostrarModalImagen.value = false;
+      imagenSeleccionada.value = {};
+    };
+
+    // Manejar errores de carga de imágenes
+    const onImageError = (event, imagen) => {
+      console.error('❌ Error cargando imagen:', imagen.nombre_archivo, 'URL:', imagen.url_acceso);
+      event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjZjhkN2RhIi8+CjxwYXRoIGQ9Im01MCAzNXYzMG0tMTUtMTVoMzAiIHN0cm9rZT0iI2RjMzU0NSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPC9zdmc+';
+      event.target.title = 'Imagen no disponible: ' + imagen.nombre_archivo;
+    };
+
     const truncateText = (text, length) => {
       if (!text) return '';
       return text.length > length ? text.substring(0, length) + '...' : text;
     };
 
     const formatearFecha = (fecha) => {
-      if (!fecha) return '';
-      const date = new Date(fecha);
-      return date.toLocaleDateString('es-MX');
+      if (!fecha) return 'No disponible';
+      try {
+        const date = new Date(fecha);
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        return date.toLocaleDateString('es-MX');
+      } catch (error) {
+        console.error('Error formateando fecha:', error);
+        return 'Error en fecha';
+      }
     };
 
     const formatearFechaCompleta = (fecha) => {
-      if (!fecha) return '';
-      const date = new Date(fecha);
-      return date.toLocaleString('es-MX');
+      if (!fecha) return 'No disponible';
+      try {
+        const date = new Date(fecha);
+        if (isNaN(date.getTime())) return 'Fecha inválida';
+        return date.toLocaleString('es-MX');
+      } catch (error) {
+        console.error('Error formateando fecha completa:', error);
+        return 'Error en fecha';
+      }
     };
 
     const obtenerColorSemaforo = (fecha) => {
@@ -884,9 +1385,19 @@ export default {
 
     // ✅ MODIFICADA: onMounted para cargar automáticamente
     onMounted(async () => {
-      const departamentoId = await cargarDepartamentoUsuario();
-      if (departamentoId) {
-        await cargarPeticiones();
+      console.log('🚀 Componente montado, iniciando carga de departamento...');
+      try {
+        const departamentoId = await cargarDepartamentoUsuario();
+        console.log(' DepartamentoId obtenido:', departamentoId);
+        if (departamentoId) {
+          console.log('✅ Cargando peticiones para departamento ID:', departamentoId);
+          await cargarPeticiones();
+          console.log('✅ Peticiones cargadas, total:', peticiones.value.length);
+        } else {
+          console.warn('⚠️ No se pudo obtener el departamento del usuario');
+        }
+      } catch (error) {
+        console.error('❌ Error en onMounted:', error);
       }
     });
 
@@ -912,11 +1423,18 @@ export default {
       errorDepartamento, // ✅ NUEVO
       loading,
       mostrarModalDescripcion,
+      mostrarModalDetalles,
       mostrarModalEstado,
       mostrarModalHistorial,
+      mostrarModalImagen,
       peticionSeleccionada,
+      imagenSeleccionada,
+      imagenesPeticion,
+      cargandoImagenesPeticion,
       nuevoEstado,
       motivoCambio,
+      imageUploadEstadoRef,
+      imagenesEstado,
       historialSeleccionado,
       historialCargando,
       cargarPeticiones,
@@ -929,11 +1447,18 @@ export default {
       cambiarRegistrosPorPagina, // ✅ NUEVO
       abrirModalDescripcion,
       cerrarModalDescripcion,
+      abrirModalDetalles,
+      cerrarModalDetalles,
       abrirModalCambioEstado,
       cerrarModalEstado,
       guardarCambioEstado,
+      onImagenesEstadoChanged,
+      onImageUploadError,
       abrirModalHistorial,
       cerrarModalHistorial,
+      abrirImagenCompleta,
+      cerrarModalImagen,
+      onImageError,
       truncateText,
       formatearFecha,
       formatearFechaCompleta,
@@ -985,6 +1510,222 @@ export default {
 .error-message i {
   font-size: 1.5rem;
   color: #ff9800;
+}
+
+/* ✅ NUEVO: Estilos para modal de detalles */
+.modal-detalles {
+  max-width: 900px;
+  width: 95%;
+}
+
+.detalles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.detalle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detalle-item label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detalle-item label i {
+  color: #0074D9;
+  font-size: 0.9rem;
+  min-width: 16px;
+}
+
+.detalle-item span {
+  font-size: 0.95rem;
+  color: #212529;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+}
+
+.direccion-container {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+  border-radius: 12px;
+  border: 1px solid #c3e6cb;
+}
+
+.direccion-container h4 {
+  margin: 0 0 1rem 0;
+  color: #155724;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.direccion-texto {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ✅ NUEVO: Estilos para imágenes de la petición */
+.imagenes-peticion-container {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #e8f4f8 0%, #d6eaf8 100%);
+  border-radius: 12px;
+  border: 1px solid #aed6f1;
+}
+
+.imagenes-peticion-container h4 {
+  margin: 0 0 1rem 0;
+  color: #154360;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-imagenes {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  font-style: italic;
+  background: white;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.no-imagenes i {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+/* ✅ NUEVO: Estilos para imágenes del historial */
+.historial-imagenes {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.historial-imagenes h5 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.historial-imagenes h5 i {
+  color: #0074D9;
+}
+
+.imagenes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.imagen-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.imagen-thumbnail {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid #dee2e6;
+}
+
+.imagen-thumbnail:hover {
+  transform: scale(1.05);
+  border-color: #0074D9;
+  box-shadow: 0 4px 8px rgba(0, 116, 217, 0.3);
+}
+
+.imagen-info {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6c757d;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.loading-imagenes {
+  text-align: center;
+  padding: 1rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.loading-imagenes i {
+  margin-right: 0.5rem;
+}
+
+/* ✅ NUEVO: Modal de imagen completa */
+.modal-imagen {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+}
+
+.modal-imagen-body {
+  text-align: center;
+  padding: 1rem;
+}
+
+.imagen-completa {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.imagen-detalles {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.imagen-detalles p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #495057;
 }
 
 /* ✅ NUEVO: Estilos para filtros */
