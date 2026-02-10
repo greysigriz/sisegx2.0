@@ -536,7 +536,8 @@
                       <img :src="imagen.url_acceso || imagen.ruta_imagen"
                            :alt="imagen.nombre_archivo"
                            @click="abrirImagenCompleta(imagen)"
-                           @error="(e) => onImageError(e, imagen)"\n                           class="imagen-thumbnail"
+                           @error="(e) => onImageError(e, imagen)"
+                           class="imagen-thumbnail"
                            :title="imagen.nombre_archivo">
                       <div class="imagen-info">
                         <small>{{ imagen.nombre_archivo }}</small>
@@ -582,11 +583,9 @@
           <button @click="cerrarModalImagen" class="btn-secondary">
             <i class="fas fa-times"></i> Cerrar
           </button>
-          <a :href="imagenSeleccionada.ruta_imagen || imagenSeleccionada.url_acceso"
-             :download="imagenSeleccionada.nombre_archivo"
-             class="btn-primary">
+          <button @click="descargarImagen" class="btn-primary">
             <i class="fas fa-download"></i> Descargar
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -1310,6 +1309,75 @@ export default {
       imagenSeleccionada.value = {};
     };
 
+    // Función para descargar imagen
+    const descargarImagen = async () => {
+      try {
+        const url = imagenSeleccionada.value.ruta_imagen || imagenSeleccionada.value.url_acceso;
+        const nombreArchivo = imagenSeleccionada.value.nombre_archivo || 'imagen.jpg';
+
+        console.log('📥 Intentando descargar imagen:', { url, nombreArchivo });
+
+        // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
+        let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '');
+        urlRelativa = urlRelativa.replace(/^\//, ''); // Quitar barra inicial si existe
+        
+        // Construir URL del endpoint de descarga
+        const downloadUrl = `${backendUrl}/descargar-imagen.php?archivo=${encodeURIComponent(urlRelativa)}&nombre=${encodeURIComponent(nombreArchivo)}`;
+        
+        console.log('📦 URL de descarga:', downloadUrl);
+
+        // Descargar usando el endpoint PHP
+        // withCredentials: false para evitar conflicto con CORS wildcard
+        // skipAuthToken: true para no enviar header de autenticación
+        const response = await axios.get(downloadUrl, {
+          responseType: 'blob',
+          timeout: 30000,
+          withCredentials: false,  // No enviar cookies para evitar error CORS
+          skipAuthToken: true      // No enviar header X-Auth-Token
+        });
+
+        // Crear blob URL
+        const blob = response.data;
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        // Crear enlace temporal y forzar descarga
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = nombreArchivo;
+        link.style.display = 'none';
+        
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link);
+        link.click();
+
+        // Limpiar después de un momento
+        setTimeout(() => {
+          if (link.parentNode) {
+            document.body.removeChild(link);
+          }
+          window.URL.revokeObjectURL(blobUrl);
+        }, 100);
+
+        console.log('✅ Imagen descargada correctamente');
+        if (window.$toast) {
+          window.$toast.success('Imagen descargada correctamente');
+        }
+
+      } catch (error) {
+        console.error('❌ Error al descargar imagen:', error);
+        console.error('Detalles del error:', error.response?.data);
+        
+        // Mostrar mensaje más específico
+        const mensaje = error.response?.data?.message || error.message || 'Error desconocido';
+        
+        if (window.$toast) {
+          window.$toast.error(`Error: ${mensaje}`);
+        } else {
+          alert(`Error al descargar: ${mensaje}`);
+        }
+      }
+    };
+
     // Manejar errores de carga de imágenes
     const onImageError = (event, imagen) => {
       console.error('❌ Error cargando imagen:', imagen.nombre_archivo, 'URL:', imagen.url_acceso);
@@ -1458,6 +1526,7 @@ export default {
       cerrarModalHistorial,
       abrirImagenCompleta,
       cerrarModalImagen,
+      descargarImagen,
       onImageError,
       truncateText,
       formatearFecha,

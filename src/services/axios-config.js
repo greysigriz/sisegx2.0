@@ -91,9 +91,9 @@ axios.interceptors.request.use(
       };
     }
 
-    // ✅ AGREGAR headers de autenticación si existen
+    // ✅ AGREGAR headers de autenticación si existen (excepto si se especifica skipAuthToken)
     const token = localStorage.getItem('authToken');
-    if (token) {
+    if (token && !config.skipAuthToken) {
       // Usar el nombre correcto del header (minúsculas con guiones)
       config.headers['X-Auth-Token'] = token;
     }

@@ -464,17 +464,71 @@ export default {
     }
 
     // Métodos de acción
-    const downloadImage = (image) => {
+    const downloadImage = async (image) => {
       if (!image || !image.url_acceso) return
 
-      const link = document.createElement('a')
-      link.href = image.url_acceso
-      link.download = image.filename_original || 'imagen'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      const url = image.url_acceso
+      const nombreArchivo = image.filename_original || 'imagen.jpg'
 
-      emit('download-image', image)
+      console.log('📥 Intentando descargar imagen:', { url, nombreArchivo })
+
+      try {
+        // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
+        let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '')
+        urlRelativa = urlRelativa.replace(/^\//, '') // Quitar barra inicial si existe
+        
+        console.log('📁 Ruta relativa extraída:', urlRelativa)
+        
+        // Descargar usando el endpoint PHP (axios usa baseURL automáticamente)
+        // withCredentials: false para evitar conflicto con CORS wildcard
+        // skipAuthToken: true para no enviar header de autenticación
+        const response = await axios.get('descargar-imagen.php', {
+          params: {
+            archivo: urlRelativa,
+            nombre: nombreArchivo
+          },
+          responseType: 'blob',
+          timeout: 30000,
+          withCredentials: false,  // No enviar cookies para evitar error CORS
+          skipAuthToken: true      // No enviar header X-Auth-Token
+        })
+
+        console.log('📦 Respuesta recibida, creando blob...')
+
+        // Crear blob URL
+        const blob = response.data
+        const blobUrl = window.URL.createObjectURL(blob)
+
+        // Crear enlace temporal y forzar descarga
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = nombreArchivo
+        link.style.display = 'none'
+        
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link)
+        link.click()
+
+        // Limpiar después de un momento
+        setTimeout(() => {
+          if (link.parentNode) {
+            document.body.removeChild(link)
+          }
+          window.URL.revokeObjectURL(blobUrl)
+        }, 100)
+
+        console.log('✅ Imagen descargada correctamente')
+        emit('download-image', image)
+
+      } catch (error) {
+        console.error('❌ Error al descargar imagen:', error)
+        console.error('Detalles del error:', error.response?.data)
+        console.error('URL solicitada:', error.config?.url)
+        
+        // Mostrar mensaje más específico
+        const mensaje = error.response?.data?.message || error.message || 'Error desconocido'
+        alert(`Error al descargar: ${mensaje}`)
+      }
     }
 
     const deleteImage = (image, index) => {

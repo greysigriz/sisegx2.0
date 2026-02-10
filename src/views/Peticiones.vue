@@ -3523,7 +3523,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
+  padding: 1.1rem;
   background: linear-gradient(135deg, #0074D9, #0056b3);
   color: white;
   border-radius: 12px 12px 0 0;
