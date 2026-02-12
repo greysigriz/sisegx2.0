@@ -27,7 +27,7 @@
     <div class="header-center">
       <div class="titles">
         <h1 class="main-title">
-          <span class="title-accent">Sistema de Reportes</span> Ciudadanos
+          <span class="title-accent">Sistema de Reportes Ciudadanos </span>
         </h1>
         <p class="subtitle">Panel de Control y Monitoreo · Estado de Yucatán</p>
       </div>

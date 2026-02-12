@@ -6,8 +6,8 @@
     <!-- Dashboard Cards (KPIs principales) -->
     <DashboardCards />
 
-    <!-- Tendencia Temporal (gráfico de línea/área) -->
-    <AreaChart />
+        <!-- Línea de Reportes (Tendencia por Estado) -->
+    <Reportes />
     <!-- Estadísticas rápidas (movidas arriba, horizontal) -->
     <!-- <div class="analytics-card full-width">
       <div class="stats-summary horizontal">
@@ -42,8 +42,9 @@
         <PieChart />
       </div>
     </div>
-    <!-- Línea de Reportes (Tendencia por Estado) -->
-    <Reportes />
+      <!-- Tendencia Temporal (gráfico de línea/área) -->
+    <AreaChart />
+
 
     <!-- Tabs para Vistas Alternativas de Departamentos -->
     <div class="department-views">
@@ -85,12 +86,13 @@
 import { ref } from 'vue'
 import YucatanHeader from "@/components/dashboard/YucatanHeader.vue"
 import DashboardCards from "@/components/dashboard/DashboardCards.vue"
+import Reportes from "@/components/TableroDash/LineaReportes.vue"
 import AreaChart from "@/components/dashboard/AreaChartt.vue"
 import BarChart from "@/components/dashboard/BarChart.vue"
 import PieChart from "@/components/dashboard/PieChart.vue"
 import MapaProblemas from "@/components/TableroDash/MapaProblemas.vue"
 import TablaDeps from "@/components/TableroDash/ReportsTable.vue"
-import Reportes from "@/components/TableroDash/LineaReportes.vue"
+
 import DepartmentGrid from "@/components/TableroDash/DepartmentGrid.vue"
 
 export default {
@@ -98,10 +100,10 @@ export default {
   components: {
     YucatanHeader,
     DashboardCards,
+    Reportes,
     AreaChart,
     BarChart,
     PieChart,
-    Reportes,
     MapaProblemas,
     TablaDeps,
     DepartmentGrid
