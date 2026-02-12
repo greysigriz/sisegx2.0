@@ -1318,7 +1318,7 @@ export default {
         console.log('📥 Intentando descargar imagen:', { url, nombreArchivo });
 
         // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
-        let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '');
+        let urlRelativa = url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/SISEE/, '');
         urlRelativa = urlRelativa.replace(/^\//, ''); // Quitar barra inicial si existe
 
         // Construir URL del endpoint de descarga

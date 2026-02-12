@@ -474,7 +474,7 @@ export default {
 
       try {
         // Extraer la ruta relativa del archivo (eliminar barras iniciales también)
-        let urlRelativa = url.replace(/^https?:\/\/[^\/]+/, '').replace(/^\/SISEE/, '')
+        let urlRelativa = url.replace(/^https?:\/\/[^/]+/, '').replace(/^\/SISEE/, '')
         urlRelativa = urlRelativa.replace(/^\//, '') // Quitar barra inicial si existe
 
         console.log('📁 Ruta relativa extraída:', urlRelativa)
