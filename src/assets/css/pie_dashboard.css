@@ -37,18 +37,25 @@
 }
 
 .chart-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1e3a8a;
-    margin: 0 0 4px 0;
-    padding: 0;
+    /* Tamaño de fuente grande: 24px */
+  font-size: 24px;
+  /* Texto en negrita */
+  font-weight: 700;
+  /* Color azul oscuro */
+  color: #1E40AF;
+  /* Fuente sans-serif moderna */
+  font-family: "Inter", "Segoe UI", sans-serif;
+  /* Sin margen para mejor control de espaciado */
+  margin: 0 0 4px 0;
+  padding: 0;
+  align-items: center;
 }
 
 .chart-description {
     font-size: 0.875rem;
-    color: #64748b;
-    margin: 0;
-    padding: 0;
+  color: #64748b;
+  margin: 0;
+  padding: 0;
 }
 
 .chart-header-right {

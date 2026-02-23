@@ -34,11 +34,11 @@
     <!-- Sección de Análisis Principal: 3 columnas -->
     <div class="analytics-grid">
       <!-- Columna 1: Top Departamentos (Filtrable) -->
-      <div class="analytics-card full-width">
+      <div class="analytics-card">
         <BarChart />
       </div>
       <!-- Columna 2: Distribución por Categoría -->
-      <div class="analytics-card">
+      <div class="analytics-card2">
         <PieChart />
       </div>
     </div>

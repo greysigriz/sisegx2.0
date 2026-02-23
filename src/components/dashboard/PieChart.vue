@@ -36,7 +36,7 @@ const updatePieChart = (data) => {
     legend: { top: '5%', left: 'center' },
     series: [
       {
-        name: 'Reportes Ciudadanos',
+        name: 'Reportes Ciudadanoss',
         type: 'pie',
         radius: ['40%', '70%'],
         center: ['50%', '60%'],
