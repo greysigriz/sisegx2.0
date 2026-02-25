@@ -18,6 +18,10 @@
           <button @click="limpiarFiltros" class="btn-clear">
             <i class="fas fa-times"></i> Limpiar Filtros
           </button>
+          <button @click="sincronizarEstados" class="btn-filter btn-sync" title="Recalcula el estado de todas las peticiones según sus departamentos asignados">
+            <i :class="sincronizando ? 'fas fa-spinner fa-spin' : 'fas fa-sync-alt'"></i>
+            {{ sincronizando ? 'Sincronizando...' : 'Sincronizar Estados' }}
+          </button>
         </div>
       </div>
       <div class="card-body">
@@ -177,19 +181,19 @@
                 <div class="peticion-acciones">
                   <div class="acciones-badges">
                     <button
+                      v-if="puedeEditarPeticion(peticion)"
                       class="accion-badge edit-badge"
-                      :class="{ 'disabled': !puedeEditarPeticion(peticion) }"
-                      :disabled="!puedeEditarPeticion(peticion)"
-                      @click.stop="puedeEditarPeticion(peticion) && editarPeticion(peticion)"
-                      :title="!puedeEditarPeticion(peticion) ? 'Solo el usuario asignado puede editar' : 'Editar petición'"
+                      @click.stop="editarPeticion(peticion)"
+                      title="Editar petición"
                     >
                       <i class="fas fa-edit"></i>
                       <span>Edit</span>
                     </button>
                     <button
+                      v-if="!puedeEditarPeticion(peticion)"
                       class="accion-badge seguimiento-badge"
                       @click.stop="seguimiento(peticion)"
-                      :title="esUsuarioAsignado(peticion) ? 'Mi Seguimiento' : 'Asignar Seguimiento'"
+                      title="Asignar Seguimiento"
                     >
                       <i class="fas fa-user-check"></i>
                       <span>Track</span>
@@ -221,11 +225,14 @@
                 <div class="peticion-estado estado-clickeable"
                      @click.stop="puedeEditarPeticion(peticion) ? cambiarEstado(peticion) : null"
                      :class="{ 'clickeable': puedeEditarPeticion(peticion), 'no-clickeable': !puedeEditarPeticion(peticion) }"
-                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar estado' : 'Solo el usuario asignado puede cambiar el estado'">
-                  <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
-                    {{ peticion.estado }}
-                  </span>
-                  <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit estado-edit-icon"></i>
+                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar estado' : 'Sin permisos para editar esta petición'">
+                  <div class="peticion-estado-container">
+                    <span v-if="requiereAtencionPeticion(peticion)" class="atencion-badge" title="Requiere atención"></span>
+                    <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
+                      {{ peticion.estado }}
+                    </span>
+                    <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit estado-edit-icon"></i>
+                  </div>
                 </div>
 
                 <!-- Columna Departamentos -->
@@ -234,15 +241,22 @@
                        class="departamentos-badge sin-asignar-badge"
                        @click="mostrarMenuDepartamentos(peticion)"
                        title="Click para opciones de departamentos">
+                    <i class="fas fa-exclamation-triangle badge-icon-left"></i>
                     <span class="badge-text">Sin asignar</span>
                     <i class="fas fa-cog badge-icon"></i>
                   </div>
-                  <div v-else class="departamentos-badge con-asignaciones-badge"
-                       @click="mostrarMenuDepartamentos(peticion)"
-                       title="Click para opciones de departamentos">
-                    <i class="fas fa-building badge-icon-left"></i>
-                    <span class="badge-text">{{ peticion.departamentos.length }}</span>
-                    <i class="fas fa-cog badge-icon"></i>
+                  <div v-else class="departamentos-wrapper">
+                    <div class="departamentos-badge con-asignaciones-badge"
+                         @click="mostrarMenuDepartamentos(peticion)"
+                         title="Click para opciones de departamentos">
+                      <i class="fas fa-building badge-icon-left"></i>
+                      <span class="badge-text">{{ peticion.departamentos.length }}</span>
+                      <i class="fas fa-cog badge-icon"></i>
+                    </div>
+                    <!-- Barra de progreso compacta -->
+                    <div class="progreso-inline" :title="calcularProgresoPeticion(peticion).texto">
+                      <div class="progreso-barra-inline" :style="{ width: calcularProgresoPeticion(peticion).porcentaje + '%' }"></div>
+                    </div>
                   </div>
                 </div>
 
@@ -250,19 +264,20 @@
                 <div class="peticion-prioridad prioridad-clickeable"
                      @click.stop="puedeEditarPeticion(peticion) ? cambiarImportancia(peticion) : null"
                      :class="{ 'clickeable': puedeEditarPeticion(peticion), 'no-clickeable': !puedeEditarPeticion(peticion) }"
-                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar prioridad' : 'Solo el usuario asignado puede cambiar la prioridad'">
+                     :title="puedeEditarPeticion(peticion) ? 'Click para cambiar prioridad' : 'Sin permisos para editar esta petición'">
                   <div class="indicadores-container">
                     <div class="nivel-importancia" :class="`nivel-${peticion.NivelImportancia}`"
                          :title="`Nivel ${peticion.NivelImportancia} - ${obtenerEtiquetaNivelImportancia(peticion.NivelImportancia)}`">
                       {{ obtenerTextoNivelImportancia(peticion.NivelImportancia) }}
                     </div>
-                    <!-- ✅ OPTIMIZADO: Usar función memoizada para semáforo -->
-                    <div class="semaforo" :class="obtenerColorSemaforoMemo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
-                    <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
-                      <i :class="obtenerIconoSeguimiento(peticion)"></i>
+                    <div class="indicadores-inline">
+                      <div class="semaforo" :class="obtenerColorSemaforoMemo(peticion)" :title="obtenerTituloSemaforo(peticion)"></div>
+                      <div class="seguimiento-indicator" :class="obtenerClaseSeguimiento(peticion)" :title="obtenerTituloSeguimiento(peticion)">
+                        <i :class="obtenerIconoSeguimiento(peticion)"></i>
+                      </div>
+                      <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit prioridad-edit-icon"></i>
                     </div>
                   </div>
-                  <i v-if="puedeEditarPeticion(peticion)" class="fas fa-edit prioridad-edit-icon"></i>
                 </div>
 
                 <!-- Columna Fecha Registro -->
@@ -420,7 +435,7 @@
 
             <div v-if="!puedeEditarPeticion(peticionSeleccionadaMenu)" class="sin-permisos">
               <i class="fas fa-lock"></i>
-              <span>Solo el usuario asignado puede gestionar departamentos</span>
+              <span>Sin permisos para gestionar departamentos de esta petición</span>
             </div>
           </div>
         </div>
@@ -1672,6 +1687,32 @@ export default {
       return peticiones.value.filter(p => !tieneUsuarioAsignado(p)).length;
     });
 
+    // Sincronización masiva de estados
+    const sincronizando = ref(false);
+
+    const sincronizarEstados = async () => {
+      if (!confirm('¿Sincronizar el estado de todas las peticiones existentes según sus departamentos asignados? Esto recalculará los estados automáticamente.')) return;
+      sincronizando.value = true;
+      try {
+        const response = await axios.post(`${backendUrl}/sincronizar_estados.php`, {}, { timeout: 120000 });
+        if (response.data.success) {
+          const r = response.data.resumen;
+          const msg = `Sincronización completada: ${r.actualizadas} actualizadas, ${r.sin_cambios} sin cambios${r.errores > 0 ? `, ${r.errores} errores` : ''}.`;
+          alert(msg);
+          if (r.actualizadas > 0) {
+            await cargarPeticiones();
+          }
+        } else {
+          alert('Error al sincronizar: ' + (response.data.error || 'Error desconocido'));
+        }
+      } catch (error) {
+        console.error('Error al sincronizar estados:', error);
+        alert('Error de conexión al sincronizar estados.');
+      } finally {
+        sincronizando.value = false;
+      }
+    };
+
     // ✅ NUEVO: Cache de cálculos de semáforo para mejorar rendimiento
     const cacheSemaforo = new Map();
     const obtenerColorSemaforoMemo = (peticion) => {
@@ -2076,14 +2117,24 @@ export default {
             window.$toast.success(response.data.message);
           }
 
-          // ✅ OPTIMIZADO: Solo recargar departamentos asignados, no todas las peticiones
+          // ✅ Recargar departamentos asignados para tener datos frescos
           await cargarDepartamentosAsignados(peticionForm.id);
           departamentosSeleccionados.value = [];
 
-          // Actualizar departamentos en la petición local
+          // ✅ Actualizar estado y departamentos de la petición local
           const peticion = peticiones.value.find(p => p.id === peticionForm.id);
-          if (peticion && response.data.departamentos) {
-            peticion.departamentos = response.data.departamentos;
+          if (peticion) {
+            // Sincronizar departamentos del panel de gestión al objeto local
+            peticion.departamentos = departamentosAsignados.value.map(d => ({
+              asignacion_id: d.asignacion_id,
+              departamento_id: d.departamento_id,
+              nombre_unidad: d.nombre_unidad,
+              estado_asignacion: d.estado_asignacion
+            }));
+            // Actualizar estado general si el backend lo devuelve
+            if (response.data.nuevo_estado_peticion) {
+              peticion.estado = response.data.nuevo_estado_peticion;
+            }
             aplicarFiltros();
           }
         }
@@ -2124,13 +2175,21 @@ export default {
             window.$toast.success('Asignación eliminada correctamente');
           }
 
-          // ✅ OPTIMIZADO: Solo recargar departamentos asignados
+          // Recargar departamentos asignados
           await cargarDepartamentosAsignados(peticionForm.id);
 
-          // Actualizar departamentos en la petición local
+          // ✅ Actualizar estado y departamentos en la petición local
           const peticion = peticiones.value.find(p => p.id === peticionForm.id);
           if (peticion) {
-            peticion.departamentos = departamentosAsignados.value;
+            peticion.departamentos = departamentosAsignados.value.map(d => ({
+              asignacion_id: d.asignacion_id,
+              departamento_id: d.departamento_id,
+              nombre_unidad: d.nombre_unidad,
+              estado_asignacion: d.estado_asignacion
+            }));
+            if (response.data.nuevo_estado_peticion) {
+              peticion.estado = response.data.nuevo_estado_peticion;
+            }
             aplicarFiltros();
           }
         }
@@ -2164,20 +2223,30 @@ export default {
             window.$toast.success('Estado actualizado correctamente');
           }
 
-          // ✅ OPTIMIZADO: Solo actualizar el estado local del departamento
+          // ✅ Actualizar el estado local del departamento
           const deptAsignado = departamentosAsignados.value.find(d => d.asignacion_id === asignacionId);
           if (deptAsignado) {
             deptAsignado.estado_asignacion = nuevoEstado;
           }
 
-          // También actualizar en la petición local si está cargada
+          // ✅ Actualizar en la petición local (departamentos y estado general)
           const peticionLocal = peticiones.value.find(p => p.id === peticionForm.id);
-          if (peticionLocal && peticionLocal.departamentos) {
-            const dept = peticionLocal.departamentos.find(d => d.asignacion_id === asignacionId);
-            if (dept) {
-              dept.estado_asignacion = nuevoEstado;
+          if (peticionLocal) {
+            // Actualizar estado del departamento dentro de la petición
+            if (peticionLocal.departamentos) {
+              const dept = peticionLocal.departamentos.find(d => d.asignacion_id === asignacionId);
+              if (dept) {
+                dept.estado_asignacion = nuevoEstado;
+              }
+            }
+            // ✅ Actualizar el estado general de la petición si el backend lo devuelve
+            if (response.data.nuevo_estado_peticion) {
+              peticionLocal.estado = response.data.nuevo_estado_peticion;
             }
           }
+
+          // ✅ Re-aplicar filtros para que la tabla refleje el nuevo estado
+          aplicarFiltros();
         }
 
       } catch (error) {
@@ -2556,6 +2625,11 @@ export default {
     const puedeEditarPeticion = (peticion) => {
       if (!usuarioLogueado.value) return false;
 
+      // ✅ Si el usuario tiene permiso 'peticiones_estatal', puede editar sin trackear
+      if (hasPermission('peticiones_estatal')) {
+        return true;
+      }
+
       // El usuario solo puede editar si es el asignado para seguimiento
       return tieneUsuarioAsignado(peticion) && peticion.usuario_id === usuarioLogueado.value.Id;
     };
@@ -2660,6 +2734,134 @@ export default {
       peticionDetalles.value = {};
     };
 
+    // ✅ NUEVO: Calcular progreso de una petición basado en estados de departamentos
+    const calcularProgresoPeticion = (peticion) => {
+      if (!peticion.departamentos || peticion.departamentos.length === 0) {
+        return {
+          porcentaje: 0,
+          completados: 0,
+          total: 0,
+          texto: 'Sin departamentos asignados'
+        };
+      }
+
+      const total = peticion.departamentos.length;
+      const completados = peticion.departamentos.filter(d =>
+        (d.estado || d.estado_asignacion) === 'Completado'
+      ).length;
+
+      const porcentaje = Math.round((completados / total) * 100);
+
+      return {
+        porcentaje,
+        completados,
+        total,
+        texto: `${completados} de ${total} departamento(s) completado(s)`
+      };
+    };
+
+    // ✅ NUEVO: Contar estados de departamentos
+    const contarEstadosDepartamentos = (peticion) => {
+      if (!peticion.departamentos || peticion.departamentos.length === 0) {
+        return {
+          total: 0,
+          completados: 0,
+          en_proceso: 0,
+          rechazados: 0,
+          devueltos: 0,
+          esperando: 0
+        };
+      }
+
+      const conteo = {
+        total: peticion.departamentos.length,
+        completados: 0,
+        en_proceso: 0,
+        rechazados: 0,
+        devueltos: 0,
+        esperando: 0
+      };
+
+      peticion.departamentos.forEach(dept => {
+        const estado = (dept.estado || dept.estado_asignacion || '').toLowerCase();
+
+        if (estado.includes('completado')) {
+          conteo.completados++;
+        } else if (estado.includes('proceso')) {
+          conteo.en_proceso++;
+        } else if (estado.includes('rechazado')) {
+          conteo.rechazados++;
+        } else if (estado.includes('devuelto')) {
+          conteo.devueltos++;
+        } else if (estado.includes('esperando')) {
+          conteo.esperando++;
+        }
+      });
+
+      return conteo;
+    };
+
+    // ✅ NUEVO: Determinar si una petición requiere atención
+    const requiereAtencionPeticion = (peticion) => {
+      // Estados que requieren atención
+      const estadosAtencion = [
+        'Sin revisar',
+        'Por asignar departamento',
+        'Devuelto',
+        'Rechazado por departamento'
+      ];
+
+      if (estadosAtencion.includes(peticion.estado)) {
+        return true;
+      }
+
+      // Si no tiene departamentos asignados
+      if (!peticion.departamentos || peticion.departamentos.length === 0) {
+        return true;
+      }
+
+      // Si tiene departamentos devueltos o rechazados
+      const conteo = contarEstadosDepartamentos(peticion);
+      if (conteo.devueltos > 0) {
+        return true;
+      }
+
+      // Si todos los departamentos rechazaron
+      if (conteo.rechazados > 0 && conteo.rechazados === conteo.total) {
+        return true;
+      }
+
+      // Si lleva mucho tiempo en espera
+      const estadosEspera = ['Esperando recepción', 'Sin revisar'];
+      if (estadosEspera.includes(peticion.estado)) {
+        const fechaRegistro = new Date(peticion.fecha_registro);
+        const ahora = new Date();
+        const horasTranscurridas = (ahora - fechaRegistro) / (1000 * 60 * 60);
+
+        if (horasTranscurridas > 48) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    // ✅ NUEVO: Obtener información completa del estado
+    const obtenerInfoEstado = (peticion) => {
+      const conteo = contarEstadosDepartamentos(peticion);
+      const progreso = calcularProgresoPeticion(peticion);
+      const requiereAtencion = requiereAtencionPeticion(peticion);
+
+      return {
+        estado: peticion.estado,
+        conteo,
+        progreso,
+        requiereAtencion,
+        color: obtenerColorSemaforo(peticion),
+        nivelImportancia: peticion.NivelImportancia
+      };
+    };
+
     return {
       loading,
 
@@ -2748,6 +2950,8 @@ export default {
       contadorSinSeguimiento,
       filtrarSinSeguimiento,
       limpiarFiltros,
+      sincronizando,
+      sincronizarEstados,
 
       puedeEditarPeticion,
       toggleAccionesMenu,
@@ -2783,12 +2987,19 @@ export default {
       peticionDetalles,
       abrirDetallesPeticion,
       cerrarDetallesPeticion,
+
+      // ✅ NUEVO: Funciones para estados y progreso
+      calcularProgresoPeticion,
+      contarEstadosDepartamentos,
+      requiereAtencionPeticion,
+      obtenerInfoEstado,
     };
   }
 };
 </script>
 
 <style src="@/assets/css/Petition.css"></style>
+<style src="@/assets/css/EstadosPeticiones.css"></style>
 <style>
 /* Sin scoped - usando namespace .peticiones-container para evitar conflictos */
 
@@ -2799,13 +3010,14 @@ export default {
 
 .peticiones-container .skeleton-item {
   display: grid;
-  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px;
-  gap: 1rem;
+  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px;
+  gap: 10px;
   padding: 1rem;
   background: white;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 0.5rem;
   border-radius: 8px;
+  min-width: max-content;
 }
 
 .peticiones-container .skeleton {
@@ -2865,10 +3077,32 @@ export default {
   width: 90%;
 }
 
+/* Estilos para contenedores de la tabla */
+.peticiones-container .peticiones-list {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.peticiones-container .tabla-scroll-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.peticiones-container .tabla-contenido {
+  width: 100%;
+  min-width: max-content;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Estilos con máxima especificidad para forzar el header */
 .peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
   display: grid !important;
-  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px !important;
   background: linear-gradient(135deg, #0074D9, #0056b3) !important;
   color: white !important;
   padding: 1rem !important;
@@ -2880,27 +3114,37 @@ export default {
   top: 0 !important;
   z-index: 100 !important;
   min-width: 1410px !important;
-  width: calc(100% + 8px) !important;
-  margin-right: -8px !important;
+  width: max-content !important;
   box-sizing: border-box !important;
   border-radius: 12px 12px 0 0 !important;
+  gap: 10px !important;
+  align-items: center !important;
 }
 
 .peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado > div {
   color: white !important;
   background: transparent !important;
+  text-align: center !important;
+  padding: 0.5rem !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.3 !important;
 }
 
 /* ✅ ESTILOS PARA FILAS DE LA TABLA CON GRID CONSISTENTE */
 .peticiones-container .peticion-item {
   display: grid !important;
-  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
+  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px !important;
   align-items: center !important;
-  padding: 0.75rem 0 !important;
+  padding: 1rem 0 !important;
   border-bottom: 1px solid #e9ecef !important;
   transition: all 0.2s ease !important;
-  min-width: 1410px !important;
-  gap: 1rem !important;
+  min-width: max-content !important;
+  gap: 10px !important;
   background: white;
 }
 
@@ -2915,15 +3159,22 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0.5rem;
+  overflow: hidden;
+  max-width: 120px;
+  width: 120px;
 }
 
 .peticiones-container .peticion-folio {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 130px;
+  width: 130px;
 }
 
 .peticiones-container .peticion-folio:hover {
@@ -2934,10 +3185,15 @@ export default {
 .peticiones-container .peticion-nombre {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
-  overflow: hidden;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 200px;
+  width: 200px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .peticiones-container .peticion-nombre:hover {
@@ -2948,9 +3204,13 @@ export default {
 .peticiones-container .peticion-telefono {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 120px;
+  width: 120px;
 }
 
 .peticiones-container .peticion-telefono:hover {
@@ -2961,10 +3221,15 @@ export default {
 .peticiones-container .peticion-localidad {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
-  overflow: hidden;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 150px;
+  width: 150px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .peticiones-container .peticion-localidad:hover {
@@ -2975,9 +3240,15 @@ export default {
 .peticiones-container .peticion-estado {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 180px;
+  width: 180px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .peticiones-container .peticion-estado:hover {
@@ -2989,16 +3260,23 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 1rem;
+  padding: 0.5rem;
+  overflow: hidden;
+  max-width: 150px;
+  width: 150px;
 }
 
 .peticiones-container .peticion-prioridad {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0.5rem;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 150px;
+  width: 150px;
 }
 
 .peticiones-container .peticion-prioridad:hover {
@@ -3009,10 +3287,16 @@ export default {
 .peticiones-container .peticion-fecha {
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 1rem;
+  padding: 0.5rem;
   font-size: 13px;
   transition: all 0.2s ease;
+  overflow: hidden;
+  max-width: 130px;
+  width: 130px;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .peticiones-container .peticion-fecha:hover {
@@ -3024,118 +3308,140 @@ export default {
 .peticiones-container .folio-badge {
   background: linear-gradient(135deg, #0074D9, #0056b3);
   color: white;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 12px;
   font-size: 11px;
   font-weight: 600;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: center;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 1.3;
 }
 
 .peticiones-container .nombre-peticion {
   font-weight: 500;
   color: #495057;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
 }
 
-.peticiones-container .telefono,
-.peticiones-container .localidad {
+.peticiones-container .telefono {
   font-size: 13px;
   color: #6c757d;
   white-space: nowrap;
+  text-align: center;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.peticiones-container .localidad {
+  font-size: 13px;
+  color: #6c757d;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .peticiones-container .indicadores-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.peticiones-container .indicadores-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .peticiones-container .fecha-registro {
   font-size: 12px;
   color: #6c757d;
-  white-space: nowrap;
-}
-
-/* ✅ NUEVO: Estilos para items de la tabla con grid consistente */
-.peticiones-container .peticion-item {
-  display: grid !important;
-  grid-template-columns: 100px 120px 200px 130px 150px 180px 200px 180px 150px !important;
-  align-items: center !important;
-  padding: 0.75rem 1rem !important;
-  border-bottom: 1px solid #e9ecef !important;
-  transition: all 0.2s ease !important;
-  min-width: 1410px !important;
-  gap: 0 !important;
-}
-
-.peticiones-container .peticion-item:hover {
-  background-color: #f8f9fa !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* ✅ NUEVO: Estilos específicos para cada columna */
-.peticiones-container .peticion-acciones {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.peticiones-container .peticion-folio {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.peticiones-container .peticion-nombre {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 100%;
   overflow: hidden;
 }
 
-.peticiones-container .peticion-telefono {
+/* Estilos para contenedor de estado */
+.peticiones-container .peticion-estado-container {
   display: flex;
   align-items: center;
-  cursor: pointer;
-}
-
-.peticiones-container .peticion-localidad {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+  gap: 6px;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
 }
 
-.peticiones-container .peticion-estado {
+/* Estilos para wrapper de departamentos */
+.peticiones-container .departamentos-wrapper {
   display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  max-width: 100%;
   align-items: center;
-  cursor: pointer;
+  overflow: hidden;
 }
 
-.peticiones-container .peticion-departamentos {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Estilos para progreso inline */
+.peticiones-container .progreso-inline {
+  width: 80%;
+  height: 3px;
+  background: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-.peticiones-container .peticion-prioridad {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+.peticiones-container .progreso-barra-inline {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50, #66bb6a);
+  transition: width 0.3s ease;
+  border-radius: 2px;
 }
 
-.peticiones-container .peticion-fecha {
-  display: flex;
+/* ✅ ESTILOS DE ESTADO - Mejor espaciado */
+.peticiones-container .estado-badge {
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-flex;
   align-items: center;
-  cursor: pointer;
-  font-size: 13px;
+  gap: 6px;
+  white-space: normal;
+  word-wrap: break-word;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 100%;
 }
 
 /* Estilos para el header con título y municipio */
@@ -3695,10 +4001,11 @@ export default {
   color: white;
 }
 
-.peticiones-container .dept-estado-pendiente { background: #ffc107; color: #212529; }
-.peticiones-container .dept-estado-aceptado { background: #28a745; }
-.peticiones-container .dept-estado-rechazado { background: #dc3545; }
-.peticiones-container .dept-estado-procesando { background: #17a2b8; }
+/* Colores armonizados para estados de departamentos */
+.peticiones-container .dept-estado-pendiente { background: #fff9e6; color: #c78116; border: 1px solid #ffeaa7; }
+.peticiones-container .dept-estado-aceptado { background: #e8f5f0; color: #2b8a5a; border: 1px solid #c3e6cb; }
+.peticiones-container .dept-estado-rechazado { background: #ffe8eb; color: #c92a3a; border: 1px solid #f8c8cf; }
+.peticiones-container .dept-estado-procesando { background: #e6f4f9; color: #1b6b8a; border: 1px solid #b8dae9; }
 
 .peticiones-container .dept-fecha {
   font-size: 12px;
@@ -3719,19 +4026,32 @@ export default {
 
 .peticiones-container .estado-badge,
 .peticiones-container .prioridad-badge {
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-align: center;
+  line-height: 1.3;
+  max-width: 100%;
+  overflow: hidden;
 }
 
-.peticiones-container .prioridad-1 { background: #dc3545; color: white; }
-.peticiones-container .prioridad-2 { background: #fd7e14; color: white; }
-.peticiones-container .prioridad-3 { background: #ffc107; color: #212529; }
-.peticiones-container .prioridad-4 { background: #28a745; color: white; }
-.peticiones-container .prioridad-5 { background: #6c757d; color: white; }
+/* Colores armonizados para prioridades */
+.peticiones-container .prioridad-1 { background: #ffe8eb; color: #c92a3a; border: 1px solid #f8c8cf; }
+.peticiones-container .prioridad-2 { background: #fff4e6; color: #e8590c; border: 1px solid #ffe0b2; }
+.peticiones-container .prioridad-3 { background: #fff9e6; color: #c78116; border: 1px solid #ffeaa7; }
+.peticiones-container .prioridad-4 { background: #e8f5f0; color: #2b8a5a; border: 1px solid #c3e6cb; }
+.peticiones-container .prioridad-5 { background: #f0f1f3; color: #5c6773; border: 1px solid #d6d8db; }
 
 /* Estilos para imágenes en historial */
 .peticiones-container .historial-imagenes {
@@ -3793,27 +4113,31 @@ export default {
 /* Estilos para badges de acciones */
 .peticiones-container .acciones-badges {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .peticiones-container .accion-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 10px;
+  gap: 3px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   border: 1px solid;
   cursor: pointer;
   transition: all 0.2s ease;
   background: white;
-  min-height: 24px;
+  min-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .peticiones-container .edit-badge {
@@ -3856,11 +4180,11 @@ export default {
 }
 
 .peticiones-container .accion-badge i {
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .peticiones-container .accion-badge span {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
 }
 
@@ -3892,43 +4216,47 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 5px;
+  padding: 5px 10px;
   border-radius: 14px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid;
-  min-height: 28px;
+  min-height: 26px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .peticiones-container .sin-asignar-badge {
-  background: linear-gradient(135deg, #fff5f5, #ffe9e9);
+  background: #fff5f5;
   color: #dc3545;
-  border-color: #dc3545;
+  border-color: #fecdd3;
 }
 
 .peticiones-container .sin-asignar-badge:hover {
-  background: linear-gradient(135deg, #ffe9e9, #ffcccb);
-  border-color: #c82333;
+  background: #ffe9e9;
+  border-color: #fca5a5;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2);
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.15);
 }
 
 .peticiones-container .con-asignaciones-badge {
-  background: linear-gradient(135deg, #f8fff8, #e8f5e8);
-  color: #28a745;
-  border-color: #28a745;
+  background: #e8f5f0;
+  color: #2b8a5a;
+  border-color: #c3e6cb;
 }
 
 .peticiones-container .con-asignaciones-badge:hover {
-  background: linear-gradient(135deg, #e8f5e8, #d4edda);
-  border-color: #1e7e34;
+  background: #d4edda;
+  border-color: #a7d6b0;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.15);
 }
 
 .peticiones-container .badge-text {
@@ -3937,7 +4265,7 @@ export default {
 
 .peticiones-container .badge-icon,
 .peticiones-container .badge-icon-left {
-  font-size: 10px;
+  font-size: 9px;
   opacity: 0.8;
 }
 
@@ -4000,18 +4328,342 @@ export default {
 /* Iconos de edición */
 .peticiones-container .estado-edit-icon,
 .peticiones-container .prioridad-edit-icon {
-  font-size: 12px;
-  margin-left: 8px;
-  opacity: 0.7;
+  font-size: 10px;
+  opacity: 0.5;
   transition: opacity 0.2s ease;
+  color: #6b7280;
 }
 
 .peticiones-container .estado-clickeable.clickeable:hover .estado-edit-icon,
 .peticiones-container .prioridad-clickeable.clickeable:hover .prioridad-edit-icon {
   opacity: 1;
+  color: #0074D9;
 }
 
 .peticiones-container .departamentos-lista {
   grid-template-columns: 1fr;
 }
+
+/* ================================================
+   ESTILOS DE ESTADOS - PALETA ARMONIZADA
+   ================================================ */
+
+/* Estado: Sin revisar */
+.peticiones-container .estado-sin-revisar {
+  background: #fff4e6;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.peticiones-container .estado-sin-revisar::before {
+  content: '\f06a';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Rechazado por departamento */
+.peticiones-container .estado-rechazado-por-departamento {
+  background: #ffe8eb;
+  color: #c92a3a;
+  border: 1px solid #fecdd3;
+}
+
+.peticiones-container .estado-rechazado-por-departamento::before {
+  content: '\f057';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Por asignar departamento */
+.peticiones-container .estado-por-asignar-departamento {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.peticiones-container .estado-por-asignar-departamento::before {
+  content: '\f252';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Completado */
+.peticiones-container .estado-completado {
+  background: #e8f5f0;
+  color: #2b8a5a;
+  border: 1px solid #c3e6cb;
+}
+
+.peticiones-container .estado-completado::before {
+  content: '\f058';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Aceptada en proceso */
+.peticiones-container .estado-aceptada-en-proceso {
+  background: #e6f4f9;
+  color: #1b6b8a;
+  border: 1px solid #b8dae9;
+}
+
+.peticiones-container .estado-aceptada-en-proceso::before {
+  content: '\f2f1';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Devuelto */
+.peticiones-container .estado-devuelto {
+  background: #f3e8ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.peticiones-container .estado-devuelto::before {
+  content: '\f2ea';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Improcedente */
+.peticiones-container .estado-improcedente {
+  background: #f5f5f5;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.peticiones-container .estado-improcedente::before {
+  content: '\f05e';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Cancelada */
+.peticiones-container .estado-cancelada {
+  background: #fff0f0;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.peticiones-container .estado-cancelada::before {
+  content: '\f00d';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estado: Esperando recepción */
+.peticiones-container .estado-esperando-recepción {
+  background: #fef9e6;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.peticiones-container .estado-esperando-recepción::before {
+  content: '\f017';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 6px;
+}
+
+/* Estilos para badges de estado grandes */
+.peticiones-container .estado-badge-large {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ================================================
+   ESTILOS DE SEMÁFORO - COLORES ARMONIZADOS
+   ================================================ */
+
+.peticiones-container .semaforo {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.peticiones-container .semaforo.verde {
+  background: #a7f3d0;
+  border-color: #6ee7b7;
+  box-shadow: 0 0 8px rgba(110, 231, 183, 0.4);
+}
+
+.peticiones-container .semaforo.amarillo {
+  background: #fde68a;
+  border-color: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+.peticiones-container .semaforo.naranja {
+  background: #fed7aa;
+  border-color: #fb923c;
+  box-shadow: 0 0 8px rgba(251, 146, 60, 0.4);
+}
+
+.peticiones-container .semaforo.rojo {
+  background: #fecaca;
+  border-color: #f87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.4);
+}
+
+/* ================================================
+   MINI BADGES DE DEPARTAMENTOS - ARMONIZADOS
+   ================================================ */
+
+.peticiones-container .dept-mini-badge {
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid;
+}
+
+.peticiones-container .dept-mini-badge.dept-pendiente {
+  background: #fff9e6;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.peticiones-container .dept-mini-badge.dept-aceptado {
+  background: #e8f5f0;
+  color: #2b8a5a;
+  border-color: #c3e6cb;
+}
+
+.peticiones-container .dept-mini-badge.dept-rechazado {
+  background: #ffe8eb;
+  color: #c92a3a;
+  border-color: #fecdd3;
+}
+
+.peticiones-container .dept-mini-badge.dept-en-proceso,
+.peticiones-container .dept-mini-badge.dept-procesando {
+  background: #e6f4f9;
+  color: #1b6b8a;
+  border-color: #b8dae9;
+}
+
+/* ================================================
+   INDICADOR DE SEGUIMIENTO - ARMONIZADO
+   ================================================ */
+
+.peticiones-container .seguimiento-indicator {
+  width: auto;
+  padding: 3px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.peticiones-container .seguimiento-asignado {
+  background: #e8f5f0;
+  color: #2b8a5a;
+  border-color: #c3e6cb;
+}
+
+.peticiones-container .seguimiento-sin-asignar {
+  background: #f5f5f5;
+  color: #9ca3af;
+  border-color: #d1d5db;
+}
+
+/* Estilos para badge de atención */
+.peticiones-container .atencion-badge {
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  animation: pulse-attention 2s infinite;
+}
+
+@keyframes pulse-attention {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.2);
+  }
+}
+
+/* ================================================
+   NIVEL DE IMPORTANCIA - BADGES ARMONIZADOS
+   ================================================ */
+
+.peticiones-container .nivel-importancia {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peticiones-container .nivel-importancia.nivel-1 {
+  background: #ffe8eb;
+  color: #c92a3a;
+  border-color: #f8c8cf;
+}
+
+.peticiones-container .nivel-importancia.nivel-2 {
+  background: #fff4e6;
+  color: #e8590c;
+  border-color: #ffe0b2;
+}
+
+.peticiones-container .nivel-importancia.nivel-3 {
+  background: #fff9e6;
+  color: #c78116;
+  border-color: #ffeaa7;
+}
+
+.peticiones-container .nivel-importancia.nivel-4 {
+  background: #e8f5f0;
+  color: #2b8a5a;
+  border-color: #c3e6cb;
+}
+
+.peticiones-container .nivel-importancia.nivel-5 {
+  background: #f0f1f3;
+  color: #5c6773;
+  border-color: #d6d8db;
+}
+
 </style>

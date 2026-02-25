@@ -2,6 +2,7 @@
 // Actualizado: 2026-02-10 - Corregido campo email inexistente
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/services/EstadoService.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -108,8 +109,8 @@ elseif ($method === 'PUT') {
     try {
         $db->beginTransaction();
 
-        // Obtener estado anterior
-        $getQuery = "SELECT estado FROM peticion_departamento WHERE id = ?";
+        // Obtener estado anterior y peticion_id en una sola consulta
+        $getQuery = "SELECT estado, peticion_id FROM peticion_departamento WHERE id = ?";
         $getStmt = $db->prepare($getQuery);
         $getStmt->execute([$data->asignacion_id]);
         $current = $getStmt->fetch(PDO::FETCH_ASSOC);
@@ -117,6 +118,8 @@ elseif ($method === 'PUT') {
         if (!$current) {
             throw new Exception("Asignación no encontrada");
         }
+
+        $peticion_id = $current['peticion_id'];
 
         // Actualizar estado
         $updateQuery = "UPDATE peticion_departamento SET estado = ? WHERE id = ?";
@@ -160,11 +163,25 @@ elseif ($method === 'PUT') {
 
         $db->commit();
 
+        // ✅ NUEVO: Actualizar automáticamente el estado general de la petición
+        $nuevo_estado_peticion = null;
+        $razon_cambio = null;
+        if ($peticion_id) {
+            $estadoService = new EstadoService($db);
+            $resultadoEstado = $estadoService->actualizarEstadoAutomatico($peticion_id);
+            if ($resultadoEstado['success']) {
+                $nuevo_estado_peticion = $resultadoEstado['estado_nuevo'];
+                $razon_cambio = $resultadoEstado['razon'];
+            }
+        }
+
         http_response_code(200);
         echo json_encode([
             "success" => true,
             "message" => "Estado actualizado correctamente",
-            "historial_id" => (int)$historial_id, // Forzar a entero
+            "historial_id" => (int)$historial_id,
+            "nuevo_estado_peticion" => $nuevo_estado_peticion,
+            "razon_cambio" => $razon_cambio, // Forzar a entero
             "debug_info" => [
                 "asignacion_id" => $data->asignacion_id,
                 "estado_anterior" => $current['estado'],

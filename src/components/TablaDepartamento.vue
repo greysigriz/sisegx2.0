@@ -162,9 +162,23 @@
                   </div>
                 </div>
                 <div class="peticion-info">
-                  <span :class="['estado-badge', `estado-${peticion.estado_departamento.toLowerCase().replace(/ /g, '-')}`]">
-                    {{ peticion.estado_departamento }}
-                  </span>
+                  <div class="estado-dual-container">
+                    <!-- Estado del departamento (principal) -->
+                    <div class="estado-principal">
+                      <span :class="['estado-badge', `estado-${peticion.estado_departamento.toLowerCase().replace(/ /g, '-')}`]"
+                            :title="`Estado de tu departamento: ${peticion.estado_departamento}`">
+                        {{ peticion.estado_departamento }}
+                      </span>
+                    </div>
+                    <!-- Estado de la petición general (secundario) -->
+                    <div v-if="peticion.estado_peticion"
+                         class="estado-secundario"
+                         :class="`estado-secundario-${(peticion.estado_peticion || '').toLowerCase().replace(/ /g, '-')}`"
+                         :title="`Estado general de la petición: ${peticion.estado_peticion}`">
+                      <i class="fas fa-info-circle"></i>
+                      <span class="estado-texto-pequeno">Petición: {{ peticion.estado_peticion }}</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="peticion-acciones">
                   <button @click="abrirModalDetalles(peticion)" class="action-btn"
@@ -1541,7 +1555,100 @@ export default {
 </script>
 
 <style src="@/assets/css/TablaDepartamento.css"></style>
+<style src="@/assets/css/EstadosPeticiones.css"></style>
 <style scoped>
+/* ✅ NUEVO: Contenedor de estado dual */
+.estado-dual-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.estado-principal {
+  width: 100%;
+}
+
+.estado-secundario {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 10px;
+  font-size: 10px;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.estado-secundario:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+.estado-secundario i {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.estado-texto-pequeno {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+/* ✅ NUEVO: Colores para estados secundarios según el estado de la petición */
+.estado-secundario-sin-revisar {
+  background: linear-gradient(135deg, #fff9e6, #fff3cd);
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.estado-secundario-por-asignar-departamento {
+  background: linear-gradient(135deg, #ffe9e9, #ffcccb);
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.estado-secundario-esperando-recepción {
+  background: linear-gradient(135deg, #e6f7ff, #d1ecf1);
+  border-color: #17a2b8;
+  color: #0c5460;
+}
+
+.estado-secundario-aceptada-en-proceso {
+  background: linear-gradient(135deg, #e3f2fd, #cfe2ff);
+  border-color: #0074D9;
+  color: #004085;
+}
+
+.estado-secundario-completado {
+  background: linear-gradient(135deg, #e8f5e8, #d4edda);
+  border-color: #28a745;
+  color: #155724;
+}
+
+.estado-secundario-devuelto {
+  background: linear-gradient(135deg, #fff4e6, #ffe5cc);
+  border-color: #fd7e14;
+  color: #8a4f00;
+}
+
+.estado-secundario-rechazado-por-departamento {
+  background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  border-color: #8B0000;
+  color: #721c24;
+}
+
+.estado-secundario-improcedente,
+.estado-secundario-cancelada {
+  background: linear-gradient(135deg, #e9ecef, #dee2e6);
+  border-color: #6c757d;
+  color: #495057;
+}
+
 /* ✅ NUEVOS: Estilos para mostrar departamento actual y estilos de peticiones */
 .departamento-actual {
   display: flex;

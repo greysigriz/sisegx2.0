@@ -16,6 +16,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/services/EstadoService.php';
 
 try {
     $database = new Database();
@@ -173,9 +174,9 @@ try {
                 
                 // Actualizar estado de la petición si se asignaron departamentos
                 if ($departamentos_asignados > 0) {
-                    $update_query = "UPDATE peticiones SET estado = 'Esperando recepción' WHERE id = ?";
-                    $update_stmt = $db->prepare($update_query);
-                    $update_stmt->execute([$data['peticion_id']]);
+                    // ✅ NUEVO: Usar el servicio para actualizar estado automáticamente
+                    $estadoService = new EstadoService($db);
+                    $resultadoEstado = $estadoService->actualizarEstadoAutomatico($data['peticion_id']);
                 }
                 
                 $db->commit();
@@ -190,7 +191,8 @@ try {
                     "success" => true,
                     "message" => $mensaje,
                     "asignados" => $departamentos_asignados,
-                    "existentes" => $departamentos_existentes
+                    "existentes" => $departamentos_existentes,
+                    "nuevo_estado_peticion" => $resultadoEstado['estado_nuevo'] ?? null
                 ]);
                 
             } catch (Exception $e) {
@@ -226,16 +228,16 @@ try {
                 $stmt = $db->prepare($query);
                 
                 if ($stmt->execute([$peticion_id, $departamento_id])) {
-                    // Actualizar estado de la petición
-                    $update_query = "UPDATE peticiones SET estado = 'Esperando recepción' WHERE id = ?";
-                    $update_stmt = $db->prepare($update_query);
-                    $update_stmt->execute([$peticion_id]);
+                    // ✅ NUEVO: Actualizar estado automáticamente usando el servicio
+                    $estadoService = new EstadoService($db);
+                    $resultadoEstado = $estadoService->actualizarEstadoAutomatico($peticion_id);
                     
                     http_response_code(201);
                     echo json_encode([
                         "success" => true,
                         "message" => "Departamento asignado correctamente",
-                        "id" => $db->lastInsertId()
+                        "id" => $db->lastInsertId(),
+                        "nuevo_estado_peticion" => $resultadoEstado['estado_nuevo'] ?? null
                     ]);
                 } else {
                     throw new Exception("No se pudo insertar la asignación");
@@ -270,14 +272,34 @@ try {
         }
         
         try {
+            // Primero obtener la peticion_id antes de actualizar
+            $peticion_id_query = "SELECT peticion_id FROM peticion_departamento WHERE id = ?";
+            $peticion_stmt = $db->prepare($peticion_id_query);
+            $peticion_stmt->execute([$data['id']]);
+            $peticion_info = $peticion_stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$peticion_info) {
+                throw new Exception("Asignación de departamento no encontrada");
+            }
+            
+            $peticion_id = $peticion_info['peticion_id'];
+            
+            // Actualizar el estado del departamento
             $query = "UPDATE peticion_departamento SET estado = ? WHERE id = ?";
             $stmt = $db->prepare($query);
             
             if ($stmt->execute([$data['estado'], $data['id']])) {
+                // ✅ NUEVO: Actualizar automáticamente el estado de la petición
+                $estadoService = new EstadoService($db);
+                $resultadoEstado = $estadoService->actualizarEstadoAutomatico($peticion_id);
+                
                 http_response_code(200);
                 echo json_encode([
                     "success" => true,
-                    "message" => "Estado actualizado correctamente"
+                    "message" => "Estado actualizado correctamente",
+                    "estado_peticion_actualizado" => $resultadoEstado['success'],
+                    "nuevo_estado_peticion" => $resultadoEstado['estado_nuevo'] ?? null,
+                    "razon_cambio" => $resultadoEstado['razon'] ?? null
                 ]);
             } else {
                 throw new Exception("No se pudo actualizar el estado");
@@ -333,14 +355,30 @@ try {
         }
         elseif (!empty($data['id'])) {
             try {
+                // Obtener peticion_id antes de eliminar
+                $getPeticionQuery = "SELECT peticion_id FROM peticion_departamento WHERE id = ?";
+                $getPeticionStmt = $db->prepare($getPeticionQuery);
+                $getPeticionStmt->execute([intval($data['id'])]);
+                $peticionRow = $getPeticionStmt->fetch(PDO::FETCH_ASSOC);
+                $peticion_id_para_estado = $peticionRow ? $peticionRow['peticion_id'] : null;
+
                 $query = "DELETE FROM peticion_departamento WHERE id = ?";
                 $stmt = $db->prepare($query);
                 
                 if ($stmt->execute([intval($data['id'])])) {
+                    // ✅ NUEVO: Recalcular estado de la petición tras eliminar departamento
+                    $nuevo_estado_peticion = null;
+                    if ($peticion_id_para_estado) {
+                        $estadoService = new EstadoService($db);
+                        $resultadoEstado = $estadoService->actualizarEstadoAutomatico($peticion_id_para_estado);
+                        $nuevo_estado_peticion = $resultadoEstado['estado_nuevo'] ?? null;
+                    }
+
                     http_response_code(200);
                     echo json_encode([
                         "success" => true,
-                        "message" => "Asignación eliminada correctamente"
+                        "message" => "Asignación eliminada correctamente",
+                        "nuevo_estado_peticion" => $nuevo_estado_peticion
                     ]);
                 } else {
                     throw new Exception("No se pudo eliminar la asignación");

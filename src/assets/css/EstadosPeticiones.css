@@ -1,0 +1,442 @@
+/* Estados de Peticiones con indicadores visuales mejorados */
+
+/* ===========================
+   BADGES DE ESTADO PRINCIPAL
+   =========================== */
+
+.estado-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Estado: Sin revisar - Amarillo con animación de pulso */
+.estado-sin-revisar {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  color: #212529;
+  border-color: #ff9800;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.estado-sin-revisar::before {
+  content: "⚠";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.6);
+  }
+}
+
+/* Estado: Por asignar departamento - Rojo con indicador de atención */
+.estado-por-asignar-departamento {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+   border-color: #bd2130;
+  animation: pulse-danger 2s ease-in-out infinite;
+}
+
+.estado-por-asignar-departamento::before {
+  content: "⚠";
+  font-size: 14px;
+  margin-right: 2px;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.7);
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Estado: Esperando recepción - Azul claro */
+.estado-esperando-recepción {
+  background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+  color: white;
+  border-color: #0f6674;
+}
+
+.estado-esperando-recepción::before {
+  content: "⏳";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+/* Estado: Aceptada en proceso - Azul */
+.estado-aceptada-en-proceso {
+  background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
+  color: white;
+  border-color: #004085;
+}
+
+.estado-aceptada-en-proceso::before {
+  content: "⚙";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+/* Estado: Completado - Verde */
+.estado-completado {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+  border-color: #155724;
+}
+
+.estado-completado::before {
+  content: "✓";
+  font-size: 14px;
+  margin-right: 2px;
+  font-weight: bold;
+}
+
+/* Estado: Devuelto - Naranja con animación */
+.estado-devuelto {
+  background: linear-gradient(135deg, #fd7e14 0%, #dc6500 100%);
+  color: white;
+  border-color: #bd5600;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.estado-devuelto::before {
+  content: "↩";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+/* Estado: Rechazado por departamento - Rojo oscuro */
+.estado-rechazado-por-departamento {
+  background: linear-gradient(135deg, #8B0000 0%, #660000 100%);
+  color: white;
+  border-color: #4a0000;
+}
+
+.estado-rechazado-por-departamento::before {
+  content: "✗";
+  font-size: 14px;
+  margin-right: 2px;
+  font-weight: bold;
+}
+
+/* Estado: Improcedente - Gris oscuro */
+.estado-improcedente {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  color: white;
+  border-color: #3d4349;
+}
+
+.estado-improcedente::before {
+  content: "⊘";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+/* Estado: Cancelada - Gris */
+.estado-cancelada {
+  background: linear-gradient(135deg, #adb5bd 0%, #868e96 100%);
+  color: white;
+  border-color: #6c757d;
+}
+
+.estado-cancelada::before {
+  content: "✗";
+  font-size: 14px;
+  margin-right: 2px;
+}
+
+/* ===========================
+   INDICADORES DE ATENCIÓN
+   =========================== */
+
+/* Contenedor de estado con indicador de atención */
+.peticion-estado-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Badge de atención (pulsante) */
+.atencion-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse-attention 1.5s ease-in-out infinite;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  z-index: 1;
+}
+
+@keyframes pulse-attention {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* ===========================
+   INFORMACIÓN DE DEPARTAMENTOS
+   =========================== */
+
+/* Mini badges de estado de departamentos */
+.departamentos-mini-estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 6px;
+  background: rgba(248, 249, 250, 0.5);
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.dept-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.dept-mini-badge:hover {
+  transform: translateY(-1px);
+}
+
+.dept-mini-badge i {
+  font-size: 8px;
+}
+
+/* Colores para estados de departamentos */
+.dept-esperando-recepcion {
+  background: linear-gradient(135deg, #17a2b8, #117a8b);
+}
+
+.dept-aceptado-en-proceso {
+  background: linear-gradient(135deg, #0074D9, #0056b3);
+}
+
+.dept-completado {
+  background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+.dept-rechazado {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.dept-devuelto-a-seguimiento {
+  background: linear-gradient(135deg, #fd7e14, #dc6500);
+}
+
+/* ===========================
+   BARRA DE PROGRESO
+   =========================== */
+
+.progreso-container {
+  margin-top: 8px;
+  background: #e9ecef;
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progreso-barra {
+  height: 100%;
+  background: linear-gradient(90deg, #28a745, #20c997);
+  transition: width 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progreso-barra::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progreso-texto {
+  margin-top: 4px;
+  font-size: 10px;
+  color: #6c757d;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ===========================
+   RESUMEN DE ESTADOS
+   =========================== */
+
+.estados-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.estado-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 6px;
+  background: #f8f9fa;
+  transition: transform 0.2s ease;
+}
+
+.estado-stat:hover {
+  transform: translateY(-2px);
+  background: #e9ecef;
+}
+
+.estado-stat-numero {
+  font-size: 16px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.estado-stat-label {
+  font-size: 9px;
+  color: #6c757d;
+  text-transform: uppercase;
+  text-align: center;
+  letter-spacing: 0.2px;
+}
+
+.estado-stat-completado .estado-stat-numero { color: #28a745; }
+.estado-stat-proceso .estado-stat-numero { color: #0074D9; }
+.estado-stat-rechazado .estado-stat-numero { color: #dc3545; }
+.estado-stat-devuelto .estado-stat-numero { color: #fd7e14; }
+.estado-stat-esperando .estado-stat-numero { color: #17a2b8; }
+
+/* ===========================
+   TOOLTIPS MEJORADOS
+   =========================== */
+
+.estado-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.estado-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  background: #212529;
+  color: white;
+  font-size: 11px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.estado-tooltip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #212529;
+  z-index: 1000;
+  margin-bottom: 2px;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+@media (max-width: 768px) {
+  .estado-badge {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
+  .estado-badge::before {
+    font-size: 12px;
+  }
+
+  .departamentos-mini-estados {
+    gap: 3px;
+    padding: 4px;
+  }
+
+  .dept-mini-badge {
+    padding: 2px 6px;
+    font-size: 9px;
+  }
+
+  .estados-resumen {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .estado-stat-numero {
+    font-size: 14px;
+  }
+
+  .estado-stat-label {
+    font-size: 8px;
+  }
+}
