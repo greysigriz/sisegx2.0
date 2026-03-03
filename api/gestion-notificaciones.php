@@ -94,12 +94,12 @@ try {
                 u.Usuario,
                 u.Email,
                 u.IdUnidad,
-                un.nombre AS nombre_unidad,
+                un.nombre_unidad AS nombre_unidad,
                 nc.NotificacionesActivas,
                 nc.UltimaNotificacion
             FROM Usuario u
             INNER JOIN UsuarioRol ur ON u.IdUsuario = ur.IdUsuario
-            LEFT JOIN Unidad un ON u.IdUnidad = un.id
+            LEFT JOIN unidades un ON u.IdUnidad = un.id
             LEFT JOIN NotificacionConfiguracion nc ON u.IdUsuario = nc.IdUsuario
             WHERE ur.IdRol = 9
             ORDER BY u.Usuario ASC
@@ -116,12 +116,12 @@ try {
         $stmtDeptos = $pdo->query("
             SELECT DISTINCT
                 un.id,
-                un.nombre
-            FROM Unidad un
+                un.nombre_unidad AS nombre
+            FROM unidades un
             INNER JOIN Usuario u ON un.id = u.IdUnidad
             INNER JOIN UsuarioRol ur ON u.IdUsuario = ur.IdUsuario
             WHERE ur.IdRol = 9
-            ORDER BY un.nombre ASC
+            ORDER BY un.nombre_unidad ASC
         ");
         
         $departamentos = $stmtDeptos->fetchAll(PDO::FETCH_ASSOC);
