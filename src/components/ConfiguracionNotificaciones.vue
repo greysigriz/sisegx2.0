@@ -27,7 +27,7 @@
 
         <!-- Configuration form -->
         <div v-else class="config-form">
-          
+
           <!-- Email configuration section -->
           <div class="section email-section">
             <div class="section-header">
@@ -57,7 +57,7 @@
                   <span>{{ guardandoEmail ? 'Guardando y probando...' : 'Guardar y Probar' }}</span>
                 </button>
               </div>
-              
+
               <div v-if="config.Email" class="email-status success">
                 <i class="fas fa-check-circle"></i>
                 <span>Email configurado: <strong>{{ config.Email }}</strong></span>
@@ -239,7 +239,7 @@ export default {
     const desvinculando = ref(false);
     const cargandoHistorial = ref(false);
     const error = ref(null);
-    
+
     const config = ref({
       Email: '',
       NotificacionesActivas: false,
@@ -252,37 +252,37 @@ export default {
       nombre_unidad: '',
       peticiones_pendientes_actuales: 0
     });
-    
+
     const emailTemp = ref('');
     const historial = ref([]);
-    
+
     const emailValido = computed(() => {
       const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return regex.test(emailTemp.value);
     });
-    
+
     const apiUrl = import.meta.env.VITE_API_URL;
-    
+
     /**
      * Cargar configuración del usuario
      */
     const cargarConfiguracion = async () => {
       loading.value = true;
       error.value = null;
-      
+
       try {
         const response = await axios.get(`${apiUrl}/notificaciones.php`);
-        
+
         if (response.data.success && response.data.data) {
           Object.assign(config.value, response.data.data);
           emailTemp.value = config.value.Email || '';
-          
+
           // Convertir valores booleanos
           config.value.NotificacionesActivas = Boolean(Number(config.value.NotificacionesActivas));
           config.value.FiltrarPorMunicipio = Boolean(Number(config.value.FiltrarPorMunicipio));
           config.value.NotificarPeticionesNuevas = Boolean(Number(config.value.NotificarPeticionesNuevas));
           config.value.NotificarPeticionesVencidas = Boolean(Number(config.value.NotificarPeticionesVencidas));
-          
+
           // Cargar historial si las notificaciones están activas
           if (config.value.NotificacionesActivas) {
             cargarHistorial();
@@ -295,7 +295,7 @@ export default {
         loading.value = false;
       }
     };
-    
+
     /**
      * Actualizar email del usuario y enviar prueba automáticamente
      */
@@ -304,19 +304,19 @@ export default {
         alert('Por favor ingresa un email válido');
         return;
       }
-      
+
       guardandoEmail.value = true;
-      
+
       try {
         const response = await axios.post(`${apiUrl}/notificaciones.php`, {
           email: emailTemp.value
         });
-        
+
         if (response.data.success) {
           config.value.Email = emailTemp.value;
           config.value.NotificacionesActivas = true;
           alert('✅ Email guardado correctamente.\n\n📧 Se ha enviado un correo de prueba a: ' + emailTemp.value + '\n\nRevisa tu bandeja de entrada (y carpeta de SPAM).');
-          
+
           // Recargar configuración para actualizar todos los campos
           await cargarConfiguracion();
         } else {
@@ -333,7 +333,7 @@ export default {
         guardandoEmail.value = false;
       }
     };
-    
+
     /**
      * Desvincular email y desactivar notificaciones
      */
@@ -341,19 +341,19 @@ export default {
       if (!confirm('¿Estás seguro de que deseas desvincular tu email y desactivar las notificaciones?\n\nYa no recibirás alertas de peticiones pendientes.')) {
         return;
       }
-      
+
       desvinculando.value = true;
-      
+
       try {
         // Desactivar notificaciones
         const response = await axios.put(`${apiUrl}/notificaciones.php`, {
           NotificacionesActivas: 0
         });
-        
+
         if (response.data.success) {
           config.value.NotificacionesActivas = false;
           alert('✅ Notificaciones desactivadas correctamente.\n\nPuedes volver a activarlas en cualquier momento ingresando tu email nuevamente.');
-          
+
           // Recargar configuración
           await cargarConfiguracion();
         }
@@ -365,16 +365,16 @@ export default {
         desvinculando.value = false;
       }
     };
-    
+
     /**
      * Cargar historial de notificaciones
      */
     const cargarHistorial = async () => {
       cargandoHistorial.value = true;
-      
+
       try {
         const response = await axios.get(`${apiUrl}/enviar-notificaciones.php?limit=10`);
-        
+
         if (response.data.success) {
           historial.value = response.data.data;
         }
@@ -384,7 +384,7 @@ export default {
         cargandoHistorial.value = false;
       }
     };
-    
+
     /**
      * Formatear fecha
      */
@@ -399,7 +399,7 @@ export default {
         minute: '2-digit'
       });
     };
-    
+
     onMounted(() => {
       // Verificar si el usuario tiene rol Departamento
       const currentUser = AuthService.getCurrentUser();
@@ -408,17 +408,17 @@ export default {
         router.push('/bienvenido');
         return;
       }
-      
+
       const tieneRolDepartamento = currentUser.usuario.RolesIds.includes(9);
       if (!tieneRolDepartamento) {
         alert('Esta sección es solo para usuarios de Departamento');
         router.push('/bienvenido');
         return;
       }
-      
+
       cargarConfiguracion();
     });
-    
+
     return {
       loading,
       guardandoEmail,
@@ -1008,43 +1008,43 @@ export default {
   .notificaciones-container {
     padding: 15px;
   }
-  
+
   .card-body {
     padding: 20px;
   }
-  
+
   .card-header {
     padding: 20px;
     flex-direction: column;
     text-align: center;
   }
-  
+
   .header-icon {
     font-size: 32px;
   }
-  
+
   .email-input-group {
     flex-direction: column;
   }
-  
+
   .btn-update-email {
     width: 100%;
     justify-content: center;
   }
-  
+
   .info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .section {
     padding: 20px;
   }
-  
+
   .historial-item {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .historial-meta {
     flex-direction: column;
     gap: 8px;
@@ -1055,19 +1055,19 @@ export default {
   .card-header {
     padding: 16px;
   }
-  
+
   .header-text h3 {
     font-size: 20px;
   }
-  
+
   .header-text .subtitle {
     font-size: 13px;
   }
-  
+
   .section {
     padding: 16px;
   }
-  
+
   .section-header h4 {
     font-size: 16px;
   }

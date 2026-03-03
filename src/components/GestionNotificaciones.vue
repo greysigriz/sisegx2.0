@@ -134,9 +134,9 @@
                     </span>
                   </td>
                   <td>
-                    <span 
-                      class="status-badge" 
-                      :class="{ 
+                    <span
+                      class="status-badge"
+                      :class="{
                         'active': usuario.NotificacionesActivas,
                         'inactive': !usuario.NotificacionesActivas && usuario.Email,
                         'no-email': !usuario.Email
@@ -145,8 +145,8 @@
                       <i v-if="usuario.NotificacionesActivas" class="fas fa-check-circle"></i>
                       <i v-else-if="usuario.Email" class="fas fa-times-circle"></i>
                       <i v-else class="fas fa-exclamation-circle"></i>
-                      {{ 
-                        usuario.NotificacionesActivas ? 'Activa' : 
+                      {{
+                        usuario.NotificacionesActivas ? 'Activa' :
                         usuario.Email ? 'Inactiva' : 'Sin configurar'
                       }}
                     </span>
@@ -277,20 +277,20 @@ export default {
     const cargandoHistorial = ref(false);
     const historialUsuario = ref([]);
     const usuarioSeleccionado = ref(null);
-    
+
     const apiUrl = import.meta.env.VITE_API_URL;
-    
+
     /**
      * Usuarios filtrados
      */
     const usuariosFiltrados = computed(() => {
       let resultado = usuarios.value;
-      
+
       // Filtrar por departamento
       if (filtroDeptoId.value) {
         resultado = resultado.filter(u => u.IdUnidad == filtroDeptoId.value);
       }
-      
+
       // Filtrar por estado
       if (filtroEstado.value === 'activo') {
         resultado = resultado.filter(u => u.NotificacionesActivas);
@@ -299,32 +299,32 @@ export default {
       } else if (filtroEstado.value === 'sin-email') {
         resultado = resultado.filter(u => !u.Email);
       }
-      
+
       return resultado;
     });
-    
-    const usuariosActivos = computed(() => 
+
+    const usuariosActivos = computed(() =>
       usuarios.value.filter(u => u.NotificacionesActivas).length
     );
-    
-    const usuariosInactivos = computed(() => 
+
+    const usuariosInactivos = computed(() =>
       usuarios.value.filter(u => !u.NotificacionesActivas && u.Email).length
     );
-    
-    const usuariosSinEmail = computed(() => 
+
+    const usuariosSinEmail = computed(() =>
       usuarios.value.filter(u => !u.Email).length
     );
-    
+
     /**
      * Cargar todos los usuarios con rol departamento
      */
     const cargarUsuarios = async () => {
       loading.value = true;
       error.value = null;
-      
+
       try {
         const response = await axios.get(`${apiUrl}/gestion-notificaciones.php`);
-        
+
         if (response.data.success) {
           usuarios.value = response.data.data.usuarios;
           departamentos.value = response.data.data.departamentos;
@@ -336,7 +336,7 @@ export default {
         loading.value = false;
       }
     };
-    
+
     /**
      * Activar notificaciones de un usuario
      */
@@ -344,15 +344,15 @@ export default {
       if (!confirm('¿Activar las notificaciones para este usuario?')) {
         return;
       }
-      
+
       procesando.value = userId;
-      
+
       try {
         const response = await axios.put(`${apiUrl}/gestion-notificaciones.php`, {
           userId,
           NotificacionesActivas: 1
         });
-        
+
         if (response.data.success) {
           alert('✅ Notificaciones activadas correctamente');
           await cargarUsuarios();
@@ -364,7 +364,7 @@ export default {
         procesando.value = null;
       }
     };
-    
+
     /**
      * Desactivar notificaciones de un usuario
      */
@@ -372,15 +372,15 @@ export default {
       if (!confirm('¿Desactivar las notificaciones para este usuario?')) {
         return;
       }
-      
+
       procesando.value = userId;
-      
+
       try {
         const response = await axios.put(`${apiUrl}/gestion-notificaciones.php`, {
           userId,
           NotificacionesActivas: 0
         });
-        
+
         if (response.data.success) {
           alert('✅ Notificaciones desactivadas correctamente');
           await cargarUsuarios();
@@ -392,7 +392,7 @@ export default {
         procesando.value = null;
       }
     };
-    
+
     /**
      * Ver historial de un usuario
      */
@@ -401,10 +401,10 @@ export default {
       mostrarModalHistorial.value = true;
       cargandoHistorial.value = true;
       historialUsuario.value = [];
-      
+
       try {
         const response = await axios.get(`${apiUrl}/gestion-notificaciones.php?userId=${userId}&historial=true`);
-        
+
         if (response.data.success) {
           historialUsuario.value = response.data.data;
         }
@@ -414,13 +414,13 @@ export default {
         cargandoHistorial.value = false;
       }
     };
-    
+
     const cerrarModalHistorial = () => {
       mostrarModalHistorial.value = false;
       usuarioSeleccionado.value = null;
       historialUsuario.value = [];
     };
-    
+
     /**
      * Formatear fecha
      */
@@ -435,7 +435,7 @@ export default {
         minute: '2-digit'
       });
     };
-    
+
     onMounted(() => {
       // Verificar si el usuario tiene rol Super Usuario
       const currentUser = AuthService.getCurrentUser();
@@ -444,17 +444,17 @@ export default {
         router.push('/bienvenido');
         return;
       }
-      
+
       const esSuperUsuario = currentUser.usuario.RolesIds.includes(1);
       if (!esSuperUsuario) {
         alert('Esta sección es solo para Super Usuarios');
         router.push('/bienvenido');
         return;
       }
-      
+
       cargarUsuarios();
     });
-    
+
     return {
       loading,
       error,
@@ -1067,23 +1067,23 @@ export default {
   .gestion-container {
     padding: 15px;
   }
-  
+
   .card-body {
     padding: 20px;
   }
-  
+
   .filters-section {
     flex-direction: column;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .table-container {
     overflow-x: scroll;
   }
-  
+
   .usuarios-table {
     min-width: 800px;
   }
