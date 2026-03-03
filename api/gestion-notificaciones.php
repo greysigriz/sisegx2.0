@@ -36,7 +36,7 @@ if (!$esSuperUsuario) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$pdo = getPDO();
+$pdo = new PDO($dsn, $usuario, $password);
 
 try {
     if ($method === 'GET') {
