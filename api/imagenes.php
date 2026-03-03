@@ -44,12 +44,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB
 define('MAX_IMAGES_PER_ENTITY', 3);
 define('ALLOWED_TYPES', ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']);
-define('UPLOADS_BASE_PATH', $_SERVER['DOCUMENT_ROOT'] . '/SISEE/uploads');
+
+// Detectar si estamos en desarrollo local o producción
+$isLocalDev = (strpos($_SERVER['DOCUMENT_ROOT'], 'xampp') !== false || 
+               strpos($_SERVER['DOCUMENT_ROOT'], 'htdocs') !== false);
+$baseFolder = $isLocalDev ? '/SISEE' : '';
+
+define('UPLOADS_BASE_PATH', $_SERVER['DOCUMENT_ROOT'] . $baseFolder . '/uploads');
 
 // Generar URL base absoluta para las imágenes
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
-define('UPLOADS_BASE_URL', "$protocol://$host/SISEE/uploads");
+define('UPLOADS_BASE_URL', "$protocol://$host$baseFolder/uploads");
 
 // Crear directorio uploads si no existe
 if (!file_exists(UPLOADS_BASE_PATH)) {
@@ -310,7 +316,12 @@ else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Convertir URLs relativas a absolutas
         foreach ($imagenes as &$imagen) {
             if (isset($imagen['url_acceso']) && strpos($imagen['url_acceso'], 'http') !== 0) {
-                $imagen['url_acceso'] = UPLOADS_BASE_URL . str_replace('/SISEE/uploads', '', $imagen['url_acceso']);
+                // Si la ruta empieza con /uploads o /SISEE/uploads, extraer solo la parte después de uploads
+                $rutaRelativa = $imagen['url_acceso'];
+                if (strpos($rutaRelativa, '/uploads/') !== false) {
+                    $rutaRelativa = substr($rutaRelativa, strpos($rutaRelativa, '/uploads/'));
+                }
+                $imagen['url_acceso'] = UPLOADS_BASE_URL . str_replace('/uploads', '', $rutaRelativa);
             }
         }
 
