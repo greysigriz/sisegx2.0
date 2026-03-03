@@ -90,7 +90,7 @@ try {
         // Obtener todos los usuarios con rol Departamento (RolId = 9)
         $stmt = $pdo->query("
             SELECT DISTINCT
-                u.IdUsuario,
+                u.Id,
                 u.Usuario,
                 u.Email,
                 u.IdUnidad,
@@ -98,9 +98,9 @@ try {
                 nc.NotificacionesActivas,
                 nc.UltimaNotificacion
             FROM Usuario u
-            INNER JOIN UsuarioRol ur ON u.IdUsuario = ur.IdUsuario
+            INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
             LEFT JOIN unidades un ON u.IdUnidad = un.id
-            LEFT JOIN NotificacionConfiguracion nc ON u.IdUsuario = nc.IdUsuario
+            LEFT JOIN NotificacionConfiguracion nc ON u.Id = nc.IdUsuario
             WHERE ur.IdRol = 9
             ORDER BY u.Usuario ASC
         ");
@@ -119,7 +119,7 @@ try {
                 un.nombre_unidad AS nombre
             FROM unidades un
             INNER JOIN Usuario u ON un.id = u.IdUnidad
-            INNER JOIN UsuarioRol ur ON u.IdUsuario = ur.IdUsuario
+            INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
             WHERE ur.IdRol = 9
             ORDER BY un.nombre_unidad ASC
         ");
@@ -152,10 +152,10 @@ try {
         
         // Verificar que el usuario exista y tenga rol departamento
         $stmt = $pdo->prepare("
-            SELECT u.IdUsuario, u.Email
+            SELECT u.Id, u.Email
             FROM Usuario u
-            INNER JOIN UsuarioRol ur ON u.IdUsuario = ur.IdUsuario
-            WHERE u.IdUsuario = :userId AND ur.IdRol = 9
+            INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
+            WHERE u.Id = :userId AND ur.IdRol = 9
         ");
         
         $stmt->execute([':userId' => $userId]);
