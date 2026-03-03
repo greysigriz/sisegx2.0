@@ -318,10 +318,12 @@ else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (isset($imagen['url_acceso']) && strpos($imagen['url_acceso'], 'http') !== 0) {
                 // Si la ruta empieza con /uploads o /SISEE/uploads, extraer solo la parte después de uploads
                 $rutaRelativa = $imagen['url_acceso'];
-                if (strpos($rutaRelativa, '/uploads/') !== false) {
-                    $rutaRelativa = substr($rutaRelativa, strpos($rutaRelativa, '/uploads/'));
-                }
-                $imagen['url_acceso'] = UPLOADS_BASE_URL . str_replace('/uploads', '', $rutaRelativa);
+                
+                // Eliminar /SISEE/uploads o /uploads del inicio
+                $rutaRelativa = preg_replace('#^(/SISEE)?/uploads/#', '', $rutaRelativa);
+                
+                // Construir URL absoluta correcta
+                $imagen['url_acceso'] = UPLOADS_BASE_URL . '/' . $rutaRelativa;
             }
         }
 
