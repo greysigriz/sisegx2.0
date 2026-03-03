@@ -23,8 +23,26 @@ export default [
         path: '/configuracion/roles',
         name: 'Configuración de roles',
         component: () => import('@/views/Configuracion/Roles.vue')
+      },
+      {
+        path: '/configuracion/notificaciones',
+        name: 'Notificaciones por Email',
+        component: () => import('@/components/ConfiguracionNotificaciones.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: [9] // Solo rol Departamento (RolId = 9)
+        }
+      },
+      {
+        path: '/configuracion/gestion-notificaciones',
+        name: 'Gestión de Notificaciones',
+        component: () => import('@/components/GestionNotificaciones.vue'),
+        meta: {
+          requiresAuth: true,
+          requiresRole: [1] // Solo Super Usuario (RolId = 1)
+        }
       }
-      
+
     ]
   }
 ]

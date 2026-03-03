@@ -3,7 +3,7 @@
         'name' => 'sisee/sistema-seguimiento',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '218a15253585cf2fed9083bd3bcad4e13c599a04',
+        'reference' => '549307bf2764c9e69475fa062c6067c485b1086d',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'sisee/sistema-seguimiento' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '218a15253585cf2fed9083bd3bcad4e13c599a04',
+            'reference' => '549307bf2764c9e69475fa062c6067c485b1086d',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

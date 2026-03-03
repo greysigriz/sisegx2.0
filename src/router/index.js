@@ -67,6 +67,22 @@ router.beforeEach(async (to, from, next) => {
       return next('/bienvenido');
     }
   }
+
+  // Verificar roles si la ruta los requiere
+  if (to.meta && to.meta.requiresRole) {
+    const currentUser = AuthService.getCurrentUser();
+    const userRoles = currentUser?.usuario?.RolesIds || [];
+    const requiredRoles = Array.isArray(to.meta.requiresRole) ? to.meta.requiresRole : [to.meta.requiresRole];
+
+    const hasRequiredRole = requiredRoles.some(roleId => userRoles.includes(roleId));
+
+    if (!hasRequiredRole) {
+      console.log('🚫 Sin rol requerido para:', to.path, 'Roles requeridos:', requiredRoles, 'Roles del usuario:', userRoles);
+      alert('No tienes permiso para acceder a esta sección');
+      return next('/configuracion');
+    }
+  }
+
   // 🔥 ARRANQUE CONTROLADO
     if (isAuthenticated) {
       AuthService.start?.();

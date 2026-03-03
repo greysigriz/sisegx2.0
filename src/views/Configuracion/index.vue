@@ -42,6 +42,22 @@
             </div>
           </div>
 
+          <!-- Notificaciones Email - Solo rol Departamento -->
+          <div v-if="isSuperUsuario" class="configuracion-item" @click="redirectTo('notificaciones')">
+            <div class="configuracion-icon">
+              <font-awesome-icon :icon="['fas', 'bell']" />
+            </div>
+            <div class="configuracion-details">
+              <div>
+                <h4>Notificaciones por Email</h4>
+                <p>Configurar alertas de peticiones</p>
+              </div>
+              <div class="configuracion-arrow-icon">
+                →
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -49,8 +65,22 @@
 </template>
 
 <script>
+import AuthService from '@/services/auth'
+
 export default {
   name: 'ConfiguracionPanel',
+  data() {
+    return {
+      isSuperUsuario: false
+    }
+  },
+  mounted() {
+    // Verificar si el usuario tiene rol Departamento (Id = 9)
+    const currentUser = AuthService.getCurrentUser()
+    if (currentUser && currentUser.usuario && currentUser.usuario.RolesIds) {
+      this.isSuperUsuario = currentUser.usuario.RolesIds.includes(9)
+    }
+  },
   methods: {
     redirectTo(page) {
       this.$router.push(`/configuracion/${page}`)

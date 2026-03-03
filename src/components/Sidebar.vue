@@ -90,8 +90,10 @@ export default {
         { name: 'formulario', label: 'Crear Petición', icon: 'fas fa-edit', path: '/petition', requiredPermission: 'peticiones_formulario' },
         { name: 'peticiones', label: 'Peticiones', icon: 'fas fa-tasks', path: '/peticiones', requiredPermission: 'ver_peticiones,peticiones_municipio,peticiones_estatal' },
         { name: 'petitions', label: 'Petitions', icon: 'fas fa-user-check', path: '/petitions', requiredPermission: 'ver_peticiones' },
-        { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'acceder_configuracion' },
         { name: 'mis-peticiones', label: 'Mis Peticiones', icon: 'fas fa-clipboard-list', path: '/departamentos', requiredPermission: 'gestion_peticiones_departamento' },
+        { name: 'notificaciones', label: 'Notificaciones', icon: 'fas fa-bell', path: '/configuracion/notificaciones', requiredPermission: 'gestion_peticiones_departamento' },
+        { name: 'gestion-notificaciones', label: 'Gestión de Notificaciones', icon: 'fas fa-users-cog', path: '/configuracion/gestion-notificaciones', requiredPermission: 'acceder_configuracion', requiredRole: 1 },
+        { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'acceder_configuracion' },
         { name: 'tablero', label: 'Tablero', icon: 'fas fa-th-large', path: '/tablero', requiredPermission: 'ver_tablero' },
       ],
       currentUser: null,
@@ -157,14 +159,22 @@ export default {
       // Obtener permisos del usuario
       const permisos = usuario.Permisos || this.currentUser.permisos || [];
 
+      // Obtener roles del usuario
+      const rolesIds = usuario.RolesIds || [];
+
       // Si no hay permisos, no mostrar ningún menú
       if (!Array.isArray(permisos) || permisos.length === 0) {
         console.warn('Usuario sin permisos asignados');
         return [];
       }
 
-      // Filtrar elementos del menú según los permisos del usuario
+      // Filtrar elementos del menú según los permisos y roles del usuario
       return this.allMenuItems.filter(item => {
+        // Verificar rol si es requerido
+        if (item.requiredRole && !rolesIds.includes(item.requiredRole)) {
+          return false;
+        }
+
         // Si el permiso contiene múltiples opciones separadas por coma, verificar si tiene alguno
         if (item.requiredPermission.includes(',')) {
           const permisosRequeridos = item.requiredPermission.split(',').map(p => p.trim());
