@@ -36,7 +36,19 @@ if (!$esSuperUsuario) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$pdo = new PDO($dsn, $usuario, $password);
+
+// Inicializar conexión a base de datos
+$database = new Database();
+$pdo = $database->getConnection();
+
+if (!$pdo) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error de conexión a base de datos'
+    ]);
+    exit;
+}
 
 try {
     if ($method === 'GET') {
