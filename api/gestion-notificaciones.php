@@ -10,33 +10,6 @@ require_once 'cors.php';
 
 session_start();
 
-// Verificar que el usuario esté autenticado
-if (!isset($_SESSION['usuario'])) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'message' => 'No autenticado'
-    ]);
-    exit;
-}
-
-// Verificar que el usuario sea Super Usuario (RolId = 1)
-$esSuperUsuario = false;
-if (isset($_SESSION['usuario']['RolesIds']) && is_array($_SESSION['usuario']['RolesIds'])) {
-    $esSuperUsuario = in_array(1, $_SESSION['usuario']['RolesIds']);
-}
-
-if (!$esSuperUsuario) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'message' => 'No tienes permisos para acceder a esta funcionalidad'
-    ]);
-    exit;
-}
-
-$method = $_SERVER['REQUEST_METHOD'];
-
 // Inicializar conexión a base de datos
 $database = new Database();
 $pdo = $database->getConnection();
@@ -49,6 +22,41 @@ if (!$pdo) {
     ]);
     exit;
 }
+
+// Verificar que el usuario esté autenticado
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'message' => 'No autenticado'
+    ]);
+    exit;
+}
+
+// Verificar que el usuario sea Super Usuario (RolId = 1)
+$esSuperUsuario = false;
+
+// Opción 1: Verificar desde la sesión si está disponible
+if (isset($_SESSION['user_data']['usuario']['RolesIds']) && is_array($_SESSION['user_data']['usuario']['RolesIds'])) {
+    $esSuperUsuario = in_array(1, $_SESSION['user_data']['usuario']['RolesIds']);
+} else {
+    // Opción 2: Consultar desde la base de datos
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM UsuarioRol WHERE IdUsuario = :userId AND IdRol = 1");
+    $stmt->execute([':userId' => $_SESSION['user_id']]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $esSuperUsuario = ($result['count'] > 0);
+}
+
+if (!$esSuperUsuario) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'No tienes permisos para acceder a esta funcionalidad'
+    ]);
+    exit;
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'GET') {
