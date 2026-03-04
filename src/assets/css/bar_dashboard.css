@@ -143,6 +143,10 @@
    ══════════════════════════════════════════════════════════════════════════ */
 .echarts-tooltip {
   padding: 8px;
+  max-width: 220px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .echarts-tooltip-title {

@@ -101,7 +101,7 @@ const renderBarChart = () => {
   }
 
   // Calcula altura dinámica basada en cantidad de elementos
-  const minHeight = 600
+  const minHeight = 700
   const heightPerItem = 28
   const calculatedHeight = Math.max(minHeight, data.length * heightPerItem + 100)
 
@@ -116,11 +116,18 @@ const renderBarChart = () => {
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
+      confine: true,
+      extraCssText: `
+      max-width: 220px;
+      white-space: normal;
+      word-break: break-word;
+      `,
+
       // Posición dinámica: intenta mostrar a la derecha si hay espacio, si no, a la izquierda
       position: (pos, params, dom, rect, size) => {
-        const chartWidth = (barChart.value && barChart.value.clientWidth) || (size && size.viewSize && size.viewSize[0]) || 800
+        const chartWidth = (barChart.value && barChart.value.clientWidth) || (size && size.viewSize && size.viewSize[0]) || 400
         const tooltipApproxWidth = 240
-        const gap = 10
+        const gap = 15
         const x = (pos[0] + tooltipApproxWidth + gap > chartWidth) ? Math.max(gap, pos[0] - tooltipApproxWidth - gap) : pos[0] + gap
         const y = pos[1]
         return [x, y]
@@ -177,7 +184,7 @@ const renderBarChart = () => {
       axisTick: { show: false },
       axisLabel: {
         color: '#1e293b',
-        fontSize: 10.5,
+        fontSize: 11,
         fontFamily: chartFont,
         fontWeight: 500,
         width: 250,
