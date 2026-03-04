@@ -96,11 +96,17 @@ try {
                 u.IdUnidad,
                 un.nombre_unidad AS nombre_unidad,
                 nc.NotificacionesActivas,
-                nc.UltimaNotificacion
+                nh_last.UltimaNotificacion
             FROM Usuario u
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
             LEFT JOIN unidades un ON u.IdUnidad = un.id
             LEFT JOIN NotificacionConfiguracion nc ON u.Id = nc.IdUsuario
+            LEFT JOIN (
+                SELECT IdUsuario, MAX(FechaEnvio) AS UltimaNotificacion
+                FROM NotificacionHistorial
+                WHERE Estado = 'enviado'
+                GROUP BY IdUsuario
+            ) nh_last ON u.Id = nh_last.IdUsuario
             WHERE ur.IdRolSistema = 9
             ORDER BY u.Usuario ASC
         ");
