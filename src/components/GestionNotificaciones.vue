@@ -499,7 +499,7 @@ export default {
 }
 
 .card-header {
-  background: linear-gradient(135deg, #6610f2 0%, #4e0db5 100%);
+  background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
   color: white;
   padding: 30px;
   display: flex;
@@ -558,7 +558,7 @@ export default {
 .btn-retry {
   margin-top: 20px;
   padding: 12px 24px;
-  background: #6610f2;
+  background: #0074D9;
   color: white;
   border: none;
   border-radius: 8px;
@@ -569,7 +569,7 @@ export default {
 }
 
 .btn-retry:hover {
-  background: #4e0db5;
+  background: #0056b3;
 }
 
 /* Filters */
@@ -606,13 +606,13 @@ export default {
 
 .filter-select:focus {
   outline: none;
-  border-color: #6610f2;
-  box-shadow: 0 0 0 4px rgba(102, 16, 242, 0.1);
+  border-color: #0074D9;
+  box-shadow: 0 0 0 4px rgba(0, 116, 217, 0.1);
 }
 
 .btn-refresh {
   padding: 10px 20px;
-  background: #6610f2;
+  background: #0074D9;
   color: white;
   border: none;
   border-radius: 8px;
@@ -627,7 +627,7 @@ export default {
 }
 
 .btn-refresh:hover {
-  background: #4e0db5;
+  background: #0056b3;
 }
 
 /* Stats */
@@ -713,18 +713,18 @@ export default {
 }
 
 .usuarios-table thead {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #0074D9, #0056b3);
 }
 
 .usuarios-table th {
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  color: #495057;
+  color: white;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #dee2e6;
+  border-bottom: 2px solid #0056b3;
 }
 
 .usuarios-table tbody tr {
@@ -734,6 +734,8 @@ export default {
 
 .usuarios-table tbody tr:hover {
   background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.1);
 }
 
 .usuarios-table td {
@@ -769,7 +771,7 @@ export default {
 
 .usuario-info i {
   font-size: 20px;
-  color: #6610f2;
+  color: #0074D9;
 }
 
 .email-badge,
@@ -786,8 +788,8 @@ export default {
 }
 
 .depto-badge {
-  background: #f3e7ff;
-  color: #6610f2;
+  background: #e7f3ff;
+  color: #0074D9;
 }
 
 .fecha-badge {
@@ -870,11 +872,11 @@ export default {
 }
 
 .btn-action.history {
-  background: #6610f2;
+  background: #0074D9;
 }
 
 .btn-action.history:hover {
-  background: #4e0db5;
+  background: #0056b3;
   transform: translateY(-2px);
 }
 
@@ -911,35 +913,43 @@ export default {
 
 .modal-header {
   padding: 24px;
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #0074D9, #0056b3);
+  color: white;
+  border-bottom: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 12px 12px 0 0;
 }
 
 .modal-header h4 {
   margin: 0;
   font-size: 20px;
-  color: #333;
+  color: white;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .btn-close {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
   font-size: 20px;
-  color: #6c757d;
+  color: white;
   cursor: pointer;
   padding: 8px;
   border-radius: 4px;
   transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-close:hover {
-  background: #f8f9fa;
-  color: #333;
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 .modal-body {
@@ -986,6 +996,7 @@ export default {
 .historial-item:hover {
   background: #f1f3f5;
   transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.1);
 }
 
 .historial-item.estado-enviado {
