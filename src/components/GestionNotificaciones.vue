@@ -503,8 +503,9 @@ export default {
   color: white;
   padding: 30px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
 }
 
 .header-icon {
@@ -513,11 +514,17 @@ export default {
   opacity: 0.95;
 }
 
+.header-text {
+  text-align: center;
+  width: 100%;
+}
+
 .header-text h3 {
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 600;
   color: white;
+  text-align: center;
 }
 
 .header-text .subtitle {
@@ -525,6 +532,7 @@ export default {
   opacity: 0.92;
   font-size: 14px;
   color: white;
+  text-align: center;
 }
 
 .card-body {
@@ -641,8 +649,8 @@ export default {
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  gap: 12px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 10px;
   border-left: 4px solid #6c757d;
@@ -664,7 +672,7 @@ export default {
 }
 
 .stat-card i {
-  font-size: 32px;
+  font-size: 24px;
   color: #6c757d;
 }
 
@@ -687,13 +695,13 @@ export default {
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #333;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -718,7 +726,7 @@ export default {
 
 .usuarios-table th {
   padding: 16px;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   color: white;
   font-size: 13px;
@@ -742,6 +750,12 @@ export default {
   padding: 16px;
   color: #495057;
   font-size: 14px;
+  text-align: center;
+  vertical-align: middle;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 300px;
 }
 
 .empty-row {
@@ -763,7 +777,7 @@ export default {
 }
 
 .usuario-info {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   font-weight: 600;
@@ -785,6 +799,10 @@ export default {
   border-radius: 6px;
   font-size: 13px;
   color: #0074D9;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
 }
 
 .depto-badge {
@@ -841,6 +859,7 @@ export default {
 .actions-group {
   display: flex;
   gap: 8px;
+  justify-content: center;
 }
 
 .btn-action {
