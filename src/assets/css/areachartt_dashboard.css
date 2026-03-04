@@ -1,211 +1,438 @@
-/* Contenedor principal del gráfico de área */
-.area-chart-wrapper {
-    /* Espaciado interno: 32px arriba/abajo, 1.25rem izquierda/derecha */
-    padding: 35px 1.30rem;
-    /* Fondo: gradiente de blanco a gris claro formando un ángulo de 145 grados */
-    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-    /* Bordes redondeados de 20px para un efecto moderno */
-    border-radius: 20px;
-    /* Margen exterior: 2rem arriba/abajo, auto izquierda/derecha (centra horizontalmente) */
-    margin: 2rem auto;
-    /* Sombra múltiple: sombra grande, sombra media y borde luminoso azul sutil */
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04),
-        0 0 0 1px rgba(59, 130, 246, 0.05);
-    /* Borde de 1px en gris claro para delimitar el contenedor */
-    border: 1px solid rgba(226, 232, 240, 0.6);
-    /* Posicionamiento relativo para permitir elementos posicionados dentro */
-    position: relative;
-    /* Oculta cualquier contenido que se desborde del contenedor */
-    overflow: hidden;
-}
-
-.area-chart-wrapper::before {
-    /* Crea un elemento pseudo (barra de color) sin contenido visible */
-    content: '';
-    /* Posicionamiento absoluto para colocar la barra en la parte superior */
-    position: absolute;
-    /* Inicia desde la esquina superior izquierda */
-    top: 0;
-    left: 0;
-    /* Se extiende hasta el borde derecho */
-    right: 0;
-    /* Altura de la barra superior: 4px */
-    height: 4px;
-    /* Gradiente de color azul (de oscuro a claro) */
-    background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
-    /* Redondea solo las esquinas superiores */
-    border-radius: 20px 20px 0 0;
-}
-
-.chart-canvas {
-    /* El canvas del gráfico ocupa el ancho completo del contenedor */
-    width: 100%;
-    /* Altura fija de 500px para el área del gráfico */
-    height: 500px;
-}
-
-/* Encabezado del gráfico: contiene título y leyenda */
-.area-chart-header {
+/* ══════════════════════════════════════════════════════════════════════════
+   Contenedor principal del gráfico de área - Mismo diseño que bar_dashboard
+   ══════════════════════════════════════════════════════════════════════════ */
+.area-chart-card {
+  /* Espaciado interno: 32px arriba/abajo, 1.25rem izquierda/derecha */
+  padding: 32px 1.25rem;
+  /* Fondo: gradiente de blanco a gris claro formando un ángulo de 145 grados */
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  /* Bordes redondeados de 20px para un efecto moderno */
+  border-radius: 20px;
+  /* Margen exterior: 2rem arriba/abajo, auto izquierda/derecha (centra horizontalmente) */
+  margin: 2rem auto;
+  /* Sombra múltiple: sombra grande, sombra media y borde luminoso azul sutil */
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(59, 130, 246, 0.05);
+  /* Borde de 1px en gris claro para delimitar el contenedor */
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  /* Posicionamiento relativo para permitir elementos posicionados dentro */
+  position: relative;
+  /* Oculta cualquier contenido que se desborde del contenedor */
+  overflow: hidden;
+  /* Flexbox para organizar contenido verticalmente */
   display: flex;
   flex-direction: column;
-  align-items: center;   /* Centra horizontalmente */
+  align-items: flex-start;
+  /* Fuente del contenedor */
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* Barra de color superior con gradiente azul */
+.area-chart-card::before {
+  /* Crea un elemento pseudo (barra de color) sin contenido visible */
+  content: '';
+  /* Posicionamiento absoluto para colocar la barra en la parte superior */
+  position: absolute;
+  /* Inicia desde la esquina superior izquierda */
+  top: 0;
+  left: 0;
+  /* Se extiende hasta el borde derecho */
+  right: 0;
+  /* Altura de la barra superior: 4px */
+  height: 4px;
+  /* Gradiente de color azul (de oscuro a claro) */
+  background: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, #60A5FA 100%);
+  /* Redondea solo las esquinas superiores */
+  border-radius: 20px 20px 0 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Encabezado del gráfico
+   ══════════════════════════════════════════════════════════════════════════ */
+.area-chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  /* Margen inferior aumentado para separación */
+  margin-bottom: 12px;
+  width: 100%;
+  /* Espaciado entre título y selector */
+  gap: 24px;
+}
+
+.card-header-content {
+  flex: 1;
+  text-align: left;
+  padding-left: 0;
+  margin-left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Título con el mismo estilo que bar_dashboard */
+.card-title {
+  /* Tamaño de fuente grande: 24px */
+  font-size: 24px;
+  /* Texto en negrita */
+  font-weight: 700;
+  /* Color azul oscuro */
+  color: #1E40AF;
+  /* Fuente sans-serif moderna */
+  font-family: "Inter", "Segoe UI", sans-serif;
+  /* Sin margen para mejor control de espaciado */
+  margin: 0 0 4px 0;
+  padding: 0;
+}
+
+/* Badge para indicar datos de prueba */
+.test-data-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+  color: #92400E;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid #FCD34D;
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2);
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.test-data-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(251, 191, 36, 0.25);
+}
+
+.card-description {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
+}
+
+.card-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Selector de rango (Última semana, mes, etc)
+   ══════════════════════════════════════════════════════════════════════════ */
+.range-selector {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background-color: white;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  font-weight: 500;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.range-selector:hover {
+  border-color: #3b82f6;
+}
+
+.range-selector:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Contenido del card
+   ══════════════════════════════════════════════════════════════════════════ */
+.area-chart-card-content {
+  width: 100%;
+  padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Estados de carga y error
+   ══════════════════════════════════════════════════════════════════════════ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  text-align: center;    /* Centra el texto */
+  padding: 3rem 1rem;
+  color: #64748b;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
   margin-bottom: 1rem;
 }
 
-.area-chart-title {
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #2563eb;
-  text-align: center;    /* Centra el texto */
+  font-size: 0.875rem;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.area-chart-legend {
+.error-state {
   display: flex;
-  gap: 1rem;
-  justify-content: center; /* Centra los filtros */
-  margin-top: 0.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
 }
 
-/* Estilo individual de cada elemento en la leyenda */
+.error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.error-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 0.5rem 0;
+}
+
+.error-message {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  max-width: 400px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Panel de debug
+   ══════════════════════════════════════════════════════════════════════════ */
+.debug-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.8125rem;
+}
+
+.debug-panel summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  color: #475569;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.debug-panel summary:hover {
+  background: #e2e8f0;
+}
+
+.debug-content {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.debug-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  color: #64748b;
+}
+
+.debug-row strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.debug-alert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  color: #991b1b;
+}
+
+.debug-alert p {
+  margin: 0 0 0.5rem 0;
+}
+
+.debug-alert p:last-child {
+  margin-bottom: 0;
+}
+
+.debug-estados {
+  margin-top: 0.75rem;
+}
+
+.debug-estados ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.25rem;
+  color: #64748b;
+}
+
+.debug-estados li {
+  padding: 0.125rem 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Leyenda del gráfico - OPCIONAL (ya que ECharts tiene su propia leyenda)
+   Si quieres mantener la leyenda externa, déjala. Si prefieres solo la interna, puedes ocultarla.
+   ══════════════════════════════════════════════════════════════════════════ */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  padding: 1rem 0 0 0;
+  justify-content: center;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Para ocultar la leyenda externa y usar solo la de ECharts, agrega esta clase: */
+/* .chart-legend { display: none; } */
+
 .legend-item {
-    /* Flexbox inline para alinear icono y texto */
-    display: inline-flex;
-    /* Alinea verticalmente el punto de color y etiqueta */
-    align-items: center;
-    /* Espaciado de 8px entre punto y texto */
-    gap: 8px;
-    /* Cambia el cursor a puntero para indicar que es clickeable */
-    cursor: pointer;
-    /* Espaciado interno: 6px arriba/abajo, 10px izquierda/derecha */
-    padding: 6px 10px;
-    /* Bordes ligeramente redondeados para mejor apariencia */
-    border-radius: 8px;
-    /* Sin borde por defecto */
-    border: 1px solid transparent;
-    /* Transiciones suaves para hover y cambios de estado (150ms) */
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  /* Flexbox inline para alinear icono y texto */
+  display: inline-flex;
+  /* Alinea verticalmente el punto de color y etiqueta */
+  align-items: center;
+  /* Espaciado de 8px entre punto y texto */
+  gap: 8px;
+  /* Cambia el cursor a puntero para indicar que es clickeable */
+  cursor: pointer;
+  /* Espaciado interno: 8px arriba/abajo, 12px izquierda/derecha */
+  padding: 8px 12px;
+  /* Bordes ligeramente redondeados para mejor apariencia */
+  border-radius: 6px;
+  /* Sin borde por defecto */
+  border: 1px solid transparent;
+  /* Transiciones suaves para hover y cambios de estado (150ms) */
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  user-select: none;
 }
 
 /* Efecto hover en los items de la leyenda */
 .legend-item:hover {
-    /* Fondo azul muy claro al pasar el mouse */
-    background: rgba(59,130,246,0.06);
+  /* Fondo azul muy claro al pasar el mouse */
+  background: rgba(59, 130, 246, 0.08);
+  /* Borde azul para indicar interactividad */
+  border-color: rgba(59, 130, 246, 0.2);
+  /* Efecto de elevación sutil */
+  transform: translateY(-1px);
 }
 
-/* Estilo cuando el item está activo/seleccionado */
-.legend-item.active {
-    /* Fondo con color variable de la leyenda, azul claro por defecto */
-    background: var(--legend-color, #b5d5ff);
-    /* Texto negro cuando está activo */
-    color: #000000;
-    /* Sin borde cuando está activo */
-    border-color: transparent;
+/* Estado inactivo de la leyenda */
+.legend-item.inactive {
+  opacity: 0.4;
 }
 
-/* Punto de color decorativo en la leyenda */
-.legend-dot {
-    /* Punto cuadrado de 12px */
-    width: 12px;
-    height: 12px;
-    /* Círculo perfecto con border-radius 50% */
-    border-radius: 50%;
-    /* Color variable para cada serie del gráfico */
-    background: var(--legend-color, #4465fa);
-    /* Sombra sutil debajo del punto */
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+.legend-item.inactive .legend-marker {
+  background: #cbd5e1 !important;
 }
 
-/* Texto de la etiqueta en la leyenda */
-.legend-label {
-    /* Tamaño de fuente pequeño: 13px */
-    font-size: 13px;
-    /* Texto en negrita para mejor legibilidad */
-    font-weight: 600;
-    /* Hereda el color del elemento padre */
-    color: inherit;
+/* Marcador de color en la leyenda (cuadrado pequeño) */
+.legend-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-/* Contenedor del tooltip (información emergente) */
-.tooltip-container {
-    /* Espaciado interno de 12px */
-    padding: 12px;
+/* Texto de la leyenda */
+.legend-text {
+  /* Tamaño de fuente: 13px */
+  font-size: 13px;
+  /* Texto en semi-negrita para mejor legibilidad */
+  font-weight: 500;
+  /* Color gris oscuro */
+  color: #475569;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-/* Título mostrado en el tooltip */
-.tooltip-title {
-    /* Texto en negrita para destacar */
-    font-weight: 600;
-    /* Color gris oscuro */
-    color: #1F2937;
-    /* Margen inferior de 12px para separar del contenido */
-    margin-bottom: 12px;
-    /* Tamaño de fuente: 15px */
-    font-size: 15px;
+/* ══════════════════════════════════════════════════════════════════════════
+   Contenedor del gráfico
+   ══════════════════════════════════════════════════════════════════════════ */
+.chart-container {
+  width: 100%;
+  height: 550px;
+  min-height: 500px;
 }
 
-/* Cada línea de datos en el tooltip */
-.tooltip-item {
-    /* Flexbox para alinear punto de color y valor */
-    display: flex;
-    /* Alinea el punto y el texto verticalmente */
-    align-items: center;
-    /* Margen inferior de 6px entre items */
-    margin-bottom: 6px;
-    /* Color gris medio */
-    color: #6B7280;
-    /* Tamaño de fuente pequeño: 13px */
-    font-size: 13px;
-}
-
-/* Punto de color al lado del valor en el tooltip */
-.tooltip-color-dot {
-    /* Punto cuadrado de 10px */
-    width: 10px;
-    height: 10px;
-    /* Círculo perfecto */
-    border-radius: 50%;
-    /* Margen a la derecha del punto */
-    margin-right: 10px;
-    /* Color variable, gris por defecto */
-    background: var(--dot, #cbd5e1);
-}
-
-/* Etiqueta del item en el tooltip */
-.tooltip-label {
-    /* Crece para ocupar espacio disponible */
-    flex: 1;
-}
-
-/* Valor numérico mostrado en el tooltip */
-.tooltip-value {
-    /* Color gris oscuro para los números */
-    color: #1F2937;
-    /* Margen a la izquierda para separar de la etiqueta */
-    margin-left: 8px;
-}
-
-/* Media query: estilos para dispositivos hasta 768px de ancho (tablets y móviles) */
+/* ══════════════════════════════════════════════════════════════════════════
+   Responsive: tablets y móviles
+   ══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-    .area-chart-wrapper {
-        /* Reducir padding a 20px en todos los lados */
-        padding: 20px;
-        /* Reducir margen a 16px */
-        margin: 16px;
-    }
+  .area-chart-card {
+    /* Reducir padding en pantallas pequeñas */
+    padding: 20px;
+    /* Reducir margen */
+    margin: 16px;
+  }
 
-    .chart-canvas {
-        /* Aumentar altura a 800px para móviles (mejor legibilidad en pantalla pequeña) */
-        height: 800px;
-    }
+  .area-chart-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 20px;
+  }
+
+  .range-selector {
+    width: 100%;
+  }
+
+  .chart-legend {
+    gap: 1rem;
+    justify-content: flex-start;
+  }
+
+  .chart-container {
+    height: 450px;
+    min-height: 400px;
+  }
 }
 
-@media (max-width: 600px) {
-  .area-chart-legend {
-    flex-wrap: wrap;
+@media (max-width: 640px) {
+  .area-chart-card {
+    padding: 16px;
+    margin: 12px;
+  }
+
+  .chart-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .legend-item {
+    justify-content: flex-start;
+  }
+
+  .chart-container {
+    height: 400px;
+    min-height: 350px;
   }
 }
