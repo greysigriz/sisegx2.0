@@ -120,7 +120,7 @@ const renderBarChart = () => {
       position: (pos, params, dom, rect, size) => {
         const chartWidth = (barChart.value && barChart.value.clientWidth) || (size && size.viewSize && size.viewSize[0]) || 800
         const tooltipApproxWidth = 240
-        const gap = 12
+        const gap = 10
         const x = (pos[0] + tooltipApproxWidth + gap > chartWidth) ? Math.max(gap, pos[0] - tooltipApproxWidth - gap) : pos[0] + gap
         const y = pos[1]
         return [x, y]
@@ -259,4 +259,3 @@ onUnmounted(() => {
   if (barChartInstance) barChartInstance.dispose()
 })
 </script>
-
