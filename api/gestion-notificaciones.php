@@ -41,7 +41,7 @@ if (isset($_SESSION['user_data']['usuario']['RolesIds']) && is_array($_SESSION['
     $esSuperUsuario = in_array(1, $_SESSION['user_data']['usuario']['RolesIds']);
 } else {
     // Opción 2: Consultar desde la base de datos
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM UsuarioRol WHERE IdUsuario = :userId AND IdRol = 1");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM UsuarioRol WHERE IdUsuario = :userId AND IdRolSistema = 1");
     $stmt->execute([':userId' => $_SESSION['user_id']]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $esSuperUsuario = ($result['count'] > 0);
@@ -90,7 +90,7 @@ try {
         // Obtener todos los usuarios con rol Departamento (RolId = 9)
         $stmt = $pdo->query("
             SELECT DISTINCT
-                u.Id,
+                u.Id AS IdUsuario,
                 u.Usuario,
                 u.Email,
                 u.IdUnidad,
@@ -101,7 +101,7 @@ try {
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
             LEFT JOIN unidades un ON u.IdUnidad = un.id
             LEFT JOIN NotificacionConfiguracion nc ON u.Id = nc.IdUsuario
-            WHERE ur.IdRol = 9
+            WHERE ur.IdRolSistema = 9
             ORDER BY u.Usuario ASC
         ");
         
@@ -120,7 +120,7 @@ try {
             FROM unidades un
             INNER JOIN Usuario u ON un.id = u.IdUnidad
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
-            WHERE ur.IdRol = 9
+            WHERE ur.IdRolSistema = 9
             ORDER BY un.nombre_unidad ASC
         ");
         
@@ -155,7 +155,7 @@ try {
             SELECT u.Id, u.Email
             FROM Usuario u
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
-            WHERE u.Id = :userId AND ur.IdRol = 9
+            WHERE u.Id = :userId AND ur.IdRolSistema = 9
         ");
         
         $stmt->execute([':userId' => $userId]);
