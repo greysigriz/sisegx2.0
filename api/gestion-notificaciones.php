@@ -41,7 +41,7 @@ if (isset($_SESSION['user_data']['usuario']['RolesIds']) && is_array($_SESSION['
     $esSuperUsuario = in_array(1, $_SESSION['user_data']['usuario']['RolesIds']);
 } else {
     // Opción 2: Consultar desde la base de datos
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM UsuarioRol WHERE IdUsuario = :userId AND IdRol = 1");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM UsuarioRol WHERE IdUsuario = :userId AND IdRolSistema = 1");
     $stmt->execute([':userId' => $_SESSION['user_id']]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $esSuperUsuario = ($result['count'] > 0);
@@ -63,9 +63,9 @@ try {
         // Si se solicita el historial de un usuario específico
         if (isset($_GET['userId']) && isset($_GET['historial'])) {
             $userId = intval($_GET['userId']);
-            
+
             $stmt = $pdo->prepare("
-                SELECT 
+                SELECT
                     Id,
                     FechaEnvio,
                     Estado,
@@ -76,42 +76,48 @@ try {
                 ORDER BY FechaEnvio DESC
                 LIMIT 50
             ");
-            
+
             $stmt->execute([':userId' => $userId]);
             $historial = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
             echo json_encode([
                 'success' => true,
                 'data' => $historial
             ]);
             exit;
         }
-        
+
         // Obtener todos los usuarios con rol Departamento (RolId = 9)
         $stmt = $pdo->query("
             SELECT DISTINCT
-                u.Id,
+                u.Id AS IdUsuario,
                 u.Usuario,
                 u.Email,
                 u.IdUnidad,
                 un.nombre_unidad AS nombre_unidad,
                 nc.NotificacionesActivas,
-                nc.UltimaNotificacion
+                nh_last.UltimaNotificacion
             FROM Usuario u
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
             LEFT JOIN unidades un ON u.IdUnidad = un.id
             LEFT JOIN NotificacionConfiguracion nc ON u.Id = nc.IdUsuario
-            WHERE ur.IdRol = 9
+            LEFT JOIN (
+                SELECT IdUsuario, MAX(FechaEnvio) AS UltimaNotificacion
+                FROM NotificacionHistorial
+                WHERE Estado = 'enviado'
+                GROUP BY IdUsuario
+            ) nh_last ON u.Id = nh_last.IdUsuario
+            WHERE ur.IdRolSistema = 9
             ORDER BY u.Usuario ASC
         ");
-        
+
         $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Convertir NotificacionesActivas a boolean
         foreach ($usuarios as &$usuario) {
             $usuario['NotificacionesActivas'] = (bool) $usuario['NotificacionesActivas'];
         }
-        
+
         // Obtener lista de departamentos únicos
         $stmtDeptos = $pdo->query("
             SELECT DISTINCT
@@ -120,12 +126,12 @@ try {
             FROM unidades un
             INNER JOIN Usuario u ON un.id = u.IdUnidad
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
-            WHERE ur.IdRol = 9
+            WHERE ur.IdRolSistema = 9
             ORDER BY un.nombre_unidad ASC
         ");
-        
+
         $departamentos = $stmtDeptos->fetchAll(PDO::FETCH_ASSOC);
-        
+
         echo json_encode([
             'success' => true,
             'data' => [
@@ -133,11 +139,11 @@ try {
                 'departamentos' => $departamentos
             ]
         ]);
-        
+
     } elseif ($method === 'PUT') {
         // Activar o desactivar notificaciones para un usuario
         $input = json_decode(file_get_contents('php://input'), true);
-        
+
         if (!isset($input['userId']) || !isset($input['NotificacionesActivas'])) {
             http_response_code(400);
             echo json_encode([
@@ -146,21 +152,21 @@ try {
             ]);
             exit;
         }
-        
+
         $userId = intval($input['userId']);
         $notificacionesActivas = $input['NotificacionesActivas'] ? 1 : 0;
-        
+
         // Verificar que el usuario exista y tenga rol departamento
         $stmt = $pdo->prepare("
             SELECT u.Id, u.Email
             FROM Usuario u
             INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
-            WHERE u.Id = :userId AND ur.IdRol = 9
+            WHERE u.Id = :userId AND ur.IdRolSistema = 9
         ");
-        
+
         $stmt->execute([':userId' => $userId]);
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if (!$usuario) {
             http_response_code(404);
             echo json_encode([
@@ -169,7 +175,7 @@ try {
             ]);
             exit;
         }
-        
+
         // Si se está activando, verificar que tenga email configurado
         if ($notificacionesActivas && empty($usuario['Email'])) {
             http_response_code(400);
@@ -179,14 +185,14 @@ try {
             ]);
             exit;
         }
-        
+
         // Verificar si existe configuración
         $stmt = $pdo->prepare("
             SELECT IdUsuario FROM NotificacionConfiguracion WHERE IdUsuario = :userId
         ");
         $stmt->execute([':userId' => $userId]);
         $existeConfig = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
         if ($existeConfig) {
             // Actualizar configuración existente
             $stmt = $pdo->prepare("
@@ -195,7 +201,7 @@ try {
                     FechaActualizacion = NOW()
                 WHERE IdUsuario = :userId
             ");
-            
+
             $stmt->execute([
                 ':activas' => $notificacionesActivas,
                 ':userId' => $userId
@@ -227,20 +233,20 @@ try {
                     NOW()
                 )
             ");
-            
+
             $stmt->execute([
                 ':userId' => $userId,
                 ':activas' => $notificacionesActivas
             ]);
         }
-        
+
         echo json_encode([
             'success' => true,
-            'message' => $notificacionesActivas 
-                ? 'Notificaciones activadas correctamente' 
+            'message' => $notificacionesActivas
+                ? 'Notificaciones activadas correctamente'
                 : 'Notificaciones desactivadas correctamente'
         ]);
-        
+
     } else {
         http_response_code(405);
         echo json_encode([
@@ -248,7 +254,7 @@ try {
             'message' => 'Método no permitido'
         ]);
     }
-    
+
 } catch (Exception $e) {
     error_log("Error en gestion-notificaciones.php: " . $e->getMessage());
     http_response_code(500);
