@@ -273,10 +273,6 @@ class EmailService {
                     <span class="detail-label">⚙️ Aceptado en proceso</span>
                     <span class="detail-value">{$enProceso}</span>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">🔄 Devuelto a seguimiento</span>
-                    <span class="detail-value">{$devueltas}</span>
-                </div>
 HTML;
 
         if ($diasPendiente !== '') {
@@ -349,7 +345,6 @@ TOTAL DE PETICIONES PENDIENTES: {$totalPendientes}
 DESGLOSE POR ESTADO:
 - Esperando recepción: {$esperandoRecepcion}
 - Aceptado en proceso: {$enProceso}
-- Devuelto a seguimiento: {$devueltas}
 
 Para ver más detalles, accede al sistema de gestión de peticiones.
 
@@ -406,6 +401,203 @@ HTML;
             
         } catch (Exception $e) {
             $this->logEmail("Error enviando correo de prueba: " . $e->getMessage(), 'ERROR');
+            return false;
+        }
+    }
+    
+    /**
+     * Enviar notificación inmediata cuando se asigna una petición a un departamento
+     * 
+     * @param int $peticionId ID de la petición asignada
+     * @param int $departamentoId ID del departamento al que se asigna
+     * @param PDO $db Conexión a la base de datos
+     * @return bool True si se envió correctamente, false en caso contrario
+     */
+    public function enviarNotificacionAsignacion($peticionId, $departamentoId, $db) {
+        try {
+            // Obtener usuarios del departamento con notificaciones activas
+            $queryUsuarios = "SELECT 
+                                u.Id,
+                                u.Email,
+                                u.Nombre,
+                                u.ApellidoP,
+                                uni.nombre_unidad
+                              FROM Usuario u
+                              INNER JOIN UsuarioRol ur ON u.Id = ur.IdUsuario
+                              INNER JOIN NotificacionConfiguracion nc ON u.Id = nc.IdUsuario
+                              INNER JOIN unidades uni ON u.IdUnidad = uni.id
+                              WHERE u.IdUnidad = :departamentoId
+                                AND ur.IdRolSistema = 9
+                                AND nc.NotificacionesActivas = 1
+                                AND u.Email IS NOT NULL
+                                AND u.Email != ''";
+            
+            $stmtUsuarios = $db->prepare($queryUsuarios);
+            $stmtUsuarios->bindParam(':departamentoId', $departamentoId, PDO::PARAM_INT);
+            $stmtUsuarios->execute();
+            $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($usuarios)) {
+                $this->logEmail("No hay usuarios con notificaciones activas en departamento $departamentoId");
+                return false;
+            }
+            
+            // Obtener información de la petición
+            $queryPeticion = "SELECT 
+                                p.id,
+                                p.Titulo,
+                                p.Descripcion,
+                                p.Ciudadano,
+                                p.NivelImportancia,
+                                p.FechaCreacion,
+                                d.NombreDivision as municipio
+                              FROM peticiones p
+                              LEFT JOIN divisiones d ON p.IdMunicipio = d.Id
+                              WHERE p.id = :peticionId";
+            
+            $stmtPeticion = $db->prepare($queryPeticion);
+            $stmtPeticion->bindParam(':peticionId', $peticionId, PDO::PARAM_INT);
+            $stmtPeticion->execute();
+            $peticion = $stmtPeticion->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$peticion) {
+                $this->logEmail("Petición $peticionId no encontrada", 'ERROR');
+                return false;
+            }
+            
+            // Enviar notificación a cada usuario del departamento
+            $enviados = 0;
+            foreach ($usuarios as $usuario) {
+                if ($this->enviarCorreoAsignacion($usuario, $peticion)) {
+                    $enviados++;
+                }
+            }
+            
+            $this->logEmail("Notificación de asignación enviada a $enviados usuarios del departamento $departamentoId");
+            return $enviados > 0;
+            
+        } catch (Exception $e) {
+            $this->logEmail("Error enviando notificación de asignación: " . $e->getMessage(), 'ERROR');
+            return false;
+        }
+    }
+    
+    /**
+     * Enviar correo individual de asignación
+     */
+    private function enviarCorreoAsignacion($usuario, $peticion) {
+        try {
+            $this->mailer->clearAddresses();
+            $this->mailer->clearAttachments();
+            
+            $nombreCompleto = trim($usuario['Nombre'] . ' ' . ($usuario['ApellidoP'] ?? ''));
+            $this->mailer->addAddress($usuario['Email'], $nombreCompleto);
+            
+            $nivelUrgencia = $peticion['NivelImportancia'] == 1 ? '🔴 ALTA' : ($peticion['NivelImportancia'] == 2 ? '🟡 MEDIA' : '🟢 BAJA');
+            
+            $this->mailer->Subject = "🆕 Nueva Petición Asignada: {$peticion['Titulo']}";
+            
+            $this->mailer->Body = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+        .container { max-width: 650px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px; }
+        .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .info-row { display: flex; margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .info-label { font-weight: bold; min-width: 140px; color: #495057; }
+        .info-value { color: #212529; }
+        .urgency-high { color: #dc3545; font-weight: bold; }
+        .urgency-medium { color: #ffc107; font-weight: bold; }
+        .urgency-low { color: #28a745; font-weight: bold; }
+        .description-box { background: #e9ecef; padding: 15px; border-radius: 4px; margin: 20px 0; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #6c757d; }
+        .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🆕 Nueva Petición Asignada</h1>
+            <p style="margin: 10px 0 0 0; font-size: 14px;">Se ha asignado una nueva petición a {$usuario['nombre_unidad']}</p>
+        </div>
+        <div class="content">
+            <div class="alert-box">
+                <strong>⚠️ Acción Requerida:</strong> Una nueva petición ha sido asignada a tu departamento y requiere tu atención.
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">📋 Petición:</span>
+                <span class="info-value">#{$peticion['id']}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">📌 Título:</span>
+                <span class="info-value"><strong>{$peticion['Titulo']}</strong></span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">👤 Ciudadano:</span>
+                <span class="info-value">{$peticion['Ciudadano']}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">📍 Municipio:</span>
+                <span class="info-value">{$peticion['municipio']}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">⚡ Urgencia:</span>
+                <span class="info-value">{$nivelUrgencia}</span>
+            </div>
+            
+            <div class="info-row">
+                <span class="info-label">📅 Fecha:</span>
+                <span class="info-value">{$peticion['FechaCreacion']}</span>
+            </div>
+            
+            <div class="description-box">
+                <strong>📄 Descripción:</strong>
+                <p style="margin: 10px 0 0 0;">{$peticion['Descripcion']}</p>
+            </div>
+            
+            <center>
+                <a href="http://50.21.181.205" class="cta-button">Ver Petición en el Sistema</a>
+            </center>
+            
+            <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 13px; color: #6c757d;">
+                <strong>Nota:</strong> Esta es una notificación automática. Por favor, revisa la petición en el sistema y toma las acciones necesarias.
+            </p>
+        </div>
+        <div class="footer">
+            <p><strong>Sistema de Gestión de Peticiones SISEE</strong></p>
+            <p>Esta notificación fue enviada automáticamente al asignar la petición a tu departamento.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+            
+            $this->mailer->AltBody = "Nueva Petición Asignada\n\n" .
+                "Petición: #{$peticion['id']}\n" .
+                "Título: {$peticion['Titulo']}\n" .
+                "Ciudadano: {$peticion['Ciudadano']}\n" .
+                "Municipio: {$peticion['municipio']}\n" .
+                "Urgencia: {$nivelUrgencia}\n" .
+                "Fecha: {$peticion['FechaCreacion']}\n\n" .
+                "Descripción:\n{$peticion['Descripcion']}\n\n" .
+                "Departamento: {$usuario['nombre_unidad']}\n\n" .
+                "Por favor, revisa la petición en el sistema.";
+            
+            return $this->mailer->send();
+            
+        } catch (Exception $e) {
+            $this->logEmail("Error enviando correo de asignación a {$usuario['Email']}: " . $e->getMessage(), 'ERROR');
             return false;
         }
     }
