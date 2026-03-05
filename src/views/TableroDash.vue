@@ -90,7 +90,7 @@ import Reportes from "@/components/TableroDash/LineaReportes.vue"
 import AreaChart from "@/components/dashboard/AreaChartt.vue"
 import BarChart from "@/components/dashboard/BarChart.vue"
 import PieChart from "@/components/dashboard/PieChart.vue"
-import MapaProblemas from "@/components/TableroDash/MapaProblemas.vue"
+import MapaProblemas from "@/components/MapaProblemas.vue"
 import TablaDeps from "@/components/TableroDash/ReportsTable.vue"
 
 import DepartmentGrid from "@/components/TableroDash/DepartmentGrid.vue"

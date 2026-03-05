@@ -5,12 +5,10 @@
       <div class="card-header-content">
         <div style="display: flex; align-items: center; gap: 12px;">
           <h3 class="card-title">Tendencia Mensual</h3>
-          <span v-if="usandoDatosPrueba" class="test-data-badge">
-            🎨 Datos de prueba
-          </span>
+
         </div>
         <p class="card-description">
-          Evolución de peticiones asignadas por mes y estado
+          Evolución de peticiones asignadas por mes
         </p>
       </div>
 
@@ -64,13 +62,13 @@
               </div>
 
               <div v-if="datosEstados.debug.total_registros === 0 || datosEstados.debug.total_registros === '0'"
-                   class="debug-alert">
+                  class="debug-alert">
                 <p><strong>⚠️ No hay datos en la tabla</strong></p>
                 <p>Necesitas insertar datos en peticion_departamento para visualizar el gráfico.</p>
               </div>
 
               <div v-if="datosEstados.debug.estados_existentes && datosEstados.debug.estados_existentes.length > 0"
-                   class="debug-estados">
+                  class="debug-estados">
                 <strong>Estados en BD:</strong>
                 <ul>
                   <li v-for="estado in datosEstados.debug.estados_existentes" :key="estado.estado">
@@ -91,7 +89,7 @@
 
 <script setup>
 import '@/assets/css/areachartt_dashboard.css'
-import { onMounted, onUnmounted, ref, watch, computed } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import * as echarts from 'echarts'
 import { useVisibilityReflow } from '@/composables/useVisibilityReflow.js'
 import axios from '@/services/axios-config.js'
@@ -105,10 +103,6 @@ const isLoading = ref(true)
 const rangoSeleccionado = ref(7)
 const showDebug = ref(false) // Cambiar a true para ver debug
 
-// Computed para detectar si está usando datos de prueba
-const usandoDatosPrueba = computed(() => {
-  return datosEstados.value?.debug?.usando_datos_prueba === true
-})
 
 // Configuración de colores por estado (manteniendo tu paleta)
 const estadoColoresMap = {
