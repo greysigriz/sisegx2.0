@@ -445,11 +445,15 @@ HTML;
             // Obtener información de la petición
             $queryPeticion = "SELECT 
                                 p.id,
-                                p.ticket,
+                                p.folio,
+                                p.nombre,
                                 p.descripcion,
-                                p.dependencia,
-                                p.created_at as FechaCreacion
+                                p.localidad,
+                                p.NivelImportancia,
+                                p.fecha_registro as FechaCreacion,
+                                d.Nombre as municipio
                               FROM peticiones p
+                              LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                               WHERE p.id = :peticionId";
             
             $stmtPeticion = $db->prepare($queryPeticion);
@@ -462,12 +466,11 @@ HTML;
                 return false;
             }
             
-            // Adaptar nombres de columnas al formato esperado
-            $peticion['Titulo'] = $peticion['ticket'] ?? 'Sin título';
-            $peticion['Descripcion'] = $peticion['descripcion'] ?? 'Sin descripción';
-            $peticion['Ciudadano'] = $peticion['dependencia'] ?? 'No especificado';
-            $peticion['municipio'] = 'No especificado';
-            $peticion['NivelImportancia'] = 2; // Media por defecto
+            // Adaptar nombres de columnas al formato esperado por el template de email
+            $peticion['Titulo'] = $peticion['folio'] ?? 'Sin folio';
+            $peticion['Descripcion'] = $peticion['descripcion'];
+            $peticion['Ciudadano'] = $peticion['nombre'];
+            $peticion['municipio'] = $peticion['municipio'] ?? $peticion['localidad'];
             
             // Enviar notificación a cada usuario del departamento
             $enviados = 0;
