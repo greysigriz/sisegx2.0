@@ -17,6 +17,7 @@ ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/services/EstadoService.php';
+require_once __DIR__ . '/services/EmailService.php';
 
 try {
     $database = new Database();
@@ -169,6 +170,14 @@ try {
                     
                     if ($insert_stmt->execute([$data['peticion_id'], $departamento_id])) {
                         $departamentos_asignados++;
+                        
+                        // ✅ NUEVO: Enviar notificación inmediata al departamento
+                        try {
+                            $emailService = new EmailService();
+                            $emailService->enviarNotificacionAsignacion($data['peticion_id'], $departamento_id, $db);
+                        } catch (Exception $e) {
+                            error_log("Error enviando notificación de asignación: " . $e->getMessage());
+                        }
                     }
                 }
                 
@@ -224,7 +233,15 @@ try {
                 // Insertar nueva asignación
                 $query = "INSERT INTO peticion_departamento (peticion_id, departamento_id, estado) 
                          VALUES (?, ?, 'Esperando recepción')";
-                
+                // ✅ NUEVO: Enviar notificación inmediata al departamento
+                    try {
+                        $emailService = new EmailService();
+                        $emailService->enviarNotificacionAsignacion($peticion_id, $departamento_id, $db);
+                    } catch (Exception $e) {
+                        error_log("Error enviando notificación de asignación: " . $e->getMessage());
+                    }
+                    
+                    
                 $stmt = $db->prepare($query);
                 
                 if ($stmt->execute([$peticion_id, $departamento_id])) {
