@@ -15,10 +15,10 @@ if ($verificacion['configurado']) {
     echo "✓ Configuración de email COMPLETA\n";
     echo "  - SMTP Host: " . (getenv('SMTP_HOST') ?: 'No configurado') . "\n";
     echo "  - SMTP Port: " . (getenv('SMTP_PORT') ?: 'No configurado') . "\n";
-    echo "  - SMTP User: " . (getenv('SMTP_USER') ?: 'No configurado') . "\n";
-    echo "  - SMTP Pass: " . (getenv('SMTP_PASS') ? '***configurado***' : 'No configurado') . "\n";
-    echo "  - Email From: " . (getenv('EMAIL_FROM') ?: 'No configurado') . "\n";
-    echo "  - Email Name: " . (getenv('EMAIL_FROM_NAME') ?: 'No configurado') . "\n";
+    echo "  - SMTP User: " . (getenv('SMTP_USERNAME') ?: 'No configurado') . "\n";
+    echo "  - SMTP Pass: " . (getenv('SMTP_PASSWORD') ? '***configurado***' : 'No configurado') . "\n";
+    echo "  - Email From: " . (getenv('SMTP_FROM_EMAIL') ?: 'No configurado') . "\n";
+    echo "  - Email Name: " . (getenv('SMTP_FROM_NAME') ?: 'No configurado') . "\n";
     echo "\n✓ Sistema listo para enviar notificaciones automáticas\n";
 } else {
     echo "✗ Configuración de email INCOMPLETA\n";
