@@ -445,14 +445,11 @@ HTML;
             // Obtener información de la petición
             $queryPeticion = "SELECT 
                                 p.id,
-                                p.Titulo,
-                                p.Descripcion,
-                                p.Ciudadano,
-                                p.NivelImportancia,
-                                p.FechaCreacion,
-                                d.NombreDivision as municipio
+                                p.ticket,
+                                p.descripcion,
+                                p.dependencia,
+                                p.created_at as FechaCreacion
                               FROM peticiones p
-                              LEFT JOIN divisiones d ON p.IdMunicipio = d.Id
                               WHERE p.id = :peticionId";
             
             $stmtPeticion = $db->prepare($queryPeticion);
@@ -464,6 +461,13 @@ HTML;
                 $this->logEmail("Petición $peticionId no encontrada", 'ERROR');
                 return false;
             }
+            
+            // Adaptar nombres de columnas al formato esperado
+            $peticion['Titulo'] = $peticion['ticket'] ?? 'Sin título';
+            $peticion['Descripcion'] = $peticion['descripcion'] ?? 'Sin descripción';
+            $peticion['Ciudadano'] = $peticion['dependencia'] ?? 'No especificado';
+            $peticion['municipio'] = 'No especificado';
+            $peticion['NivelImportancia'] = 2; // Media por defecto
             
             // Enviar notificación a cada usuario del departamento
             $enviados = 0;
