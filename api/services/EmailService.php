@@ -451,7 +451,7 @@ HTML;
                                 p.localidad,
                                 p.NivelImportancia,
                                 p.fecha_registro as FechaCreacion,
-                                d.Nombre as municipio
+                                d.Municipio as municipio
                               FROM peticiones p
                               LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                               WHERE p.id = :peticionId";
