@@ -92,7 +92,6 @@ export default {
         { name: 'petitions', label: 'Petitions', icon: 'fas fa-user-check', path: '/petitions', requiredPermission: 'ver_peticiones' },
         { name: 'mis-peticiones', label: 'Mis Peticiones', icon: 'fas fa-clipboard-list', path: '/departamentos', requiredPermission: 'gestion_peticiones_departamento' },
         { name: 'notificaciones', label: 'Notificaciones', icon: 'fas fa-bell', path: '/configuracion/notificaciones', requiredPermission: 'gestion_peticiones_departamento' },
-        { name: 'gestion-notificaciones', label: 'Gestión de Notificaciones', icon: 'fas fa-users-cog', path: '/configuracion/gestion-notificaciones', requiredPermission: 'acceder_configuracion', requiredRole: 1 },
         { name: 'configuracion', label: 'Configuración', icon: 'fas fa-cog', path: '/configuracion', requiredPermission: 'acceder_configuracion' },
         { name: 'tablero', label: 'Tablero', icon: 'fas fa-th-large', path: '/tablero', requiredPermission: 'ver_tablero' },
       ],
