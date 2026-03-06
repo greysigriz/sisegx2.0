@@ -37,7 +37,23 @@ import {
   faTag,
   faList,
   faKey,
-  faChevronRight
+  faChevronRight,
+  faUsersCog,
+  faUserShield,
+  faDatabase,
+  faBell,
+  faBellSlash,
+  faUserCheck,
+  faUserTimes,
+  faUserTag,
+  faHistory,
+  faFileAlt,
+  faCalendar,
+  faInbox,
+  faRedo,
+  faFileExcel,
+  faFilter,
+  faSearch
 } from '@fortawesome/free-solid-svg-icons';
 
 // Agregar los iconos a la librería
@@ -78,7 +94,23 @@ library.add(
   faTag,
   faList,
   faKey,
-  faChevronRight
+  faChevronRight,
+  faUsersCog,
+  faUserShield,
+  faDatabase,
+  faBell,
+  faBellSlash,
+  faUserCheck,
+  faUserTimes,
+  faUserTag,
+  faHistory,
+  faFileAlt,
+  faCalendar,
+  faInbox,
+  faRedo,
+  faFileExcel,
+  faFilter,
+  faSearch
 );
 
 export { FontAwesomeIcon };

@@ -18,6 +18,8 @@ import 'swiper/css/pagination'
 
 // FontAwesome - TODOS los iconos necesarios
 import { library } from '@fortawesome/fontawesome-svg-core'
+// Importar plugin local que agrega iconos adicionales (faUsersCog, etc.)
+import './plugins/fontawesome.js'
 import {
   faUserShield,
   faDatabase,
