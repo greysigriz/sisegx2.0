@@ -12,6 +12,10 @@ const baseConfig = defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  assetsInclude: ['**/*.geojson'],
+  json: {
+    stringify: false
   }
 })
 

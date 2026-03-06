@@ -24,42 +24,46 @@
         <l-control-zoom position="topleft" />
       </l-map>
 
-      <!-- Leyenda -->
-      <div class="map-legend-bubble">
-        <h4 class="legend-bubble-title">Reportes por Municipio</h4>
+      <!-- Leyenda de intensidad -->
+      <div class="map-legend-choropleth">
+        <h4 class="legend-choropleth-title">Reportes por Municipio</h4>
 
-        <div class="legend-bubble-section">
-          <div class="legend-bubble-item">
-            <span class="legend-bubble-dot" style="background-color: #ef4444"></span>
-            <span class="legend-bubble-label">Rechazado</span>
+        <div class="legend-status-colors">
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #ef4444;"></span>
+            <span class="legend-status-text">Rechazado</span>
           </div>
-          <div class="legend-bubble-item">
-            <span class="legend-bubble-dot" style="background-color: #10b981"></span>
-            <span class="legend-bubble-label">Atendido</span>
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #3b82f6;"></span>
+            <span class="legend-status-text">Atendido</span>
           </div>
-          <div class="legend-bubble-item">
-            <span class="legend-bubble-dot" style="background-color: #f59e0b"></span>
-            <span class="legend-bubble-label">Pendiente</span>
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #cbd5e1;"></span>
+            <span class="legend-status-text">Pendiente</span>
           </div>
-          <div class="legend-bubble-item">
-            <span class="legend-bubble-dot" style="background-color: #3b82f6"></span>
-            <span class="legend-bubble-label">En Proceso</span>
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #3b82f6;"></span>
+            <span class="legend-status-text">En Proceso</span>
           </div>
         </div>
 
-        <div class="legend-bubble-divider"></div>
+        <div class="legend-choropleth-divider"></div>
 
         <div class="legend-bubble-size">
-          <div class="bubble-size-visual">
-            <span class="bubble-demo" style="width: 12px; height: 12px; opacity: 0.4"></span>
-            <span class="bubble-demo" style="width: 20px; height: 20px; opacity: 0.5"></span>
-            <span class="bubble-demo" style="width: 28px; height: 28px; opacity: 0.6"></span>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <div class="bubble-demo" style="width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
+            <div class="bubble-demo" style="width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
+            <div class="bubble-demo" style="width: 36px; height: 36px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
+            <span style="font-size: 11px; color: #475569; margin-left: 4px;">= Volumen de reportes</span>
           </div>
-          <span class="bubble-size-label">= Volumen de reportes</span>
         </div>
 
-        <div class="legend-bubble-total">
-          Total: <b>{{ totalGeneral }}</b> reportes{{ mapScope === 'Nacional' ? '' : ' en Yucatán' }}
+        <div class="legend-choropleth-divider"></div>
+
+        <div class="legend-choropleth-total">
+          <div class="total-label">Total:</div>
+          <div class="total-value">{{ totalGeneral.toLocaleString() }}</div>
+          <div class="total-subtitle">reportes en Yucatán</div>
         </div>
       </div>
     </div>
@@ -88,7 +92,7 @@ L.Icon.Default.mergeOptions({
 // Referencias
 const map = ref(null)
 const isLoadingMunicipios = ref(true)
-const mapScope = ref('Yucatán') // 'Yucatán' o 'Nacional'
+const mapScope = ref('Yucatán')
 
 // Configuración del mapa
 const tileUrl = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
@@ -99,12 +103,12 @@ const attribution = '©OpenStreetMap, ©CartoDB'
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Colores por intensidad de reportes
-const INTENSITY_COLORS = {
-  'Crítico': { color: '#dc2626', min: 90 },
-  'Alto': { color: '#f97316', min: 61 },
-  'Medio': { color: '#f59e0b', min: 31 },
-  'Bajo': { color: '#10b981', min: 1 },
-  'Sin reportes': { color: '#94a3b8', min: 0 }
+const CHOROPLETH_COLORS = {
+  'Bajo': '#cbd5e1',
+  'Medio': '#cbd5e1',
+  'Alto': '#cbd5e1',
+  'Muy Alto': '#cbd5e1',
+  'Sin datos': '#e2e8f0'
 }
 
 // Colores por estado (para popup)
@@ -115,9 +119,10 @@ const STATUS_COLORS = {
   'En Proceso': '#3b82f6'
 }
 
-// Datos de municipios con reportes (cargados desde API)
+// Datos de municipios con reportes
 const municipiosData = ref([])
 const estadisticasAPI = ref(null)
+const rangosMedios = ref([0, 0, 0])
 
 // Función para cargar datos desde la API
 const loadMunicipiosData = async () => {
@@ -138,207 +143,308 @@ const loadMunicipiosData = async () => {
       estadisticasAPI.value = data.estadisticas
 
       console.log(`✅ ${data.municipios.length} municipios cargados desde la base de datos`)
-      console.log('📊 Estadísticas:')
-      if (data.estadisticas) {
-        console.log(`  - Total reportes: ${data.estadisticas.totalReportes}`)
-        console.log(`  - Municipios en Yucatán: ${data.estadisticas.municipiosYucatan} (${data.estadisticas.reportesYucatan} reportes)`)
-        console.log(`  - Municipios fuera: ${data.estadisticas.municipiosFueraYucatan} (${data.estadisticas.reportesFuera} reportes)`)
-      }
     } else {
       throw new Error(data.message || 'No se pudieron cargar los datos')
     }
   } catch (error) {
     console.error('❌ Error cargando datos:', error)
-    // Datos de respaldo en caso de error
     municipiosData.value = []
     estadisticasAPI.value = null
-  } finally {
-    isLoadingMunicipios.value = false
   }
 }
 
-// Límites geográficos del estado de Yucatán (INEGI 2020)
-const yucatanBounds = [
-  [19.551111, -90.407222], // Suroeste (Sur: 19° 33′ 04″, Oeste: 90° 24′ 26″)
-  [21.586111, -87.533333]  // Noreste (Norte: 21° 35′ 10″, Este: 87° 32′ 00″)
-]
-
-// Función para verificar si un punto está en Yucatán
-const isInYucatan = (lat, lng) => {
-  return lat >= yucatanBounds[0][0] && lat <= yucatanBounds[1][0] &&
-         lng >= yucatanBounds[0][1] && lng <= yucatanBounds[1][1]
+// Función para normalizar texto
+const normalize = (text) => {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
 }
 
 const mapOptions = {
   zoomControl: false,
   attributionControl: true,
-  preferCanvas: true,
+  preferCanvas: false, // CAMBIADO A FALSE - importante para SVG
   minZoom: 6,
   maxZoom: 18,
-  maxBounds: null, // Se ajustará dinámicamente
-  maxBoundsViscosity: 1.0
+  renderer: L.svg() // FORZAR renderer SVG
 }
 
 const onMapReady = async (mapInstance) => {
   console.log('✅ Mapa cargado')
 
-  // Crear un pane para las etiquetas encima de todo
-  const labelsPane = mapInstance.createPane('labels')
-  labelsPane.style.zIndex = 650
-  labelsPane.style.pointerEvents = 'none'
-
-  // Agregar la capa de etiquetas
-  L.tileLayer(tileUrlLabels, {
-    attribution: attribution,
-    pane: 'labels'
-  }).addTo(mapInstance)
-
   // Cargar datos de municipios desde la API
   await loadMunicipiosData()
 
-  // Verificar que hay datos antes de crear burbujas
+  // Verificar que hay datos
   if (municipiosData.value.length === 0) {
     console.warn('⚠️ No hay datos de municipios para mostrar')
     isLoadingMunicipios.value = false
     return
   }
 
-  // Analizar ubicaciones y reportes
-  const municipiosEnYucatan = municipiosData.value.filter(m => isInYucatan(m.lat, m.lng))
-  const municipiosFueraYucatan = municipiosData.value.filter(m => !isInYucatan(m.lat, m.lng))
+  // Centrar en Yucatán
+  mapScope.value = 'Yucatán'
+  mapInstance.setView([20.7, -89.0], 8.5)
 
-  // Usar estadísticas de la API si están disponibles, sino calcular localmente
-  const reportesEnYucatan = estadisticasAPI.value?.reportesYucatan ??
-                           municipiosEnYucatan.reduce((acc, m) => acc + m.total, 0)
-  const ubicacionesFuera = estadisticasAPI.value?.municipiosFueraYucatan ??
-                          municipiosFueraYucatan.length
+  // Calcular rangos de intensidad
+  const totales = municipiosData.value.map(m => m.total).filter(t => t > 0).sort((a, b) => a - b)
+  const maxTotal = Math.max(...totales)
 
-  console.log(`📍 Análisis de ubicaciones:`)
-  console.log(`  - Municipios en Yucatán: ${municipiosEnYucatan.length} (${reportesEnYucatan} reportes)`)
-  console.log(`  - Municipios fuera de Yucatán: ${ubicacionesFuera}`)
+  const rango1 = Math.floor(maxTotal * 0.25)
+  const rango2 = Math.floor(maxTotal * 0.50)
+  const rango3 = Math.floor(maxTotal * 0.75)
+  rangosMedios.value = [rango1, rango2, rango3]
 
-  // Mostrar advertencia si hay municipios fuera de Yucatán
-  if (ubicacionesFuera > 0) {
-    console.warn(`⚠️ Se encontraron ${ubicacionesFuera} municipios fuera de Yucatán:`)
-    municipiosFueraYucatan.forEach(m => {
-      console.warn(`  - ${m.municipio} (${m.estado || 'Sin estado'})`)
-    })
+  console.log(`📊 Rangos: Bajo (0-${rango1}), Medio (${rango1+1}-${rango2}), Alto (${rango2+1}-${rango3}), Muy Alto (${rango3+1}+)`)
+
+  // Función para obtener color según total de reportes
+  const getColorForTotal = (total) => {
+    if (total === 0) return { color: CHOROPLETH_COLORS['Sin datos'], label: 'Sin datos' }
+    if (total <= rango1) return { color: CHOROPLETH_COLORS['Bajo'], label: 'Bajo' }
+    if (total <= rango2) return { color: CHOROPLETH_COLORS['Medio'], label: 'Medio' }
+    if (total <= rango3) return { color: CHOROPLETH_COLORS['Alto'], label: 'Alto' }
+    return { color: CHOROPLETH_COLORS['Muy Alto'], label: 'Muy Alto' }
   }
 
-  // Decidir comportamiento del mapa
-  if (reportesEnYucatan > 10 || ubicacionesFuera <= 5) {
-    // Centrar en Yucatán
-    console.log('🗺️ Centrando mapa en Yucatán')
-    mapScope.value = 'Yucatán'
-    mapInstance.setMaxBounds(yucatanBounds)
-    mapInstance.fitBounds(yucatanBounds)
-    mapInstance.setMinZoom(8)
-    mapInstance.setMaxZoom(12)
-  } else if (ubicacionesFuera > 5) {
-    // Mostrar todas las ubicaciones reales
-    console.log('🌍 Mostrando todas las ubicaciones (hay más de 5 fuera de Yucatán)')
-    mapScope.value = 'Nacional'
-    mapInstance.setMaxBounds(null)
-
-    // Calcular bounds que incluyan todas las ubicaciones
-    const allCoords = municipiosData.value.map(m => [m.lat, m.lng])
-    const bounds = L.latLngBounds(allCoords)
-    mapInstance.fitBounds(bounds, {
-      padding: [50, 50],
-      maxZoom: 10
-    })
-
-    mapInstance.setMinZoom(5)
-    mapInstance.setMaxZoom(18)
-  }
-
-  // Crear burbujas para cada municipio
-  const maxTotal = Math.max(...municipiosData.value.map(m => m.total))
+  // Crear mapa de datos
+  const municipioDataMap = {}
+  const municipioCoordinates = {} // Para guardar las coordenadas de cada municipio
 
   municipiosData.value.forEach(m => {
-    // Calcular radio proporcional al total de reportes
-    const radius = 10 + (m.total / maxTotal) * 30
+    const nombreNormalizado = normalize(m.municipio)
+    municipioDataMap[nombreNormalizado] = m
+  })
 
-    // Determinar color según intensidad de reportes
-    let color = '#94a3b8' // Sin reportes
-    let intensityLabel = 'Sin reportes'
+  // Cargar GeoJSON
+  console.log('🗺️ Cargando GeoJSON...')
 
-    if (m.total >= 90) {
-      color = INTENSITY_COLORS['Crítico'].color
-      intensityLabel = 'Crítico'
-    } else if (m.total >= 61) {
-      color = INTENSITY_COLORS['Alto'].color
-      intensityLabel = 'Alto'
-    } else if (m.total >= 31) {
-      color = INTENSITY_COLORS['Medio'].color
-      intensityLabel = 'Medio'
-    } else if (m.total > 0) {
-      color = INTENSITY_COLORS['Bajo'].color
-      intensityLabel = 'Bajo'
+  let geojson
+  try {
+    const response = await fetch('../../municipios-yucatan.geojson')
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    geojson = await response.json()
+    console.log('✅ GeoJSON cargado:', geojson.features?.length, 'features')
+
+    // DEBUG: Ver primer feature
+    if (geojson.features && geojson.features[0]) {
+      console.log('🔍 Primer feature:', geojson.features[0])
+      console.log('🔍 Geometría:', geojson.features[0].geometry?.type)
     }
+  } catch (error) {
+    console.error('❌ Error cargando GeoJSON:', error)
+    isLoadingMunicipios.value = false
+    return
+  }
 
-    // Crear círculo (burbuja)
-    const circle = L.circleMarker([m.lat, m.lng], {
-      radius: radius,
-      fillColor: color,
-      color: '#1e3a8a',
-      weight: 2,
-      opacity: 0.9,
-      fillOpacity: 0.65
-    }).addTo(mapInstance)
+  if (!geojson || !geojson.features || geojson.features.length === 0) {
+    console.error('❌ GeoJSON inválido')
+    isLoadingMunicipios.value = false
+    return
+  }
 
-    // Tooltip con intensidad
-    const municipioNombre = m.municipio
-    const estadoInfo = m.estado && m.estado !== 'Yucatán' ? ` (${m.estado})` : ''
+  // Crear capa GeoJSON
+  console.log('🎨 Aplicando estilos a polígonos...')
 
-    circle.bindTooltip(
-      `<b style="color:#1e3a8a">${municipioNombre}${estadoInfo}</b><br/>${m.total} reportes - <span style="color:${color};font-weight:bold">${intensityLabel}</span>`,
-      { direction: 'top', offset: [0, -10] }
-    )
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: (feature) => {
+      const nombreMunicipio = normalize(feature.properties.NOMGEO)
+      const datos = municipioDataMap[nombreMunicipio]
+      const total = datos ? datos.total : 0
+      const colorData = getColorForTotal(total)
 
-    // Problemas principales (top 3)
-    const topProblemas = Object.entries(m.problemas)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3)
-      .map(([p, c]) => `<p style="font-size:11px;color:#4b5563;margin:2px 0">${p}: <b>${c}</b></p>`)
-      .join('')
+      const estilo = {
+        fillColor: colorData.color,
+        fillOpacity: 0.40,
+        color: '#000000',
+        weight: 0.5,
+        opacity: 0.5
+      }
 
-    // Popup detallado
-    const estadoLabel = m.estado && m.estado !== 'Yucatán' ? `<p style="margin:0 0 8px;color:#6b7280;font-size:11px;font-style:italic">${m.estado}</p>` : ''
+      console.log(`🎨 ${feature.properties.NOMGEO}: ${colorData.color} (${total} reportes)`)
 
-    const popupContent = `
-      <div style="font-family:system-ui,sans-serif;min-width:200px">
-        <h3 style="margin:0 0 8px;color:#1e3a8a;font-size:16px;font-weight:700">${m.municipio}</h3>
-        ${estadoLabel}
-        <p style="margin:0 0 8px;color:#4b5563;font-size:13px">Total de reportes: <b>${m.total}</b></p>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          ${[
-            { label: 'Rechazado', count: m.rechazado, color: STATUS_COLORS['Rechazado'] },
-            { label: 'Atendido', count: m.atendido, color: STATUS_COLORS['Atendido'] },
-            { label: 'Pendiente', count: m.pendiente, color: STATUS_COLORS['Pendiente'] },
-            { label: 'En Proceso', count: m.enProceso, color: STATUS_COLORS['En Proceso'] }
-          ]
-            .map(s => `
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${s.color}"></span>
-                <span style="font-size:12px;color:#4b5563">${s.label}: <b style="color:#1e3a8a">${s.count}</b></span>
+      return estilo
+    },
+
+    onEachFeature: (feature, layer) => {
+      const nombreMunicipio = normalize(feature.properties.NOMGEO)
+      const datos = municipioDataMap[nombreMunicipio]
+
+      // Guardar el centroide del polígono
+      if (layer.getBounds) {
+        const center = layer.getBounds().getCenter()
+        municipioCoordinates[nombreMunicipio] = center
+      }
+
+      // Hover
+      layer.on({
+        mouseover: (e) => {
+          e.target.setStyle({
+            weight: 4,
+            color: '#4a0e2e',
+            fillOpacity: 0.95
+          })
+          e.target.bringToFront()
+        },
+        mouseout: (e) => {
+          geojsonLayer.resetStyle(e.target)
+        }
+      })
+
+      if (datos) {
+        const total = datos.total
+
+        let popupContent = `
+          <div style="padding: 12px; min-width: 260px; font-family: system-ui, sans-serif;">
+            <h3 style="margin: 0 0 10px 0; color: #1f2937; font-size: 18px; font-weight: 700;">
+              ${feature.properties.NOMGEO}
+            </h3>
+            <div style="margin-bottom: 10px;">
+              <strong style="color: #374151;">Total de reportes: <span style="font-size: 18px; color: #3b82f6;">${total}</span></strong>
+            </div>
+        `
+
+        if (datos.estados && Object.keys(datos.estados).length > 0) {
+          Object.entries(datos.estados).forEach(([estado, count]) => {
+            const color = STATUS_COLORS[estado] || '#6b7280'
+            popupContent += `
+              <div style="display: flex; align-items: center; margin: 6px 0;">
+                <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px;"></span>
+                <span style="color: #4b5563;">${estado}: <strong>${count}</strong></span>
               </div>
-            `)
-            .join('')}
-        </div>
-        ${topProblemas ? `
-          <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
-            <p style="font-size:11px;color:#6b7280;margin:0 0 4px;font-weight:600">Problemas principales:</p>
-            ${topProblemas}
-          </div>
-        ` : ''}
-      </div>
-    `
+            `
+          })
+        }
 
-    circle.bindPopup(popupContent)
+        // Agregar problemas principales si existen
+        if (datos.problemas && datos.problemas.length > 0) {
+          popupContent += '<div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">'
+          popupContent += '<strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>'
+          popupContent += '<div style="margin-top: 6px;">'
+
+          datos.problemas.forEach(problema => {
+            popupContent += `
+              <div style="color: #6b7280; font-size: 13px; margin: 4px 0;">
+                ${problema.tipo}: <strong>${problema.cantidad}</strong>
+              </div>
+            `
+          })
+
+          popupContent += '</div></div>'
+        }
+
+        popupContent += '</div>'
+
+        layer.bindPopup(popupContent, {
+          maxWidth: 300,
+          className: 'custom-popup'
+        })
+        layer.bindTooltip(`<strong>${feature.properties.NOMGEO}</strong><br>${total} reportes`, {
+          sticky: true,
+          direction: 'top'
+        })
+      } else {
+        layer.bindTooltip(`<strong>${feature.properties.NOMGEO}</strong><br>Sin reportes`)
+      }
+    }
+  })
+
+  geojsonLayer.addTo(mapInstance)
+  console.log('✅ Capa GeoJSON agregada al mapa')
+
+  // Agregar círculos (burbujas) sobre los municipios
+  console.log('🔵 Agregando burbujas al mapa...')
+
+  municipiosData.value.forEach(municipio => {
+    const nombreNormalizado = normalize(municipio.municipio)
+    const coords = municipioCoordinates[nombreNormalizado]
+
+    if (municipio.total > 0 && coords) {
+      // Calcular el radio del círculo basado en el total de reportes
+      const baseRadius = 6
+      const scaleFactor = 1.5
+      const maxRadius = 30
+      const radius = Math.min(baseRadius + (municipio.total * scaleFactor), maxRadius)
+
+      const circle = L.circleMarker([coords.lat, coords.lng], {
+        radius: radius,
+        fillColor: '#3b82f6',
+        color: '#1e40af',
+        weight: 2,
+        opacity: 0.8,
+        fillOpacity: 0.5
+      })
+
+      // Popup para la burbuja
+      let bubblePopup = `
+        <div style="padding: 12px; min-width: 260px; font-family: system-ui, sans-serif;">
+          <h3 style="margin: 0 0 10px 0; color: #1f2937; font-size: 18px; font-weight: 700;">
+            ${municipio.municipio}
+          </h3>
+          <div style="margin-bottom: 10px;">
+            <strong style="color: #374151;">Total de reportes: <span style="font-size: 18px; color: #3b82f6;">${municipio.total}</span></strong>
+          </div>
+      `
+
+      if (municipio.estados && Object.keys(municipio.estados).length > 0) {
+        Object.entries(municipio.estados).forEach(([estado, count]) => {
+          const color = STATUS_COLORS[estado] || '#6b7280'
+          bubblePopup += `
+            <div style="display: flex; align-items: center; margin: 6px 0;">
+              <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px;"></span>
+              <span style="color: #4b5563;">${estado}: <strong>${count}</strong></span>
+            </div>
+          `
+        })
+      }
+
+      // Agregar problemas principales si existen
+      if (municipio.problemas && municipio.problemas.length > 0) {
+        bubblePopup += '<div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">'
+        bubblePopup += '<strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>'
+        bubblePopup += '<div style="margin-top: 6px;">'
+
+        municipio.problemas.forEach(problema => {
+          bubblePopup += `
+            <div style="color: #6b7280; font-size: 13px; margin: 4px 0;">
+              ${problema.tipo}: <strong>${problema.cantidad}</strong>
+            </div>
+          `
+        })
+
+        bubblePopup += '</div></div>'
+      }
+
+      bubblePopup += '</div>'
+
+      circle.bindPopup(bubblePopup, {
+        maxWidth: 300,
+        className: 'custom-popup'
+      })
+
+      circle.bindTooltip(`<strong>${municipio.municipio}</strong><br>${municipio.total} reportes`, {
+        direction: 'top',
+        offset: [0, -10]
+      })
+
+      circle.addTo(mapInstance)
+    }
   })
 
   console.log('✅ Burbujas agregadas al mapa')
+
+  // Crear pane para etiquetas
+  const labelsPane = mapInstance.createPane('labels')
+  labelsPane.style.zIndex = 650
+  labelsPane.style.pointerEvents = 'none'
+
+  L.tileLayer(tileUrlLabels, {
+    attribution: attribution,
+    pane: 'labels'
+  }).addTo(mapInstance)
+
   isLoadingMunicipios.value = false
 }
 
@@ -346,7 +452,7 @@ const totalGeneral = computed(() => {
   return municipiosData.value.reduce((acc, m) => acc + m.total, 0)
 })
 
-onMounted(async () => {
+onMounted(() => {
   console.log('✅ Componente montado')
 })
 </script>

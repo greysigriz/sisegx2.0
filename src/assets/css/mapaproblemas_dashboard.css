@@ -1,713 +1,13 @@
-/* Leaflet Direction Markers */
-.leaflet-direction-pane {
-  z-index: 620;
-  pointer-events: none;
-}
-/* Custom Direction Marker Icons */
-.custom-marker-icon {
-  background: transparent !important;
-  border: none !important;
-  pointer-events: auto !important;
-}
-
-.custom-marker-icon:hover {
-  z-index: 1000 !important;
-}
-.map-card-wrapper {
-  margin: 2rem auto;
-  max-width: 1400px;
-  background: white;
-  border: 2px solid #2563eb;
-  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04);
-  padding: 1.5rem;
-  font-family: "Inter", "Segoe UI", sans-serif;
-}
-
-.map-card-title {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0 0 1rem 0;
-}
-
-.map-view {
-  position: relative;
-  height: 500px;
-}
-
-.map-loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2000;
-  background: rgba(239, 246, 255, 0.95);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  border-radius: 20px;
-  backdrop-filter: blur(4px);
-}
-
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid #dbeafe;
-  border-top-color: #2563eb;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.map-loading-text {
-  color: #2563eb;
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.map-canvas {
-  height: 500px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 2px solid #93c5fd;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  position: relative;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.map-canvas.loading {
-  opacity: 0.3;
-}
-
-.map-legend {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 1rem;
-  max-width: 16rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-.legend-title {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0 0 0.75rem 0;
-  text-align: left;
-}
-
-.legend-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.legend-dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.legend-text {
-  text-align: left;
-}
-
-.legend-status {
-  font-size: 0.6875rem;
-  color: #4b5563;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.legend-count {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0;
-  line-height: 1.2;
-}
-
-.legend-total {
-  font-size: 0.6875rem;
-  color: #6b7280;
-  margin: 0.5rem 0 0 0;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
-  text-align: left;
-}
-
-.map-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Custom marker styles */
-.custom-marker {
-  background: transparent;
-  border: none;
-}
-
-/* Leaflet popup overrides */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  padding: 15px;
-}
-
-.leaflet-popup-content {
-  margin: 0;
-  font-family: "Inter", "Segoe UI", sans-serif;
-  min-width: 220px;
-}
-
-.leaflet-popup-content p {
-  margin: 4px 0;
-}
-
-.custom-popup .leaflet-popup-content-wrapper {
-  border-radius: 12px;
-}
-
-/* Hover effects para marcadores */
-.custom-marker:hover {
-  z-index: 1000 !important;
-}
-
 /* ============================================ */
-/* ESTILOS ADICIONALES PARA MapaProblemas.vue  */
-/* ============================================ */
-
-.map-wrapper {
-  width: 100%;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.map-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.map-header h2 {
-  margin: 0;
-  color: #1e3a8a;
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.stats-mini {
-  display: flex;
-  gap: 2rem;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #2563eb;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 0.25rem;
-}
-
-/* Filtros */
-.filters-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-
-.filter-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-}
-
-.filter-btn.active {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: white;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.badge {
-  background: rgba(0, 0, 0, 0.1);
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.filter-btn.active .badge {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Contenedor del mapa - versión extendida */
-.map-wrapper .map-container {
-  height: 650px;
-  width: 100%;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  position: relative;
-}
-
-/* Leyenda mejorada - versión extendida */
-.map-wrapper .map-legend {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.97);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  padding: 1.25rem;
-  max-width: 18rem;
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(37, 99, 235, 0.2);
-}
-
-.map-wrapper .legend-title {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #1e3a8a;
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.map-wrapper .legend-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
-
-.map-wrapper .legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  transition: background 0.2s;
-}
-
-.map-wrapper .legend-item:hover {
-  background: #f1f5f9;
-}
-
-.legend-marker {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.legend-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.legend-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.legend-count {
-  font-size: 0.6875rem;
-  color: #64748b;
-}
-
-.legend-priority {
-  padding-top: 1rem;
-  border-top: 2px solid #e2e8f0;
-}
-
-.priority-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #475569;
-  margin: 0 0 0.75rem 0;
-}
-
-.priority-scale {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.priority-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.priority-dot {
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.priority-dot.low { background: #10b981; }
-.priority-dot.medium { background: #f59e0b; }
-.priority-dot.high { background: #dc2626; }
-
-/* Popup personalizado */
-.popup-content {
-  font-family: 'Inter', -apple-system, sans-serif;
-}
-
-.popup-header {
-  padding: 1rem;
-  color: white;
-  text-align: center;
-}
-
-.popup-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
-}
-
-.popup-body {
-  padding: 1rem;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.popup-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.popup-row:last-child {
-  border-bottom: none;
-}
-
-.popup-label {
-  font-size: 0.8125rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.popup-value {
-  font-size: 0.875rem;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.problema-tag {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  color: white;
-  font-size: 0.75rem;
-}
-
-.reportes-badge {
-  background: #dbeafe;
-  color: #1e3a8a;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-weight: 700;
-}
-
-/* Etiquetas de municipios */
-.municipio-label,
-.heatmap-label {
-  background: rgba(255, 255, 255, 0.95) !important;
-  border: 2px solid rgba(37, 99, 235, 0.3) !important;
-  border-radius: 8px !important;
-  padding: 0.5rem 1rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 700 !important;
-  color: #1e3a8a !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  backdrop-filter: blur(10px);
-}
-
-.heatmap-label {
-  text-align: center;
-  min-width: 140px;
-}
-
-.heatmap-label .intensity-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  display: block;
-  margin-top: 0.25rem;
-  color: #64748b;
-}
-
-.municipio-label::before,
-.heatmap-label::before {
-  border-top-color: rgba(255, 255, 255, 0.95) !important;
-}
-
-/* Estilos para la leyenda del mapa de calor */
-.heatmap-scale {
-  margin-bottom: 1rem;
-}
-
-.scale-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #475569;
-  margin: 0 0 0.75rem 0;
-}
-
-.scale-gradient {
-  margin-bottom: 0.75rem;
-}
-
-.scale-bar {
-  height: 12px;
-  border-radius: 6px;
-  background: linear-gradient(to right,
-    #10b981 0%,
-    #f59e0b 33%,
-    #f97316 66%,
-    #dc2626 100%
-  );
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 0.5rem;
-}
-
-.scale-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.625rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.scale-ranges {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.range-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.6875rem;
-  color: #475569;
-}
-
-.range-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.legend-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 1rem 0;
-}
-
-.section-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #475569;
-  margin: 0 0 0.75rem 0;
-}
-
-.legend-items-compact {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.legend-item-compact {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.5rem;
-  border-radius: 6px;
-  transition: background 0.2s;
-}
-
-.legend-item-compact:hover {
-  background: #f1f5f9;
-}
-
-.problem-icon {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.problem-name {
-  font-size: 0.75rem;
-  color: #334155;
-  flex: 1;
-  font-weight: 500;
-}
-
-.problem-count {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #2563eb;
-  background: #dbeafe;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-}
-
-/* Controles del mapa */
-.leaflet-control-zoom {
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.leaflet-control-zoom a {
-  background: white !important;
-  color: #2563eb !important;
-  border: none !important;
-  font-size: 1.25rem !important;
-  font-weight: 700 !important;
-  width: 36px !important;
-  height: 36px !important;
-  line-height: 36px !important;
-}
-
-.leaflet-control-zoom a:hover {
-  background: #2563eb !important;
-  color: white !important;
-}
-
-@media (max-width: 768px) {
-  .map-wrapper {
-    padding: 1rem;
-    margin: 1rem;
-  }
-
-  .map-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .map-header h2 {
-    font-size: 1.25rem;
-  }
-
-  .stats-mini {
-    width: 100%;
-    justify-content: space-around;
-  }
-
-  .map-wrapper .map-container {
-    height: 500px;
-    border-radius: 12px;
-  }
-
-  .map-wrapper .map-legend {
-    max-width: calc(100% - 2rem);
-    font-size: 0.875rem;
-    padding: 1.5rem;
-  }
-
-  .filters-container {
-    gap: 0.5rem;
-  }
-
-  .filter-btn {
-    font-size: 0.8125rem;
-    padding: 0.5rem 1rem;
-  }
-}
-
-/* ============================================ */
-/* ESTILOS DEL COMPONENTE MapaProblemas.vue    */
-/* Con vista de mapa de calor y municipios     */
+/* ESTILOS PARA MapaProblemas.vue               */
+/* Mapa de calor con polígonos GeoJSON          */
 /* ============================================ */
 
 * {
   box-sizing: border-box;
 }
 
+/* Contenedor principal */
 .map-wrapper {
   width: 100%;
   background: white;
@@ -716,6 +16,7 @@
   overflow: hidden;
 }
 
+/* Encabezado del mapa */
 .map-header {
   padding: 1.5rem 2rem;
   background: white;
@@ -723,7 +24,7 @@
 }
 
 .map-header h2 {
-  margin: 0 0 1rem 0;
+  margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   color: #1e3a8a;
@@ -748,339 +49,205 @@
   50% { opacity: 0.6; }
 }
 
-.header-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.stats-mini {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.stat-number {
-  font-size: 1.75rem;
-  font-weight: 800;
-  line-height: 1;
-  margin-top: 0.25rem;
-  color: #1e3a8a;
-}
-
-.view-toggle {
-  display: flex;
-  gap: 0.5rem;
-  background: #f1f5f9;
-  padding: 0.25rem;
-  border-radius: 10px;
-  border: 2px solid #cbd5e1;
-}
-
-.toggle-btn {
-  padding: 0.625rem 1.25rem;
-  background: transparent;
-  border: none;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toggle-btn:hover {
-  background: rgba(37, 99, 235, 0.1);
-  color: #1e3a8a;
-}
-
-.toggle-btn.active {
-  background: #2563eb;
-  color: white;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
-}
-
+/* Contenedor del mapa */
 .map-container {
   height: 600px;
   position: relative;
   background: #f5f5f5;
 }
 
-/* Estilo para el mapa CartoDB Positron */
 .map-container .leaflet-container {
   background: #f5f5f5;
 }
 
-/* Leyenda lateral */
-.map-legend {
+/* ============================================ */
+/* LEYENDA CHOROPLETH (MAPA DE CALOR)           */
+/* ============================================ */
+
+.map-legend-choropleth {
   position: absolute;
   top: 1rem;
   right: 1rem;
   z-index: 1000;
-  background: white;
+  background: rgba(255, 255, 255, 0.98);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  width: 280px;
-  max-height: calc(100% - 2rem);
-  overflow-y: auto;
-  border: 1px solid #e5e7eb;
-}
-
-.legend-header {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   padding: 1rem;
-  background: #f8fafc;
-  color: #1e3a8a;
-  border-radius: 11px 11px 0 0;
-  border-bottom: 1px solid #e5e7eb;
+  min-width: 200px;
+  backdrop-filter: blur(10px);
+  border: 2px solid #93c5fd;
 }
 
-.legend-header h4 {
-  margin: 0;
-  font-size: 0.9375rem;
+.legend-choropleth-title {
+  margin: 0 0 0.875rem 0;
+  font-size: 0.875rem;
   font-weight: 700;
+  color: #1e3a8a;
+  text-align: left;
 }
 
-.legend-content {
-  padding: 1rem;
-}
-
-.status-section {
-  margin-bottom: 1rem;
-}
-
-.status-list {
+.legend-choropleth-scale {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  margin-bottom: 0.75rem;
 }
 
-.status-item {
+.legend-scale-item {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  transition: background 0.2s;
 }
 
-.status-item:hover {
-  background: #f8fafc;
-}
-
-.status-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+.legend-scale-color {
+  display: inline-block;
+  width: 32px;
+  height: 20px;
+  border-radius: 4px;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 
-.status-info {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.8125rem;
-}
-
-.status-name {
+.legend-scale-label {
+  font-size: 0.75rem;
   color: #475569;
   font-weight: 500;
 }
 
-.status-count {
-  font-weight: 700;
-  color: #1e3a8a;
-  background: #dbeafe;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-}
-
-.legend-footer {
-  text-align: center;
-  padding-top: 0.75rem;
-  border-top: 2px solid #e5e7eb;
-  margin-top: 0.75rem;
-}
-
-.legend-footer small {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.legend-divider {
+.legend-choropleth-divider {
   height: 2px;
-  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-  margin: 1rem 0;
+  background: linear-gradient(to right, transparent, #cbd5e1, transparent);
+  margin: 0.75rem 0;
 }
 
-.selected-info h5 {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0 0 0.75rem 0;
-}
-
-.selected-municipio {
-  background: #f8fafc;
-  padding: 0.875rem;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-}
-
-.selected-municipio strong {
-  color: #1e3a8a;
-  font-size: 0.9375rem;
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.selected-municipio p {
-  margin: 0.375rem 0;
-  font-size: 0.8125rem;
-  color: #475569;
-}
-
-.clear-btn {
-  width: 100%;
-  margin-top: 0.625rem;
+.legend-choropleth-total {
+  text-align: center;
   padding: 0.625rem;
-  background: white;
-  border: 1px solid #cbd5e1;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-radius: 8px;
+}
+
+.legend-choropleth-total .total-label {
+  font-size: 0.625rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.legend-choropleth-total .total-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  line-height: 1;
+  margin: 0 0 0.25rem 0;
+}
+
+.legend-choropleth-total .total-subtitle {
+  font-size: 0.625rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Estilos para la leyenda de estados con puntos de colores */
+.legend-status-colors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.legend-status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legend-status-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.legend-status-text {
+  font-size: 0.75rem;
   color: #475569;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s;
+  font-weight: 500;
 }
 
-.clear-btn:hover {
-  background: #f8fafc;
-  border-color: #64748b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* Estilos para la leyenda de burbujas */
+.legend-bubble-size {
+  padding: 0.5rem 0;
 }
 
-/* Tooltips */
-.heat-tooltip,
-.municipio-tooltip {
+.bubble-demo {
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+  border: 2px solid #1e40af;
+}
+
+/* ============================================ */
+/* ESTILOS LEAFLET - POPUPS Y TOOLTIPS          */
+/* ============================================ */
+
+/* Popup personalizado */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 0;
+}
+
+.leaflet-popup-content-wrapper.custom-popup {
+  border: 2px solid #3b82f6;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  min-width: 220px;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+/* Círculos (burbujas) interactivas */
+.leaflet-interactive.leaflet-marker-pane circle {
+  transition: all 0.2s ease;
+}
+
+.leaflet-interactive.leaflet-marker-pane circle:hover {
+  fill-opacity: 0.8 !important;
+  stroke-width: 3 !important;
+}
+
+/* Tooltips de burbujas circulares */
+.custom-bubble-tooltip {
   background: white !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 10px !important;
-  padding: 0.75rem !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25) !important;
+  border: 2px solid #2563eb !important;
+  border-radius: 12px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3) !important;
+  min-width: 180px !important;
 }
 
-.heat-tooltip .leaflet-tooltip-content,
-.municipio-tooltip .leaflet-tooltip-content {
+.custom-bubble-tooltip::before {
+  border-top-color: #2563eb !important;
+}
+
+.leaflet-tooltip-top::before {
+  border-top-color: #2563eb !important;
+}
+
+.custom-bubble-tooltip .leaflet-tooltip-content {
   margin: 0 !important;
 }
 
-.tooltip-content {
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 0.8125rem;
-  line-height: 1.5;
-}
-
-.tooltip-content strong {
-  color: #1e3a8a;
-  font-size: 0.9375rem;
-}
-
-/* Popup */
-.custom-popup .leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  padding: 0;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-.custom-popup .leaflet-popup-content {
-  margin: 0;
-  min-width: 260px;
-}
-
-.popup-content {
-  font-family: 'Inter', -apple-system, sans-serif;
-}
-
-.popup-header {
-  padding: 1rem;
-  color: white;
-  text-align: center;
-}
-
-.popup-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.popup-body {
-  padding: 1rem;
-  background: white;
-}
-
-.popup-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.popup-row:last-child {
-  border-bottom: none;
-}
-
-.popup-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.popup-value {
-  font-size: 0.8125rem;
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.problema-tag {
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  color: white;
-  font-size: 0.6875rem;
-  font-weight: 700;
-}
-
-.reportes-badge {
-  background: #dbeafe;
-  color: #1e3a8a;
-  padding: 0.25rem 0.625rem;
-  border-radius: 9999px;
-  font-weight: 700;
-  font-size: 0.75rem;
-}
-
-/* Controles */
+/* Controles de zoom */
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
@@ -1104,18 +271,51 @@
   color: white !important;
 }
 
-/* Polígonos interactivos */
-.leaflet-interactive {
-  cursor: pointer;
-  transition: all 0.15s;
+/* ============================================ */
+/* POLÍGONOS GEOJSON INTERACTIVOS               */
+/* ============================================ */
+
+/* Asegurar renderizado correcto de polígonos */
+.leaflet-overlay-pane svg {
+  z-index: 400;
 }
 
-.leaflet-interactive:hover {
-  stroke-width: 4;
+.leaflet-overlay-pane path {
+  pointer-events: auto;
+}
+
+/* Polígonos del mapa coroplético */
+path.leaflet-interactive {
+  fill-opacity: 0.85 !important;
+  stroke-opacity: 1 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none !important;
+}
+
+path.leaflet-interactive:hover {
+  fill-opacity: 0.95 !important;
+  stroke-width: 4 !important;
   filter: brightness(1.05);
 }
 
-/* Responsivo para MapaProblemas.vue */
+path.leaflet-interactive:focus {
+  outline: none !important;
+}
+
+/* Asegurar visibilidad en zoom */
+.leaflet-zoom-animated {
+  will-change: transform;
+}
+
+.leaflet-zoom-animated path {
+  vector-effect: non-scaling-stroke;
+}
+
+/* ============================================ */
+/* RESPONSIVO                                   */
+/* ============================================ */
+
 @media (max-width: 768px) {
   .map-header {
     padding: 1rem;
@@ -1125,124 +325,13 @@
     font-size: 1.125rem;
   }
 
-  .header-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .view-toggle {
-    justify-content: center;
-  }
-
   .map-container {
     height: 500px;
   }
 
-  .map-legend {
-    width: calc(100% - 2rem);
-    max-height: 250px;
+  .map-legend-choropleth {
+    width: calc(100% - 1.5rem);
+    right: 0.75rem;
+    min-width: auto;
   }
-
-  .map-legend-bubble {
-    max-width: calc(100% - 2rem);
-  }
-}
-
-/* ============================================ */
-/* LEYENDA DE BURBUJAS                          */
-/* ============================================ */
-
-.map-legend-bubble {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  padding: 1rem;
-  max-width: 220px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-.legend-bubble-title {
-  margin: 0 0 0.75rem 0;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-}
-
-.legend-bubble-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.legend-bubble-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.legend-bubble-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-}
-
-.legend-bubble-label {
-  font-size: 0.75rem;
-  color: #4b5563;
-}
-
-.legend-bubble-divider {
-  height: 1px;
-  background: #e5e7eb;
-  margin: 0.5rem 0;
-}
-
-.legend-bubble-size {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid #e5e7eb;
-}
-
-.bubble-size-visual {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.bubble-demo {
-  display: inline-block;
-  border-radius: 50%;
-  background: #275dff;
-  flex-shrink: 0;
-}
-
-.bubble-size-label {
-  font-size: 0.625rem;
-  color: #6b7280;
-  line-height: 1.2;
-}
-
-.legend-bubble-total {
-  font-size: 0.6875rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.legend-bubble-total b {
-  color: #1e3a8a;
-  font-weight: 700;
 }
