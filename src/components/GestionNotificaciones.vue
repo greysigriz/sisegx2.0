@@ -1,15 +1,56 @@
 <template>
-  <div class="gestion-container">
-    <div class="card">
-      <div class="card-header">
-        <i class="fas fa-users-cog header-icon"></i>
-        <div class="header-text">
-          <h3>Gestión de Notificaciones por Departamento</h3>
-          <p class="subtitle">Administra las notificaciones de todos los usuarios de departamento</p>
+  <div class="notificaciones-container">
+    <!-- Estadísticas -->
+    <div class="notificaciones-stats-grid">
+      <div class="notificaciones-stat-card">
+        <div class="notificaciones-stat-icon total">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="notificaciones-stat-info">
+          <p class="notificaciones-stat-value">{{ usuariosFiltrados.length }}</p>
+          <p class="notificaciones-stat-label">Total Usuarios</p>
+        </div>
+      </div>
+      <div class="notificaciones-stat-card">
+        <div class="notificaciones-stat-icon active">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="notificaciones-stat-info">
+          <p class="notificaciones-stat-value">{{ usuariosActivos }}</p>
+          <p class="notificaciones-stat-label">Notificaciones Activas</p>
+        </div>
+      </div>
+      <div class="notificaciones-stat-card">
+        <div class="notificaciones-stat-icon inactive">
+          <i class="fas fa-bell-slash"></i>
+        </div>
+        <div class="notificaciones-stat-info">
+          <p class="notificaciones-stat-value">{{ usuariosInactivos }}</p>
+          <p class="notificaciones-stat-label">Notificaciones Inactivas</p>
+        </div>
+      </div>
+      <div class="notificaciones-stat-card">
+        <div class="notificaciones-stat-icon warning">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="notificaciones-stat-info">
+          <p class="notificaciones-stat-value">{{ usuariosSinEmail }}</p>
+          <p class="notificaciones-stat-label">Sin Email</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="notificaciones-card">
+      <div class="notificaciones-card-header">
+        <h3>Gestión de Notificaciones</h3>
+        <div class="notificaciones-header-actions">
+          <button class="notificaciones-btn-refresh" @click="cargarUsuarios" title="Actualizar">
+            <i class="fas fa-sync-alt" :class="{ 'spinning': loading }"></i>
+          </button>
         </div>
       </div>
 
-      <div class="card-body">
+      <div class="notificaciones-card-body">
         <!-- Loading state -->
         <div v-if="loading" class="loading-state">
           <i class="fas fa-spinner fa-spin"></i>
@@ -28,10 +69,10 @@
         <!-- Content -->
         <div v-else>
           <!-- Filters -->
-          <div class="filters-section">
-            <div class="filter-group">
+          <div class="notificaciones-search-filter-container">
+            <div class="notificaciones-filter-group">
               <label>Filtrar por departamento:</label>
-              <select v-model="filtroDeptoId" class="filter-select">
+              <select v-model="filtroDeptoId" class="notificaciones-filter-select">
                 <option value="">Todos los departamentos</option>
                 <option v-for="depto in departamentos" :key="depto.id" :value="depto.id">
                   {{ depto.nombre }}
@@ -39,60 +80,27 @@
               </select>
             </div>
 
-            <div class="filter-group">
+            <div class="notificaciones-filter-group">
               <label>Estado de notificaciones:</label>
-              <select v-model="filtroEstado" class="filter-select">
+              <select v-model="filtroEstado" class="notificaciones-filter-select">
                 <option value="">Todos</option>
                 <option value="activo">Activas</option>
                 <option value="inactivo">Inactivas</option>
                 <option value="sin-email">Sin email configurado</option>
               </select>
             </div>
-
-            <button @click="cargarUsuarios" class="btn-refresh">
-              <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
-              Actualizar
-            </button>
           </div>
 
-          <!-- Stats -->
-          <div class="stats-grid">
-            <div class="stat-card">
-              <i class="fas fa-users"></i>
-              <div class="stat-content">
-                <span class="stat-value">{{ usuariosFiltrados.length }}</span>
-                <span class="stat-label">Usuarios Totales</span>
-              </div>
-            </div>
-
-            <div class="stat-card active">
-              <i class="fas fa-bell"></i>
-              <div class="stat-content">
-                <span class="stat-value">{{ usuariosActivos }}</span>
-                <span class="stat-label">Notificaciones Activas</span>
-              </div>
-            </div>
-
-            <div class="stat-card inactive">
-              <i class="fas fa-bell-slash"></i>
-              <div class="stat-content">
-                <span class="stat-value">{{ usuariosInactivos }}</span>
-                <span class="stat-label">Notificaciones Inactivas</span>
-              </div>
-            </div>
-
-            <div class="stat-card warning">
-              <i class="fas fa-exclamation-triangle"></i>
-              <div class="stat-content">
-                <span class="stat-value">{{ usuariosSinEmail }}</span>
-                <span class="stat-label">Sin Email</span>
-              </div>
-            </div>
+          <!-- Resultados -->
+          <div class="notificaciones-results-info">
+            <p>
+              Mostrando {{ usuariosFiltrados.length }} de {{ usuarios.length }} usuarios
+            </p>
           </div>
 
           <!-- Table -->
-          <div class="table-container">
-            <table class="usuarios-table">
+          <div class="table-wrapper">
+            <table class="notificaciones-table">
               <thead>
                 <tr>
                   <th>Usuario</th>
@@ -160,16 +168,18 @@
                   </td>
                   <td>
                     <div class="actions-group">
+                      <!-- Botón Activar: visible cuando notificaciones están inactivas -->
                       <button
-                        v-if="usuario.Email && !usuario.NotificacionesActivas"
+                        v-if="!usuario.NotificacionesActivas"
                         @click="activarNotificaciones(usuario.IdUsuario)"
-                        :disabled="procesando === usuario.IdUsuario"
+                        :disabled="!usuario.Email || procesando === usuario.IdUsuario"
                         class="btn-action activate"
-                        title="Activar notificaciones"
+                        :title="!usuario.Email ? 'Requiere email configurado' : 'Activar notificaciones'"
                       >
                         <i v-if="procesando === usuario.IdUsuario" class="fas fa-spinner fa-spin"></i>
                         <i v-else class="fas fa-bell"></i>
                       </button>
+                      <!-- Botón Desactivar: visible cuando notificaciones están activas -->
                       <button
                         v-if="usuario.NotificacionesActivas"
                         @click="desactivarNotificaciones(usuario.IdUsuario)"
@@ -484,59 +494,116 @@ export default {
 
 <style scoped>
 /* Container */
-.gestion-container {
+.notificaciones-container {
   padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* Card */
-.card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+/* Estadísticas */
+.notificaciones-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin: 2rem 0 1.5rem 0;
 }
 
-.card-header {
-  background: linear-gradient(135deg, #0074D9 0%, #0056b3 100%);
-  color: white;
-  padding: 30px;
+.notificaciones-stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
 }
 
-.header-icon {
-  font-size: 36px;
-  color: white;
-  opacity: 0.95;
+.notificaciones-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.header-text {
-  text-align: center;
-  width: 100%;
-}
-
-.header-text h3 {
-  margin: 0 0 8px 0;
+.notificaciones-stat-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 24px;
-  font-weight: 600;
   color: white;
-  text-align: center;
 }
 
-.header-text .subtitle {
+.notificaciones-stat-icon.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.notificaciones-stat-icon.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.notificaciones-stat-icon.inactive {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.notificaciones-stat-icon.warning {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.notificaciones-stat-info {
+  flex: 1;
+}
+
+.notificaciones-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #333;
   margin: 0;
-  opacity: 0.92;
-  font-size: 14px;
-  color: white;
-  text-align: center;
 }
 
-.card-body {
-  padding: 30px;
+.notificaciones-stat-label {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0 0 0;
+}
+
+/* Card */
+.notificaciones-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.notificaciones-card-header {
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%);
+  color: white;
+  padding: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 12px 12px 0 0;
+}
+
+.notificaciones-card-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+}
+
+.notificaciones-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.notificaciones-card-body {
+  padding: 20px;
 }
 
 /* Loading & Error */
@@ -566,7 +633,7 @@ export default {
 .btn-retry {
   margin-top: 20px;
   padding: 12px 24px;
-  background: #0074D9;
+  background: #165CB1;
   color: white;
   border: none;
   border-radius: 8px;
@@ -577,185 +644,138 @@ export default {
 }
 
 .btn-retry:hover {
-  background: #0056b3;
+  background: #1976d2;
 }
 
 /* Filters */
-.filters-section {
+.notificaciones-search-filter-container {
   display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
-.filter-group {
+.notificaciones-filter-group {
   flex: 1;
   min-width: 200px;
 }
 
-.filter-group label {
+.notificaciones-filter-group label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
+  color: #666;
   font-size: 14px;
 }
 
-.filter-select {
+.notificaciones-filter-select {
   width: 100%;
-  padding: 10px 14px;
-  border: 2px solid #ced4da;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
   background: white;
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
 
-.filter-select:focus {
+.notificaciones-filter-select:focus {
   outline: none;
-  border-color: #0074D9;
-  box-shadow: 0 0 0 4px rgba(0, 116, 217, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.btn-refresh {
-  padding: 10px 20px;
-  background: #0074D9;
-  color: white;
-  border: none;
+.notificaciones-btn-refresh {
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 12px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.btn-refresh:hover {
-  background: #0056b3;
-}
-
-/* Stats */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 10px;
-  border-left: 4px solid #6c757d;
-}
-
-.stat-card.active {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  border-left-color: #28a745;
-}
-
-.stat-card.inactive {
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-  border-left-color: #ffc107;
-}
-
-.stat-card.warning {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  border-left-color: #dc3545;
-}
-
-.stat-card i {
-  font-size: 24px;
-  color: #6c757d;
-}
-
-.stat-card.active i {
-  color: #28a745;
-}
-
-.stat-card.inactive i {
-  color: #ffc107;
-}
-
-.stat-card.warning i {
-  color: #dc3545;
-}
-
-.stat-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
-}
-
-.stat-label {
-  font-size: 11px;
+  font-size: 18px;
   color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
 }
+
+.notificaciones-btn-refresh:hover {
+  background: #f9fafb;
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Resultados */
+.notificaciones-results-info {
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.notificaciones-results-info p {
+  margin: 0;
+  font-size: 14px;
+}
+
+
 
 /* Table */
-.table-container {
+.table-wrapper {
   overflow-x: auto;
   border-radius: 10px;
   border: 1px solid #dee2e6;
 }
 
-.usuarios-table {
+.notificaciones-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
 }
 
-.usuarios-table thead {
-  background: linear-gradient(135deg, #0074D9, #0056b3);
+.notificaciones-table thead {
+  background: linear-gradient(135deg, #165CB1, #1976d2);
 }
 
-.usuarios-table th {
+.notificaciones-table th {
   padding: 16px;
-  text-align: center;
+  text-align: left;
   font-weight: 600;
   color: white;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #0056b3;
+  border-bottom: 2px solid #1976d2;
 }
 
-.usuarios-table tbody tr {
+.notificaciones-table tbody tr {
   border-bottom: 1px solid #f1f3f5;
   transition: background 0.2s;
 }
 
-.usuarios-table tbody tr:hover {
+.notificaciones-table tbody tr:hover {
   background: #f8f9fa;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.1);
 }
 
-.usuarios-table td {
+.notificaciones-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.notificaciones-table td {
   padding: 16px;
   color: #495057;
   font-size: 14px;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  max-width: 300px;
 }
 
 .empty-row {
@@ -783,31 +803,42 @@ export default {
   font-weight: 600;
 }
 
-.usuario-info i {
-  font-size: 20px;
-  color: #0074D9;
-}
-
-.email-badge,
-.depto-badge,
-.fecha-badge {
+.usuario-info {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: #e7f3ff;
-  border-radius: 6px;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.usuario-info i {
+  font-size: 20px;
+  color: #165CB1;
+}
+
+.usuario-nombre {
+  font-weight: 600;
+}
+
+.email-badge {
+  display: inline-block;
   font-size: 13px;
-  color: #0074D9;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-  max-width: 100%;
+  color: #495057;
 }
 
 .depto-badge {
-  background: #e7f3ff;
-  color: #0074D9;
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(22, 92, 177, 0.1);
+  border-radius: 4px;
+  font-size: 12px;
+  color: #165CB1;
+  font-weight: 500;
+}
+
+.fecha-badge {
+  display: inline-block;
+  font-size: 13px;
+  color: #666;
 }
 
 .fecha-badge {
@@ -830,36 +861,31 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
 }
 
 .status-badge.active {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .status-badge.inactive {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .status-badge.no-email {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .actions-group {
   display: flex;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .btn-action {
@@ -867,41 +893,46 @@ export default {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.2s;
   color: white;
+  font-weight: 500;
 }
 
 .btn-action.activate {
-  background: #28a745;
+  background: #10b981;
 }
 
 .btn-action.activate:hover {
-  background: #218838;
-  transform: translateY(-2px);
+  background: #059669;
 }
 
 .btn-action.deactivate {
-  background: #ffc107;
+  background: #f59e0b;
 }
 
 .btn-action.deactivate:hover {
-  background: #e0a800;
-  transform: translateY(-2px);
+  background: #d97706;
 }
 
 .btn-action.history {
-  background: #0074D9;
+  background: #2563eb;
 }
 
 .btn-action.history:hover {
-  background: #0056b3;
-  transform: translateY(-2px);
+  background: #1e40af;
 }
 
 .btn-action:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  background: #9ca3af !important;
+  color: #e5e7eb !important;
+}
+
+.btn-action:disabled:hover {
+  background: #9ca3af !important;
+  transform: none;
 }
 
 /* Modal */
@@ -911,7 +942,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -927,12 +958,12 @@ export default {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .modal-header {
-  padding: 24px;
-  background: linear-gradient(135deg, #0074D9, #0056b3);
+  padding: 20px;
+  background: linear-gradient(135deg, #165CB1 0%, #1976d2 100%);
   color: white;
   border-bottom: none;
   display: flex;
@@ -943,7 +974,7 @@ export default {
 
 .modal-header h4 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   color: white;
   display: flex;
   align-items: center;
@@ -953,11 +984,11 @@ export default {
 .btn-close {
   background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 20px;
+  font-size: 18px;
   color: white;
   cursor: pointer;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s;
   width: 32px;
   height: 32px;
@@ -968,7 +999,6 @@ export default {
 
 .btn-close:hover {
   background: rgba(255, 255, 255, 0.3);
-  color: white;
 }
 
 .modal-body {
@@ -1015,7 +1045,6 @@ export default {
 .historial-item:hover {
   background: #f1f3f5;
   transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.1);
 }
 
 .historial-item.estado-enviado {
@@ -1081,40 +1110,38 @@ export default {
 }
 
 .badge-enviado {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .badge-fallido {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .gestion-container {
+  .notificaciones-container {
     padding: 15px;
   }
 
-  .card-body {
-    padding: 20px;
+  .notificaciones-card-body {
+    padding: 15px;
   }
 
-  .filters-section {
+  .notificaciones-search-filter-container {
     flex-direction: column;
   }
 
-  .stats-grid {
+  .notificaciones-stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .table-container {
+  .table-wrapper {
     overflow-x: scroll;
   }
 
-  .usuarios-table {
+  .notificaciones-table {
     min-width: 800px;
   }
 }
