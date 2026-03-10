@@ -1,0 +1,2 @@
+0 8 * * * /usr/bin/php /var/www/sisee/api/cron/notificaciones-diarias.php >> /var/www/sisee/api/logs/cron-notificaciones.log 2>&1
+0 * * * * /usr/bin/php /var/www/sisee/api/cron/notificaciones-diarias.php >> /var/www/sisee/api/logs/cron-notificaciones-inmediatas.log 2>&1

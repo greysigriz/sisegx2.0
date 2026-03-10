@@ -21,7 +21,7 @@
                 <p>Administrar usuarios</p>
               </div>
               <div class="configuracion-arrow-icon">
-                →
+
               </div>
             </div>
           </div>
@@ -37,13 +37,13 @@
                 <p>Administrar roles</p>
               </div>
               <div class="configuracion-arrow-icon">
-                →
+
               </div>
             </div>
           </div>
 
           <!-- Notificaciones Email - Solo rol Departamento -->
-          <div v-if="isSuperUsuario" class="configuracion-item" @click="redirectTo('notificaciones')">
+          <div v-if="isDepartamento" class="configuracion-item" @click="redirectTo('notificaciones')">
             <div class="configuracion-icon">
               <font-awesome-icon :icon="['fas', 'bell']" />
             </div>
@@ -53,7 +53,23 @@
                 <p>Configurar alertas de peticiones</p>
               </div>
               <div class="configuracion-arrow-icon">
-                →
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Notificaciones - Solo Super Usuario -->
+          <div v-if="isSuperUsuario" class="configuracion-item" @click="redirectTo('gestion-notificaciones')">
+            <div class="configuracion-icon">
+              <font-awesome-icon :icon="['fas', 'users-cog']" />
+            </div>
+            <div class="configuracion-details">
+              <div>
+                <h4>Gestión de Notificaciones</h4>
+                <p>Administrar notificaciones de todos los usuarios</p>
+              </div>
+              <div class="configuracion-arrow-icon">
+
               </div>
             </div>
           </div>
@@ -71,14 +87,16 @@ export default {
   name: 'ConfiguracionPanel',
   data() {
     return {
-      isSuperUsuario: false
+      isSuperUsuario: false,
+      isDepartamento: false
     }
   },
   mounted() {
-    // Verificar si el usuario tiene rol Departamento (Id = 9)
+    // Verificar roles del usuario
     const currentUser = AuthService.getCurrentUser()
     if (currentUser && currentUser.usuario && currentUser.usuario.RolesIds) {
-      this.isSuperUsuario = currentUser.usuario.RolesIds.includes(9)
+      this.isSuperUsuario = currentUser.usuario.RolesIds.includes(1) // Super Usuario
+      this.isDepartamento = currentUser.usuario.RolesIds.includes(9) // Departamento
     }
   },
   methods: {
