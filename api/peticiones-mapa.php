@@ -215,9 +215,40 @@ try {
 
     // Limpiar y limitar problemas a top 5 por municipio
     foreach ($municipiosData as &$mun) {
+        // Convertir contadores de estados a objeto "estados"
+        $mun['estados'] = [];
+        if ($mun['rechazado'] > 0) {
+            $mun['estados']['Rechazado'] = $mun['rechazado'];
+        }
+        if ($mun['atendido'] > 0) {
+            $mun['estados']['Atendido'] = $mun['atendido'];
+        }
+        if ($mun['pendiente'] > 0) {
+            $mun['estados']['Pendiente'] = $mun['pendiente'];
+        }
+        if ($mun['enProceso'] > 0) {
+            $mun['estados']['En Proceso'] = $mun['enProceso'];
+        }
+
+        // Remover campos individuales (opcional, pero limpia la respuesta)
+        unset($mun['rechazado']);
+        unset($mun['atendido']);
+        unset($mun['pendiente']);
+        unset($mun['enProceso']);
+
+        // Convertir problemas a array con formato [tipo, cantidad]
+        $problemasArray = [];
         arsort($mun['problemas']);
-        $mun['problemas'] = array_slice($mun['problemas'], 0, 5);
+        $topProblemas = array_slice($mun['problemas'], 0, 5, true);
+        foreach ($topProblemas as $tipo => $cantidad) {
+            $problemasArray[] = [
+                'tipo' => $tipo,
+                'cantidad' => $cantidad
+            ];
+        }
+        $mun['problemas'] = $problemasArray;
     }
+    unset($mun); // Liberar referencia
 
     // Convertir a array indexado
     $resultado = array_values($municipiosData);

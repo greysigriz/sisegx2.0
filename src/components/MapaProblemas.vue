@@ -34,11 +34,11 @@
             <span class="legend-status-text">Rechazado</span>
           </div>
           <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #3b82f6;"></span>
+            <span class="legend-status-dot" style="background-color: #10b981;"></span>
             <span class="legend-status-text">Atendido</span>
           </div>
           <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #cbd5e1;"></span>
+            <span class="legend-status-dot" style="background-color: #f59e0b;"></span>
             <span class="legend-status-text">Pendiente</span>
           </div>
           <div class="legend-status-item">
@@ -138,10 +138,20 @@ const loadMunicipiosData = async () => {
 
     const data = await response.json()
 
+    // ============================================================
+    // 🔍 DIAGNÓSTICO: Ver estructura completa del primer municipio
+    // ============================================================
+    if (data.municipios && data.municipios.length > 0) {
+      console.log('🔍 DIAGNÓSTICO - Estructura del primer municipio:')
+      console.log(JSON.stringify(data.municipios[0], null, 2))
+      console.log('🔍 ¿Tiene estados?', !!data.municipios[0].estados)
+      console.log('🔍 ¿Tiene problemas?', !!data.municipios[0].problemas)
+    }
+    // ============================================================
+
     if (data.success && data.municipios) {
       municipiosData.value = data.municipios
       estadisticasAPI.value = data.estadisticas
-
       console.log(`✅ ${data.municipios.length} municipios cargados desde la base de datos`)
     } else {
       throw new Error(data.message || 'No se pudieron cargar los datos')
@@ -163,33 +173,74 @@ const normalize = (text) => {
     .trim()
 }
 
+// Función reutilizable para generar el HTML del popup
+const buildPopupHTML = (nombre, total, estados, problemas) => {
+  let html = `
+    <div style="padding: 16px; min-width: 280px; font-family: system-ui, sans-serif;">
+      <h3 style="margin: 0 0 4px 0; color: #1f2937; font-size: 20px; font-weight: 700;">
+        ${nombre}
+      </h3>
+      <div style="margin-bottom: 12px; color: #374151; font-size: 14px;">
+        Total de reportes: <strong>${total}</strong>
+      </div>
+  `
+
+  if (estados && Object.keys(estados).length > 0) {
+    Object.entries(estados).forEach(([estado, count]) => {
+      const color = STATUS_COLORS[estado] || '#6b7280'
+      html += `
+        <div style="display: flex; align-items: center; margin: 5px 0; font-size: 14px;">
+          <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px; flex-shrink:0;"></span>
+          <span style="color: #374151;">${estado}: <strong>${count}</strong></span>
+        </div>
+      `
+    })
+  }
+
+  if (problemas && problemas.length > 0) {
+    html += `
+      <div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">
+        <strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>
+        <div style="margin-top: 6px;">
+    `
+    problemas.forEach(problema => {
+      html += `
+        <div style="color: #374151; font-size: 13px; margin: 4px 0;">
+          ${problema.tipo}: <strong>${problema.cantidad}</strong>
+        </div>
+      `
+    })
+    html += `</div></div>`
+  }
+
+  html += `</div>`
+  return html
+}
+
 const mapOptions = {
   zoomControl: false,
   attributionControl: true,
-  preferCanvas: false, // CAMBIADO A FALSE - importante para SVG
+  preferCanvas: false,
   minZoom: 6,
   maxZoom: 18,
-  renderer: L.svg() // FORZAR renderer SVG
+  renderer: L.svg()
 }
 
 const onMapReady = async (mapInstance) => {
   console.log('✅ Mapa cargado')
+  console.log('🚀 INICIANDO CARGA DE DATOS DEL MAPA...')
 
-  // Cargar datos de municipios desde la API
   await loadMunicipiosData()
 
-  // Verificar que hay datos
   if (municipiosData.value.length === 0) {
     console.warn('⚠️ No hay datos de municipios para mostrar')
     isLoadingMunicipios.value = false
     return
   }
 
-  // Centrar en Yucatán
   mapScope.value = 'Yucatán'
   mapInstance.setView([20.7, -89.0], 8.5)
 
-  // Calcular rangos de intensidad
   const totales = municipiosData.value.map(m => m.total).filter(t => t > 0).sort((a, b) => a - b)
   const maxTotal = Math.max(...totales)
 
@@ -198,9 +249,6 @@ const onMapReady = async (mapInstance) => {
   const rango3 = Math.floor(maxTotal * 0.75)
   rangosMedios.value = [rango1, rango2, rango3]
 
-  console.log(`📊 Rangos: Bajo (0-${rango1}), Medio (${rango1+1}-${rango2}), Alto (${rango2+1}-${rango3}), Muy Alto (${rango3+1}+)`)
-
-  // Función para obtener color según total de reportes
   const getColorForTotal = (total) => {
     if (total === 0) return { color: CHOROPLETH_COLORS['Sin datos'], label: 'Sin datos' }
     if (total <= rango1) return { color: CHOROPLETH_COLORS['Bajo'], label: 'Bajo' }
@@ -209,16 +257,14 @@ const onMapReady = async (mapInstance) => {
     return { color: CHOROPLETH_COLORS['Muy Alto'], label: 'Muy Alto' }
   }
 
-  // Crear mapa de datos
   const municipioDataMap = {}
-  const municipioCoordinates = {} // Para guardar las coordenadas de cada municipio
+  const municipioCoordinates = {}
 
   municipiosData.value.forEach(m => {
     const nombreNormalizado = normalize(m.municipio)
     municipioDataMap[nombreNormalizado] = m
   })
 
-  // Cargar GeoJSON
   console.log('🗺️ Cargando GeoJSON...')
 
   let geojson
@@ -227,12 +273,6 @@ const onMapReady = async (mapInstance) => {
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     geojson = await response.json()
     console.log('✅ GeoJSON cargado:', geojson.features?.length, 'features')
-
-    // DEBUG: Ver primer feature
-    if (geojson.features && geojson.features[0]) {
-      console.log('🔍 Primer feature:', geojson.features[0])
-      console.log('🔍 Geometría:', geojson.features[0].geometry?.type)
-    }
   } catch (error) {
     console.error('❌ Error cargando GeoJSON:', error)
     isLoadingMunicipios.value = false
@@ -245,9 +285,6 @@ const onMapReady = async (mapInstance) => {
     return
   }
 
-  // Crear capa GeoJSON
-  console.log('🎨 Aplicando estilos a polígonos...')
-
   const geojsonLayer = L.geoJSON(geojson, {
     style: (feature) => {
       const nombreMunicipio = normalize(feature.properties.NOMGEO)
@@ -255,37 +292,27 @@ const onMapReady = async (mapInstance) => {
       const total = datos ? datos.total : 0
       const colorData = getColorForTotal(total)
 
-      const estilo = {
+      return {
         fillColor: colorData.color,
         fillOpacity: 0.40,
         color: '#000000',
         weight: 0.5,
         opacity: 0.5
       }
-
-      console.log(`🎨 ${feature.properties.NOMGEO}: ${colorData.color} (${total} reportes)`)
-
-      return estilo
     },
 
     onEachFeature: (feature, layer) => {
       const nombreMunicipio = normalize(feature.properties.NOMGEO)
       const datos = municipioDataMap[nombreMunicipio]
 
-      // Guardar el centroide del polígono
       if (layer.getBounds) {
         const center = layer.getBounds().getCenter()
         municipioCoordinates[nombreMunicipio] = center
       }
 
-      // Hover
       layer.on({
         mouseover: (e) => {
-          e.target.setStyle({
-            weight: 4,
-            color: '#4a0e2e',
-            fillOpacity: 0.95
-          })
+          e.target.setStyle({ weight: 4, color: '#4a0e2e', fillOpacity: 0.95 })
           e.target.bringToFront()
         },
         mouseout: (e) => {
@@ -294,59 +321,16 @@ const onMapReady = async (mapInstance) => {
       })
 
       if (datos) {
-        const total = datos.total
+        const popupContent = buildPopupHTML(
+          feature.properties.NOMGEO,
+          datos.total,
+          datos.estados,
+          datos.problemas
+        )
 
-        let popupContent = `
-          <div style="padding: 12px; min-width: 260px; font-family: system-ui, sans-serif;">
-            <h3 style="margin: 0 0 10px 0; color: #1f2937; font-size: 18px; font-weight: 700;">
-              ${feature.properties.NOMGEO}
-            </h3>
-            <div style="margin-bottom: 10px;">
-              <strong style="color: #374151;">Total de reportes: <span style="font-size: 18px; color: #3b82f6;">${total}</span></strong>
-            </div>
-        `
-
-        if (datos.estados && Object.keys(datos.estados).length > 0) {
-          Object.entries(datos.estados).forEach(([estado, count]) => {
-            const color = STATUS_COLORS[estado] || '#6b7280'
-            popupContent += `
-              <div style="display: flex; align-items: center; margin: 6px 0;">
-                <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px;"></span>
-                <span style="color: #4b5563;">${estado}: <strong>${count}</strong></span>
-              </div>
-            `
-          })
-        }
-
-        // Agregar problemas principales si existen
-        if (datos.problemas && datos.problemas.length > 0) {
-          popupContent += '<div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">'
-          popupContent += '<strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>'
-          popupContent += '<div style="margin-top: 6px;">'
-
-          datos.problemas.forEach(problema => {
-            popupContent += `
-              <div style="color: #6b7280; font-size: 13px; margin: 4px 0;">
-                ${problema.tipo}: <strong>${problema.cantidad}</strong>
-              </div>
-            `
-          })
-
-          popupContent += '</div></div>'
-        }
-
-        popupContent += '</div>'
-
-        layer.bindPopup(popupContent, {
-          maxWidth: 300,
-          className: 'custom-popup'
-        })
-        layer.bindTooltip(`<strong>${feature.properties.NOMGEO}</strong><br>${total} reportes`, {
-          sticky: true,
-          direction: 'top'
-        })
+        layer.bindPopup(popupContent, { maxWidth: 320, className: 'custom-popup' })
       } else {
-        layer.bindTooltip(`<strong>${feature.properties.NOMGEO}</strong><br>Sin reportes`)
+        layer.bindPopup(`<div style="padding: 12px;"><strong>${feature.properties.NOMGEO}</strong><br>Sin reportes</div>`, { className: 'custom-popup' })
       }
     }
   })
@@ -354,7 +338,6 @@ const onMapReady = async (mapInstance) => {
   geojsonLayer.addTo(mapInstance)
   console.log('✅ Capa GeoJSON agregada al mapa')
 
-  // Agregar círculos (burbujas) sobre los municipios
   console.log('🔵 Agregando burbujas al mapa...')
 
   municipiosData.value.forEach(municipio => {
@@ -362,7 +345,6 @@ const onMapReady = async (mapInstance) => {
     const coords = municipioCoordinates[nombreNormalizado]
 
     if (municipio.total > 0 && coords) {
-      // Calcular el radio del círculo basado en el total de reportes
       const baseRadius = 6
       const scaleFactor = 1.5
       const maxRadius = 30
@@ -377,57 +359,14 @@ const onMapReady = async (mapInstance) => {
         fillOpacity: 0.5
       })
 
-      // Popup para la burbuja
-      let bubblePopup = `
-        <div style="padding: 12px; min-width: 260px; font-family: system-ui, sans-serif;">
-          <h3 style="margin: 0 0 10px 0; color: #1f2937; font-size: 18px; font-weight: 700;">
-            ${municipio.municipio}
-          </h3>
-          <div style="margin-bottom: 10px;">
-            <strong style="color: #374151;">Total de reportes: <span style="font-size: 18px; color: #3b82f6;">${municipio.total}</span></strong>
-          </div>
-      `
+      const bubblePopup = buildPopupHTML(
+        municipio.municipio,
+        municipio.total,
+        municipio.estados,
+        municipio.problemas
+      )
 
-      if (municipio.estados && Object.keys(municipio.estados).length > 0) {
-        Object.entries(municipio.estados).forEach(([estado, count]) => {
-          const color = STATUS_COLORS[estado] || '#6b7280'
-          bubblePopup += `
-            <div style="display: flex; align-items: center; margin: 6px 0;">
-              <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px;"></span>
-              <span style="color: #4b5563;">${estado}: <strong>${count}</strong></span>
-            </div>
-          `
-        })
-      }
-
-      // Agregar problemas principales si existen
-      if (municipio.problemas && municipio.problemas.length > 0) {
-        bubblePopup += '<div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">'
-        bubblePopup += '<strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>'
-        bubblePopup += '<div style="margin-top: 6px;">'
-
-        municipio.problemas.forEach(problema => {
-          bubblePopup += `
-            <div style="color: #6b7280; font-size: 13px; margin: 4px 0;">
-              ${problema.tipo}: <strong>${problema.cantidad}</strong>
-            </div>
-          `
-        })
-
-        bubblePopup += '</div></div>'
-      }
-
-      bubblePopup += '</div>'
-
-      circle.bindPopup(bubblePopup, {
-        maxWidth: 300,
-        className: 'custom-popup'
-      })
-
-      circle.bindTooltip(`<strong>${municipio.municipio}</strong><br>${municipio.total} reportes`, {
-        direction: 'top',
-        offset: [0, -10]
-      })
+      circle.bindPopup(bubblePopup, { maxWidth: 320, className: 'custom-popup' })
 
       circle.addTo(mapInstance)
     }
@@ -435,7 +374,6 @@ const onMapReady = async (mapInstance) => {
 
   console.log('✅ Burbujas agregadas al mapa')
 
-  // Crear pane para etiquetas
   const labelsPane = mapInstance.createPane('labels')
   labelsPane.style.zIndex = 650
   labelsPane.style.pointerEvents = 'none'

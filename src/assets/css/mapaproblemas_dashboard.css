@@ -195,34 +195,36 @@
 
 /* Popup personalizado */
 .leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  padding: 0;
-}
-
-.leaflet-popup-content-wrapper.custom-popup {
-  border: 2px solid #3b82f6;
+  border-radius: 12px !important;
+  overflow: visible !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  padding: 0 !important;
+  border: 2px solid #3b82f6 !important;
 }
 
 .leaflet-popup-content {
-  margin: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   font-family: "Inter", "Segoe UI", sans-serif;
-  min-width: 220px;
+  width: auto !important;
+  min-width: 280px !important;
+}
+
+.leaflet-popup-tip-container {
+  margin-top: -1px;
 }
 
 .leaflet-popup-tip {
   background: white;
+  box-shadow: none;
 }
 
-/* Círculos (burbujas) interactivas */
-.leaflet-interactive.leaflet-marker-pane circle {
-  transition: all 0.2s ease;
-}
-
-.leaflet-interactive.leaflet-marker-pane circle:hover {
-  fill-opacity: 0.8 !important;
-  stroke-width: 3 !important;
+.leaflet-popup-close-button {
+  top: 8px !important;
+  right: 8px !important;
+  color: #6b7280 !important;
+  font-size: 18px !important;
+  z-index: 10;
 }
 
 /* Tooltips de burbujas circulares */
