@@ -31,19 +31,23 @@
         <div class="legend-status-colors">
           <div class="legend-status-item">
             <span class="legend-status-dot" style="background-color: #ef4444;"></span>
-            <span class="legend-status-text">Rechazado</span>
-          </div>
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #10b981;"></span>
-            <span class="legend-status-text">Atendido</span>
+            <span class="legend-status-text">Nivel 1 - Crítico</span>
           </div>
           <div class="legend-status-item">
             <span class="legend-status-dot" style="background-color: #f59e0b;"></span>
-            <span class="legend-status-text">Pendiente</span>
+            <span class="legend-status-text">Nivel 2 - Alto</span>
           </div>
           <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #3b82f6;"></span>
-            <span class="legend-status-text">En Proceso</span>
+            <span class="legend-status-dot" style="background-color: #0074D9;"></span>
+            <span class="legend-status-text">Nivel 3 - Medio</span>
+          </div>
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #10b981;"></span>
+            <span class="legend-status-text">Nivel 4 - Bajo</span>
+          </div>
+          <div class="legend-status-item">
+            <span class="legend-status-dot" style="background-color: #94a3b8;"></span>
+            <span class="legend-status-text">Nivel 5 - Muy Bajo</span>
           </div>
         </div>
 
@@ -51,9 +55,9 @@
 
         <div class="legend-bubble-size">
           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <div class="bubble-demo" style="width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
-            <div class="bubble-demo" style="width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
-            <div class="bubble-demo" style="width: 36px; height: 36px; background: #3b82f6; border-radius: 50%; opacity: 0.6;"></div>
+            <div class="bubble-demo" style="width: 20px; height: 20px; background: #10b981; border-radius: 50%; opacity: 0.6;"></div>
+            <div class="bubble-demo" style="width: 28px; height: 28px; background: #0074D9; border-radius: 50%; opacity: 0.6;"></div>
+            <div class="bubble-demo" style="width: 36px; height: 36px; background: #ef4444; border-radius: 50%; opacity: 0.6;"></div>
             <span style="font-size: 11px; color: #475569; margin-left: 4px;">= Volumen de reportes</span>
           </div>
         </div>
@@ -117,6 +121,23 @@ const STATUS_COLORS = {
   'Atendido': '#10b981',
   'Pendiente': '#f59e0b',
   'En Proceso': '#3b82f6'
+}
+
+// Colores por nivel de importancia (para burbujas)
+const NIVEL_COLORS = {
+  1: '#ef4444',  // Crítico - Rojo
+  2: '#f59e0b',  // Alto - Naranja
+  3: '#0074D9',  // Medio - Azul
+  4: '#10b981',  // Bajo - Verde
+  5: '#94a3b8'   // Muy Bajo - Gris
+}
+
+const NIVEL_BORDER_COLORS = {
+  1: '#dc2626',
+  2: '#d97706',
+  3: '#0056a6',
+  4: '#059669',
+  5: '#64748b'
 }
 
 // Datos de municipios con reportes
@@ -310,17 +331,8 @@ const onMapReady = async (mapInstance) => {
         municipioCoordinates[nombreMunicipio] = center
       }
 
-      layer.on({
-        mouseover: (e) => {
-          e.target.setStyle({ weight: 4, color: '#4a0e2e', fillOpacity: 0.95 })
-          e.target.bringToFront()
-        },
-        mouseout: (e) => {
-          geojsonLayer.resetStyle(e.target)
-        }
-      })
-
       if (datos) {
+        // Si tiene datos, mantener clic pero sin hover effects
         const popupContent = buildPopupHTML(
           feature.properties.NOMGEO,
           datos.total,
@@ -330,6 +342,17 @@ const onMapReady = async (mapInstance) => {
 
         layer.bindPopup(popupContent, { maxWidth: 320, className: 'custom-popup' })
       } else {
+        // Municipios sin reportes - mantener interactividad y efectos hover
+        layer.on({
+          mouseover: (e) => {
+            e.target.setStyle({ weight: 4, color: '#000000', fillOpacity: 0.95 })
+            e.target.bringToFront()
+          },
+          mouseout: (e) => {
+            geojsonLayer.resetStyle(e.target)
+          }
+        })
+
         layer.bindPopup(`<div style="padding: 12px;"><strong>${feature.properties.NOMGEO}</strong><br>Sin reportes</div>`, { className: 'custom-popup' })
       }
     }
@@ -337,6 +360,11 @@ const onMapReady = async (mapInstance) => {
 
   geojsonLayer.addTo(mapInstance)
   console.log('✅ Capa GeoJSON agregada al mapa')
+
+  // Crear pane para burbujas con z-index alto
+  const bubblesPane = mapInstance.createPane('bubbles')
+  bubblesPane.style.zIndex = 600
+  bubblesPane.style.pointerEvents = 'auto'
 
   console.log('🔵 Agregando burbujas al mapa...')
 
@@ -350,13 +378,19 @@ const onMapReady = async (mapInstance) => {
       const maxRadius = 30
       const radius = Math.min(baseRadius + (municipio.total * scaleFactor), maxRadius)
 
+      // Obtener color según nivel predominante
+      const nivelPredominante = municipio.nivel_predominante || 3
+      const bubbleColor = NIVEL_COLORS[nivelPredominante] || NIVEL_COLORS[3]
+      const bubbleBorderColor = NIVEL_BORDER_COLORS[nivelPredominante] || NIVEL_BORDER_COLORS[3]
+
       const circle = L.circleMarker([coords.lat, coords.lng], {
         radius: radius,
-        fillColor: '#3b82f6',
-        color: '#1e40af',
+        fillColor: bubbleColor,
+        color: bubbleBorderColor,
         weight: 2,
         opacity: 0.8,
-        fillOpacity: 0.5
+        fillOpacity: 0.6,
+        pane: 'bubbles'
       })
 
       const bubblePopup = buildPopupHTML(

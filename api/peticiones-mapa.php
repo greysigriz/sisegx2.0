@@ -158,7 +158,8 @@ try {
                 'atendido' => 0,
                 'pendiente' => 0,
                 'enProceso' => 0,
-                'problemas' => []
+                'problemas' => [],
+                'niveles' => []  // Agregar array para niveles de importancia
             ];
         }
 
@@ -213,8 +214,45 @@ try {
         }
     }
 
+    // Obtener niveles de importancia por municipio
+    $queryNiveles = "
+        SELECT 
+            da.Municipio as municipio,
+            p.NivelImportancia,
+            COUNT(*) as cantidad
+        FROM peticiones p
+        INNER JOIN DivisionAdministrativa da ON p.division_id = da.Id
+        WHERE da.Municipio IS NOT NULL 
+        AND da.Municipio != ''
+        AND p.NivelImportancia IS NOT NULL
+        GROUP BY da.Municipio, p.NivelImportancia
+        ORDER BY da.Municipio, cantidad DESC
+    ";
+
+    $stmtNiveles = $db->prepare($queryNiveles);
+    $stmtNiveles->execute();
+    $niveles = $stmtNiveles->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($niveles as $nivel) {
+        $municipio = $nivel['municipio'];
+        $nivelImportancia = intval($nivel['NivelImportancia']);
+        $cantidad = intval($nivel['cantidad']);
+
+        if (isset($municipiosData[$municipio])) {
+            $municipiosData[$municipio]['niveles'][$nivelImportancia] = $cantidad;
+        }
+    }
+
     // Limpiar y limitar problemas a top 5 por municipio
     foreach ($municipiosData as &$mun) {
+        // Calcular nivel predominante (el que tenga más peticiones)
+        $nivelPredominante = 3; // Por defecto nivel 3 (medio)
+        if (!empty($mun['niveles'])) {
+            arsort($mun['niveles']);
+            $nivelPredominante = key($mun['niveles']); // Obtener el nivel con más peticiones
+        }
+        $mun['nivel_predominante'] = $nivelPredominante;
+
         // Convertir contadores de estados a objeto "estados"
         $mun['estados'] = [];
         if ($mun['rechazado'] > 0) {
