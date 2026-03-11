@@ -1,148 +1,84 @@
 <template>
   <div class="dashboard-metrics">
-    <div class="metrics-container">
-      <div class="metrics-grid">
-        <!-- Card 1: Reportes Totales -->
-        <div class="metric-card">
-          <div class="metric-label">Reportes Totales</div>
-          <div class="metric-value-row">
-            <div class="metric-value">{{ Math.floor(cards[0].displayValue).toLocaleString() }}</div>
-            <span :class="['metric-badge', cards[0].trend > 0 ? 'badge-up' : 'badge-down']">
-              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  :d="cards[0].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <span>{{ Math.abs(cards[0].trend) }}%</span>
-            </span>
-          </div>
-        </div>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Cargando estadísticas...</p>
+    </div>
 
-        <!-- Card 2: Pendientes -->
-        <div class="metric-card">
-          <div class="metric-label">Pendientes</div>
-          <div class="metric-value-row">
-            <div class="metric-value">{{ Math.floor(cards[1].displayValue).toLocaleString() }}</div>
-            <span :class="['metric-badge', cards[1].trend > 0 ? 'badge-up' : 'badge-down']">
-              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  :d="cards[1].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <span>{{ Math.abs(cards[1].trend) }}%</span>
-            </span>
-          </div>
-        </div>
+    <!-- Error state -->
+    <div v-else-if="error" class="error-container">
+      <p class="error-message">❌ {{ error }}</p>
+    </div>
 
-        <!-- Card 3: Atendidos -->
-        <div class="metric-card">
-          <div class="metric-label">Atendidos</div>
-          <div class="metric-value-row">
-            <div class="metric-value">{{ Math.floor(cards[2].displayValue).toLocaleString() }}</div>
-            <span :class="['metric-badge', cards[2].trend > 0 ? 'badge-up' : 'badge-down']">
-              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  :d="cards[2].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <span>{{ Math.abs(cards[2].trend) }}%</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Card 4: En Proceso -->
-        <div class="metric-card">
-          <div class="metric-label">En Proceso</div>
-          <div class="metric-value-row">
-            <div class="metric-value">{{ Math.floor(cards[3].displayValue).toLocaleString() }}</div>
-            <span :class="['metric-badge', cards[3].trend > 0 ? 'badge-up' : 'badge-down']">
-              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  :d="cards[3].trend > 0 ? 'M18 15L12 9L6 15' : 'M6 9L12 15L18 9'"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <span>{{ Math.abs(cards[3].trend) }}%</span>
-            </span>
-          </div>
-        </div>
+    <!-- Resumen de departamentos -->
+    <div class="resumen-header" v-else-if="totales">
+      <div class="resumen-item">
+        <span class="resumen-label">Total Departamentos</span>
+        <span class="resumen-valor">{{ totales.total_departamentos }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Total Peticiones</span>
+        <span class="resumen-valor">{{ totales.total_peticiones }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Pendientes</span>
+        <span class="resumen-valor warning">{{ totales.total_pendientes }}</span>
+      </div>
+      <div class="resumen-item">
+        <span class="resumen-label">Completadas</span>
+        <span class="resumen-valor success">{{ totales.total_completadas }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import '@/assets/css/cards_dashboard.css'
-import { ref, onMounted, onUnmounted } from "vue"
+import '@/assets/css/cards_dashboard.css'
+import { ref, onMounted } from "vue"
+import axios from 'axios'
 
 export default {
   name: "DashboardCards",
   setup() {
-    const cards = ref([
-      { title: 'Reportes Totales', value: 1240, displayValue: 0, trend: 1.8 },
-      { title: 'Pendientes', value: 312, displayValue: 0, trend: -2.5 },
-      { title: 'Atendidos', value: 872, displayValue: 0, trend: 5.2 },
-      { title: 'En Proceso', value: 56, displayValue: 0, trend: 2.2 },
-    ])
+    const totales = ref(null)
+    const isLoading = ref(false)
+    const error = ref(null)
 
-    const animationIntervals = ref([])
+    // API endpoint cambiado a tarjetas-depto
+    const API_URL = `${import.meta.env.VITE_API_URL || '/api'}/tarjetas-depto.php`
 
-    const animateNumber = (index, targetValue, duration = 1500) => {
-      // Defensive: Don't animate if tab is hidden
-      if (document.hidden) {
-        cards.value[index].displayValue = targetValue
-        return
+    const cargarTotales = async () => {
+      try {
+        isLoading.value = true
+        error.value = null
+
+        const response = await axios.get(API_URL, {
+          params: { source: 'dashboard-cards' }
+        })
+
+        if (response.data.success) {
+          totales.value = response.data.totales
+        } else {
+          throw new Error(response.data.message || 'Error al cargar totales')
+        }
+      } catch (err) {
+        console.error('❌ Error cargando totales:', err)
+        error.value = err.message || 'Error al cargar estadísticas'
+      } finally {
+        isLoading.value = false
       }
-
-      const frameRate = 1000 / 60
-      const totalFrames = Math.round(duration / frameRate)
-      let frame = 0
-      const increment = targetValue / totalFrames
-
-      const counter = setInterval(() => {
-        // Pause animation if tab becomes hidden
-        if (document.hidden) {
-          clearInterval(counter)
-          return
-        }
-
-        frame++
-        cards.value[index].displayValue += increment
-        if (frame >= totalFrames) {
-          cards.value[index].displayValue = targetValue
-          clearInterval(counter)
-        }
-      }, frameRate)
-
-      animationIntervals.value.push(counter)
     }
 
     onMounted(() => {
-      cards.value.forEach((c, i) => animateNumber(i, c.value))
+      cargarTotales()
     })
 
-    onUnmounted(() => {
-      // Cleanup: clear all animation intervals
-      animationIntervals.value.forEach(interval => clearInterval(interval))
-      animationIntervals.value = []
-    })
-
-    return { cards }
+    return {
+      totales,
+      isLoading,
+      error
+    }
   }
 }
 </script>

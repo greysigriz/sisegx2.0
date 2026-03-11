@@ -73,12 +73,12 @@ try {
     // Obtener información del usuario
     debugLog("Ejecutando query usuario");
     $queryUser = "SELECT u.Id, u.Nombre, u.ApellidoP, u.IdRolSistema, u.IdDivisionAdm, u.IdUnidad,
-                         r.Nombre as NombreRol,
-                         d.Municipio as NombreDivision
-                  FROM Usuario u
-                  LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
-                  LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
-                  WHERE u.Id = :user_id AND u.Estatus = 'ACTIVO'";
+                            r.Nombre as NombreRol,
+                            d.Municipio as NombreDivision
+                    FROM Usuario u
+                    LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
+                    LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
+                    WHERE u.Id = :user_id AND u.Estatus = 'ACTIVO'";
     
     $stmtUser = $db->prepare($queryUser);
     $stmtUser->bindParam(':user_id', $userId, PDO::PARAM_INT);
@@ -126,22 +126,34 @@ try {
 
         // Últimos 7 días
         $query7dias = "SELECT DATE(fecha_registro) as fecha, COUNT(*) as cantidad
-                      FROM peticiones
-                      WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                      GROUP BY DATE(fecha_registro)
-                      ORDER BY fecha";
+                        FROM peticiones
+                        WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                        GROUP BY DATE(fecha_registro)
+                        ORDER BY fecha";
         $stmt7dias = $db->query($query7dias);
         $stats['ultimos_7_dias'] = $stmt7dias->fetchAll(PDO::FETCH_ASSOC);
 
         // Top municipios
         $queryMunicipios = "SELECT d.Municipio, COUNT(p.id) as cantidad
-                           FROM peticiones p
-                           LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                           GROUP BY d.Municipio
-                           ORDER BY cantidad DESC
-                           LIMIT 5";
+                            FROM peticiones p
+                            LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+                            GROUP BY d.Municipio
+                            ORDER BY cantidad DESC
+                            LIMIT 5";
         $stmtMuni = $db->query($queryMunicipios);
         $stats['top_municipios'] = $stmtMuni->fetchAll(PDO::FETCH_ASSOC);
+
+        // ✅ NUEVO: Timeline de estados para gráfica (últimos 90 días)
+        $queryTimeline = "SELECT 
+                            DATE(p.fecha_registro) as fecha,
+                            p.estado,
+                            COUNT(*) as cantidad
+                            FROM peticiones p
+                            WHERE p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                            GROUP BY DATE(p.fecha_registro), p.estado
+                            ORDER BY fecha ASC, p.estado";
+        $stmtTimeline = $db->query($queryTimeline);
+        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
 
     } 
     // Rol 12: Canalizador Municipal - Ver peticiones de su municipio
@@ -178,10 +190,10 @@ try {
 
         // Peticiones retrasadas (no completadas y con más de 30 días)
         $queryRetrasadas = "SELECT COUNT(*) as cantidad
-                           FROM peticiones
-                           WHERE division_id = :division_id
-                           AND estado NOT IN ('Completada', 'Cancelada')
-                           AND DATEDIFF(CURDATE(), fecha_registro) > 30";
+                            FROM peticiones
+                            WHERE division_id = :division_id
+                            AND estado NOT IN ('Completada', 'Cancelada')
+                            AND DATEDIFF(CURDATE(), fecha_registro) > 30";
         $stmtRetrasadas = $db->prepare($queryRetrasadas);
         $stmtRetrasadas->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
         $stmtRetrasadas->execute();
@@ -189,17 +201,32 @@ try {
 
         // Departamentos con más peticiones asignadas en su municipio
         $queryDepartamentos = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
-                              FROM peticion_departamento pd
-                              INNER JOIN peticiones p ON pd.peticion_id = p.id
-                              INNER JOIN unidades u ON pd.departamento_id = u.id
-                              WHERE p.division_id = :division_id
-                              GROUP BY u.id, u.nombre_unidad
-                              ORDER BY cantidad DESC
-                              LIMIT 5";
+                                FROM peticion_departamento pd
+                                INNER JOIN peticiones p ON pd.peticion_id = p.id
+                                INNER JOIN unidades u ON pd.departamento_id = u.id
+                                WHERE p.division_id = :division_id
+                                GROUP BY u.id, u.nombre_unidad
+                                ORDER BY cantidad DESC
+                                LIMIT 5";
         $stmtDepts = $db->prepare($queryDepartamentos);
         $stmtDepts->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
         $stmtDepts->execute();
         $stats['departamentos_top'] = $stmtDepts->fetchAll(PDO::FETCH_ASSOC);
+
+        // ✅ NUEVO: Timeline de estados para gráfica - filtrado por municipio (últimos 90 días)
+        $queryTimeline = "SELECT 
+                            DATE(p.fecha_registro) as fecha,
+                            p.estado,
+                            COUNT(*) as cantidad
+                            FROM peticiones p
+                            WHERE p.division_id = :division_id
+                            AND p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                            GROUP BY DATE(p.fecha_registro), p.estado
+                            ORDER BY fecha ASC, p.estado";
+        $stmtTimeline = $db->prepare($queryTimeline);
+        $stmtTimeline->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
+        $stmtTimeline->execute();
+        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
 
     }
     // Rol 13: Canalizador Estatal - Ver todas las peticiones del estado
@@ -260,6 +287,18 @@ try {
                       ORDER BY fecha";
         $stmt7dias = $db->query($query7dias);
         $stats['ultimos_7_dias'] = $stmt7dias->fetchAll(PDO::FETCH_ASSOC);
+
+        // ✅ NUEVO: Timeline de estados para gráfica (últimos 90 días)
+        $queryTimeline = "SELECT 
+                            DATE(p.fecha_registro) as fecha,
+                            p.estado,
+                            COUNT(*) as cantidad
+                         FROM peticiones p
+                         WHERE p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
+                         GROUP BY DATE(p.fecha_registro), p.estado
+                         ORDER BY fecha ASC, p.estado";
+        $stmtTimeline = $db->query($queryTimeline);
+        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
 
     }
     // Rol 9: Usuario de departamento - Ver peticiones asignadas a su departamento
