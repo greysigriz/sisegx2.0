@@ -51,7 +51,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Encabezado del gráfico
    ══════════════════════════════════════════════════════════════════════════ */
-.area-chart-card-header {
+.area-chart-card .area-chart-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -62,7 +62,7 @@
   gap: 24px;
 }
 
-.card-header-content {
+.area-chart-card .card-header-content {
   flex: 1;
   text-align: left;
   padding-left: 0;
@@ -72,43 +72,29 @@
   align-items: flex-start;
 }
 
+/* Contenedor del título con icono/badge */
+.area-chart-card .card-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Título con el mismo estilo que bar_dashboard */
-.card-title {
-  /* Tamaño de fuente grande: 24px */
-  font-size: 24px;
-  /* Texto en negrita */
+.area-chart-card .card-title {
+  font-size: 28px;
   font-weight: 700;
-  /* Color azul oscuro */
   color: #1E40AF;
-  /* Fuente sans-serif moderna */
   font-family: "Inter", "Segoe UI", sans-serif;
-  /* Sin margen para mejor control de espaciado */
   margin: 0 0 4px 0;
   padding: 0;
+  text-align: center;
 }
-
-/* Badge para indicar datos de prueba */
-.test-data-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-  color: #92400E;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 1px solid #FCD34D;
-  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2);
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
-}
-
-.test-data-badge:hover {
+.area-chart-card .test-data-badge:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(251, 191, 36, 0.25);
 }
 
-.card-description {
+.area-chart-card .card-description {
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
@@ -116,17 +102,18 @@
   line-height: 1.4;
 }
 
-.card-actions {
+.area-chart-card .card-actions {
   flex-shrink: 0;
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Selector de rango (Última semana, mes, etc)
    ══════════════════════════════════════════════════════════════════════════ */
-.range-selector {
+.area-chart-card .range-selector {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -144,11 +131,11 @@
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.range-selector:hover {
+.area-chart-card .range-selector:hover {
   border-color: #3b82f6;
 }
 
-.range-selector:focus {
+.area-chart-card .range-selector:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
@@ -156,7 +143,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Contenido del card
    ══════════════════════════════════════════════════════════════════════════ */
-.area-chart-card-content {
+.area-chart-card .area-chart-card-content {
   width: 100%;
   padding: 0;
 }
@@ -164,7 +151,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Estados de carga y error
    ══════════════════════════════════════════════════════════════════════════ */
-.loading-state {
+.area-chart-card .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -173,27 +160,27 @@
   color: #64748b;
 }
 
-.loading-spinner {
+.area-chart-card .loading-spinner {
   width: 40px;
   height: 40px;
   border: 3px solid #e2e8f0;
   border-top-color: #3b82f6;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: area-chart-spin 0.8s linear infinite;
   margin-bottom: 1rem;
 }
 
-@keyframes spin {
+@keyframes area-chart-spin {
   to { transform: rotate(360deg); }
 }
 
-.loading-state p {
+.area-chart-card .loading-state p {
   margin: 0;
   font-size: 0.875rem;
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
-.error-state {
+.area-chart-card .error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -202,19 +189,19 @@
   text-align: center;
 }
 
-.error-icon {
+.area-chart-card .error-icon {
   font-size: 2.5rem;
   margin-bottom: 0.75rem;
 }
 
-.error-title {
+.area-chart-card .error-title {
   font-size: 1rem;
   font-weight: 600;
   color: #dc2626;
   margin: 0 0 0.5rem 0;
 }
 
-.error-message {
+.area-chart-card .error-message {
   font-size: 0.875rem;
   color: #64748b;
   margin: 0;
@@ -224,7 +211,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Panel de debug
    ══════════════════════════════════════════════════════════════════════════ */
-.debug-panel {
+.area-chart-card .debug-panel {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -233,7 +220,7 @@
   font-size: 0.8125rem;
 }
 
-.debug-panel summary {
+.area-chart-card .debug-panel summary {
   cursor: pointer;
   user-select: none;
   font-weight: 600;
@@ -243,29 +230,29 @@
   transition: background 0.15s ease;
 }
 
-.debug-panel summary:hover {
+.area-chart-card .debug-panel summary:hover {
   background: #e2e8f0;
 }
 
-.debug-content {
+.area-chart-card .debug-content {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e2e8f0;
 }
 
-.debug-row {
+.area-chart-card .debug-row {
   display: flex;
   justify-content: space-between;
   padding: 0.25rem 0;
   color: #64748b;
 }
 
-.debug-row strong {
+.area-chart-card .debug-row strong {
   color: #0f172a;
   font-weight: 600;
 }
 
-.debug-alert {
+.area-chart-card .debug-alert {
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 6px;
@@ -274,25 +261,25 @@
   color: #991b1b;
 }
 
-.debug-alert p {
+.area-chart-card .debug-alert p {
   margin: 0 0 0.5rem 0;
 }
 
-.debug-alert p:last-child {
+.area-chart-card .debug-alert p:last-child {
   margin-bottom: 0;
 }
 
-.debug-estados {
+.area-chart-card .debug-estados {
   margin-top: 0.75rem;
 }
 
-.debug-estados ul {
+.area-chart-card .debug-estados ul {
   margin: 0.5rem 0 0 0;
   padding-left: 1.25rem;
   color: #64748b;
 }
 
-.debug-estados li {
+.area-chart-card .debug-estados li {
   padding: 0.125rem 0;
 }
 
@@ -300,7 +287,7 @@
    Leyenda del gráfico - OPCIONAL (ya que ECharts tiene su propia leyenda)
    Si quieres mantener la leyenda externa, déjala. Si prefieres solo la interna, puedes ocultarla.
    ══════════════════════════════════════════════════════════════════════════ */
-.chart-legend {
+.area-chart-card .chart-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -311,9 +298,9 @@
 }
 
 /* Para ocultar la leyenda externa y usar solo la de ECharts, agrega esta clase: */
-/* .chart-legend { display: none; } */
+/* .area-chart-card .chart-legend { display: none; } */
 
-.legend-item {
+.area-chart-card .legend-item {
   /* Flexbox inline para alinear icono y texto */
   display: inline-flex;
   /* Alinea verticalmente el punto de color y etiqueta */
@@ -334,7 +321,7 @@
 }
 
 /* Efecto hover en los items de la leyenda */
-.legend-item:hover {
+.area-chart-card .legend-item:hover {
   /* Fondo azul muy claro al pasar el mouse */
   background: rgba(59, 130, 246, 0.08);
   /* Borde azul para indicar interactividad */
@@ -344,16 +331,16 @@
 }
 
 /* Estado inactivo de la leyenda */
-.legend-item.inactive {
+.area-chart-card .legend-item.inactive {
   opacity: 0.4;
 }
 
-.legend-item.inactive .legend-marker {
+.area-chart-card .legend-item.inactive .legend-marker {
   background: #cbd5e1 !important;
 }
 
 /* Marcador de color en la leyenda (cuadrado pequeño) */
-.legend-marker {
+.area-chart-card .legend-marker {
   width: 10px;
   height: 10px;
   border-radius: 50%;
@@ -361,7 +348,7 @@
 }
 
 /* Texto de la leyenda */
-.legend-text {
+.area-chart-card .legend-text {
   /* Tamaño de fuente: 13px */
   font-size: 13px;
   /* Texto en semi-negrita para mejor legibilidad */
@@ -374,7 +361,7 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Contenedor del gráfico
    ══════════════════════════════════════════════════════════════════════════ */
-.chart-container {
+.area-chart-card .chart-container {
   width: 100%;
   height: 550px;
   min-height: 500px;
@@ -391,25 +378,25 @@
     margin: 16px;
   }
 
-  .area-chart-card-header {
+  .area-chart-card .area-chart-card-header {
     flex-direction: column;
     gap: 12px;
   }
 
-  .card-title {
+  .area-chart-card .card-title {
     font-size: 20px;
   }
 
-  .range-selector {
+  .area-chart-card .range-selector {
     width: 100%;
   }
 
-  .chart-legend {
+  .area-chart-card .chart-legend {
     gap: 1rem;
     justify-content: flex-start;
   }
 
-  .chart-container {
+  .area-chart-card .chart-container {
     height: 450px;
     min-height: 400px;
   }
@@ -421,17 +408,17 @@
     margin: 12px;
   }
 
-  .chart-legend {
+  .area-chart-card .chart-legend {
     flex-direction: column;
     gap: 0.5rem;
     align-items: stretch;
   }
 
-  .legend-item {
+  .area-chart-card .legend-item {
     justify-content: flex-start;
   }
 
-  .chart-container {
+  .area-chart-card .chart-container {
     height: 400px;
     min-height: 350px;
   }

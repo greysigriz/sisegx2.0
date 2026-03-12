@@ -55,6 +55,7 @@
 </template>
 
 <script>
+/* */
 import { ref } from 'vue'
 import YucatanHeader from "@/components/dashboard/YucatanHeader.vue"
 import DashboardCards from "@/components/dashboard/DashboardCards.vue"
