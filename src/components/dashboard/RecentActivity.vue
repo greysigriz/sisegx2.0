@@ -2,17 +2,9 @@
   <div class="recent-activity-container">
     <div class="section-header">
       <div class="header-left">
-        <i class="fas fa-history"></i>
+        <span class="header-icon"><i class="fas fa-history"></i></span>
         <h2>Actividad Reciente</h2>
-      </div>
-      <div class="header-left">
-        <button @click="prevSlide" class="carousel-control" :disabled="currentIndex === 0">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <span class="carousel-indicator">{{ currentIndex + 1 }} / {{ totalSlides }}</span>
-        <button @click="nextSlide" class="carousel-control" :disabled="currentIndex >= totalSlides - 1">
-          <i class="fas fa-chevron-right"></i>
-        </button>
+        <span v-if="petitions && petitions.length > 0" class="header-count">{{ petitions.length }}</span>
       </div>
     </div>
 
@@ -36,15 +28,26 @@
       </div>
     </div>
 
-    <!-- Carrusel de peticiones -->
-    <div v-if="petitions && petitions.length > 0" class="carousel-container">
-      <div class="carousel-track" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
-        <div
+    <!-- Carrusel de peticiones con Swiper -->
+    <div v-if="petitions && petitions.length > 0" class="ra-swiper-wrap">
+      <Swiper
+        :modules="swiperModules"
+        :slides-per-view="1"
+        :space-between="16"
+        :navigation="true"
+        :pagination="{ clickable: true }"
+        :breakpoints="{
+          640: { slidesPerView: 1.5 },
+          900: { slidesPerView: 2 },
+          1200: { slidesPerView: 2.5 }
+        }"
+        class="ra-swiper"
+      >
+        <SwiperSlide
           v-for="petition in petitions"
           :key="petition.id"
-          class="carousel-slide"
         >
-          <div class="petition-card">
+          <div class="petition-card" :class="'nivel--' + petition.NivelImportancia">
             <!-- Header de la tarjeta -->
             <div class="petition-header">
               <div class="folio-badge">
@@ -60,6 +63,18 @@
             <div class="petition-body">
               <h3 class="petition-title">{{ petition.nombre }}</h3>
               <p class="petition-description">{{ truncateText(petition.descripcion, 150) }}</p>
+
+              <div class="petition-images" @click.stop>
+                <ImageGallery
+                  :entidad-tipo="'peticion'"
+                  :entidad-id="petition.id"
+                  :readonly="true"
+                  :show-upload="false"
+                  :show-info="false"
+                  layout="carousel"
+                  :compact="true"
+                />
+              </div>
 
               <div class="petition-meta">
                 <div class="meta-item">
@@ -85,8 +100,8 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
+        </SwiperSlide>
+      </Swiper>
     </div>
 
     <!-- Estado vacío -->
@@ -101,8 +116,13 @@
 </template>
 
 <script>
+import ImageGallery from '@/components/ImageGallery.vue'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Navigation, Pagination } from 'swiper/modules'
+
 export default {
   name: 'RecentActivity',
+  components: { ImageGallery, Swiper, SwiperSlide },
   props: {
     petitions: {
       type: Array,
@@ -115,26 +135,10 @@ export default {
   },
   data() {
     return {
-      lastUpdate: new Date(),
-      currentIndex: 0
-    }
-  },
-  computed: {
-    totalSlides() {
-      return this.petitions.length
+      swiperModules: [Navigation, Pagination]
     }
   },
   methods: {
-    nextSlide() {
-      if (this.currentIndex < this.totalSlides - 1) {
-        this.currentIndex++
-      }
-    },
-    prevSlide() {
-      if (this.currentIndex > 0) {
-        this.currentIndex--
-      }
-    },
     formatDate(dateString) {
       if (!dateString) return 'Sin fecha'
       const date = new Date(dateString)
@@ -156,15 +160,6 @@ export default {
       })
     },
 
-    formatTime(date) {
-      const now = new Date()
-      const diff = Math.floor((now - date) / 1000)
-
-      if (diff < 60) return 'hace unos segundos'
-      if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
-      return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
-    },
-
     truncateText(text, maxLength) {
       if (!text) return ''
       if (text.length <= maxLength) return text
@@ -183,10 +178,10 @@ export default {
 
     getPriorityLabel(nivel) {
       const labels = {
-        1: '🔴 Crítico',
-        2: '🟠 Alto',
-        3: '🟡 Medio',
-        4: '🟢 Bajo'
+        1: 'Critico',
+        2: 'Alto',
+        3: 'Medio',
+        4: 'Bajo'
       }
       return labels[nivel] || 'Medio'
     },
@@ -222,7 +217,7 @@ export default {
     },
 
     viewDetails(petition) {
-      this.$emit('view-petition', petition.id)
+      this.$emit('view-petition', petition.folio)
     }
   }
 }
@@ -232,8 +227,10 @@ export default {
 .recent-activity-container {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 12px rgba(0, 116, 217, 0.08);
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  padding-bottom: 2.5rem;
 }
 
 /* Header */
@@ -241,9 +238,9 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f5f9;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .header-left {
@@ -252,121 +249,82 @@ export default {
   gap: 0.75rem;
 }
 
-.header-left i {
-  font-size: 1.5rem;
-  color: #0074D9;
+.header-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #0074D9, #0056a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-icon i {
+  color: white;
+  font-size: 0.85rem;
 }
 
 .header-left h2 {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 
-.carousel-control {
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.header-count {
+  background: #eff6ff;
   color: #0074D9;
-}
-
-.carousel-control:hover:not(:disabled) {
-  border-color: #0074D9;
-  background: #f0f9ff;
-  transform: scale(1.05);
-}
-
-.carousel-control:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.carousel-indicator {
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 600;
-  padding: 0 0.5rem;
-}
-
-/* Carrusel */
-.carousel-container {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-}
-
-.carousel-track {
-  display: flex;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.carousel-slide {
-  flex: 0 0 100%;
-  min-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
 }
 
 /* Alertas */
 .alerts-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .alert-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
   border-radius: 12px;
-  margin-bottom: 0.75rem;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  margin-bottom: 0.625rem;
+  border-left: 4px solid;
 }
 
 .alert-critical {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border: 1px solid #fecaca;
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-left-color: #ef4444;
 }
 
 .alert-warning {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1px solid #fde68a;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-left-color: #f59e0b;
 }
 
 .alert-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .alert-critical .alert-icon {
-  background: #dc2626;
-  color: white;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 .alert-warning .alert-icon {
-  background: #f59e0b;
-  color: white;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
 }
 
 .alert-content {
@@ -376,6 +334,7 @@ export default {
 .alert-content p {
   margin: 0;
   font-weight: 600;
+  font-size: 0.85rem;
   color: #1e293b;
 }
 
@@ -383,31 +342,86 @@ export default {
   background: white;
   color: #dc2626;
   font-weight: 700;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-/* Peticiones */
-.petitions-list {
-  display: grid;
-  gap: 1rem;
+/* Swiper carrusel */
+.ra-swiper-wrap {
+  position: relative;
 }
 
+.ra-swiper {
+  padding-bottom: 2rem;
+}
+
+.ra-swiper :deep(.swiper-pagination) {
+  bottom: 0;
+}
+
+.ra-swiper :deep(.swiper-pagination-bullet) {
+  background: #0074D9;
+  opacity: 0.3;
+  width: 8px;
+  height: 8px;
+}
+
+.ra-swiper :deep(.swiper-pagination-bullet-active) {
+  opacity: 1;
+  width: 20px;
+  border-radius: 4px;
+}
+
+.ra-swiper :deep(.swiper-button-prev),
+.ra-swiper :deep(.swiper-button-next) {
+  width: 34px;
+  height: 34px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  top: calc(50% - 1rem);
+}
+
+.ra-swiper :deep(.swiper-button-prev)::after,
+.ra-swiper :deep(.swiper-button-next)::after {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0074D9;
+}
+
+.ra-swiper :deep(.swiper-button-prev) {
+  left: 4px;
+}
+
+.ra-swiper :deep(.swiper-button-next) {
+  right: 4px;
+}
+
+/* Petition card */
 .petition-card {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1.25rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
+  border-radius: 14px;
+  padding: 1.15rem;
+  transition: all 0.3s ease;
+  border-top: 3px solid #cbd5e1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .petition-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 116, 217, 0.12);
-  border-color: #0074D9;
+  background: #f1f5f9;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
+
+.petition-card.nivel--1 { border-top-color: #ef4444; }
+.petition-card.nivel--2 { border-top-color: #f59e0b; }
+.petition-card.nivel--3 { border-top-color: #0074D9; }
+.petition-card.nivel--4 { border-top-color: #10b981; }
+.petition-card.nivel--5 { border-top-color: #94a3b8; }
 
 /* Petition Header */
 .petition-header {
@@ -420,26 +434,26 @@ export default {
 .folio-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #0074D9, #0056a6);
   color: white;
-  padding: 0.375rem 0.875rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
 .folio-badge i {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
 }
 
 .priority-badge {
-  padding: 0.375rem 0.875rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
 .priority-critical {
@@ -464,40 +478,126 @@ export default {
 
 /* Petition Body */
 .petition-body {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  flex: 1;
 }
 
 .petition-title {
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #1e293b;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.35rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .petition-description {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #64748b;
   line-height: 1.5;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.6rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.petition-images {
+  margin: 0.4rem 0 0.6rem 0;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 170px;
+  max-height: 170px;
+  position: relative;
+}
+
+.petition-images :deep(*) {
+  max-height: inherit;
+}
+
+.petition-images :deep(.image-gallery),
+.petition-images :deep(.gallery-carousel),
+.petition-images :deep(.carousel-container) {
+  height: 100%;
+  max-height: 170px;
+}
+
+.petition-images :deep(.carousel-slide) {
+  height: 145px;
+  max-height: 145px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.petition-images :deep(.carousel-image) {
+  max-height: 145px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.petition-images :deep(.carousel-btn) {
+  width: 28px;
+  height: 28px;
+  font-size: 0.7rem;
+}
+
+.petition-images :deep(.carousel-indicators) {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.petition-images :deep(.indicator) {
+  width: 7px;
+  height: 7px;
+}
+
+.petition-images :deep(.gallery-empty) {
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  height: 100%;
+}
+
+.petition-images :deep(.gallery-empty .empty-icon) {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.petition-images :deep(.gallery-empty h4) {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.petition-images :deep(.gallery-empty p) {
+  display: none;
+}
+
+.petition-images :deep(.gallery-loading) {
+  padding: 0.5rem;
+  height: 100%;
 }
 
 .petition-meta {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: 0.35rem;
+  font-size: 0.775rem;
   color: #64748b;
 }
 
 .meta-item i {
   color: #0074D9;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
 }
 
 /* Petition Footer */
@@ -505,17 +605,18 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1rem;
+  padding-top: 0.75rem;
   border-top: 1px solid #e2e8f0;
+  margin-top: auto;
 }
 
 .status-badge {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -547,43 +648,43 @@ export default {
 .view-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #0074D9 0%, #0056a6 100%);
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #0074D9, #0056a6);
   color: white;
   border: none;
-  padding: 0.625rem 1.25rem;
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .view-btn:hover {
-  transform: translateX(4px);
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 116, 217, 0.3);
 }
 
 .view-btn i {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   transition: transform 0.3s ease;
 }
 
 .view-btn:hover i {
-  transform: translateX(4px);
+  transform: translateX(3px);
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 3rem 1.5rem;
 }
 
 .empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, rgba(0, 116, 217, 0.1) 0%, rgba(0, 86, 166, 0.1) 100%);
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.25rem;
+  background: linear-gradient(135deg, rgba(0, 116, 217, 0.08), rgba(0, 86, 166, 0.08));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -591,19 +692,19 @@ export default {
 }
 
 .empty-icon i {
-  font-size: 2rem;
+  font-size: 1.75rem;
   color: #0074D9;
 }
 
 .empty-state h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #1e293b;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.4rem 0;
 }
 
 .empty-state p {
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: #64748b;
   margin: 0;
 }
@@ -611,24 +712,19 @@ export default {
 /* Responsive */
 @media (max-width: 768px) {
   .recent-activity-container {
-    padding: 1.5rem;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
+    padding: 1.15rem;
+    padding-bottom: 2.25rem;
   }
 
   .petition-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
   .petition-footer {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.6rem;
     align-items: stretch;
   }
 

@@ -610,6 +610,7 @@
 <script>
 import axios from 'axios';
 import { ref, onMounted, watch, computed, reactive } from 'vue';
+import { useRoute } from 'vue-router';
 import ImageUpload from '@/components/ImageUpload.vue';
 
 export default {
@@ -618,6 +619,7 @@ export default {
     ImageUpload
   },
   setup() {
+    const route = useRoute();
     const backendUrl = import.meta.env.VITE_API_URL;
     const peticiones = ref([]);
     const peticionesFiltradas = ref([]);
@@ -1475,6 +1477,11 @@ export default {
           console.log('✅ Cargando peticiones para departamento ID:', departamentoId);
           await cargarPeticiones();
           console.log('✅ Peticiones cargadas, total:', peticiones.value.length);
+
+          // Si viene con ?folio= desde Bienvenido, ponerlo en el filtro
+          if (route.query.folio) {
+            filtros.value.busqueda = route.query.folio;
+          }
         } else {
           console.warn('⚠️ No se pudo obtener el departamento del usuario');
         }

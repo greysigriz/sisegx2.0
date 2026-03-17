@@ -6,16 +6,16 @@
 
 
     <main class="main-content">
-      <header class="mainlayout-page-header">
+      <!-- <header class="mainlayout-page-header">
         <div class="mainlayout-breadcrumb">
-          <h2 class="mainlayout-page-title">{{ pageTitle }}</h2>
+          <img src="@/assets/Tramitia.jpg" alt="Tramitia Logo" class="mainlayout-logo" />
         </div>
-        <!-- <div class="header-actions">
+         <div class="header-actions">
           <div class="date-display">{{ currentDate }}</div>
           <button class="action-button"><i class="fas fa-bell"></i></button>
           <button class="action-button"><i class="fas fa-cog"></i></button>
-        </div> -->
-      </header>
+        </div>
+      </header> -->
 
       <router-view />
     </main>
@@ -100,6 +100,17 @@ export default {
   flex: 1;
 }
 
+.mainlayout-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+.mainlayout-logo:hover {
+  opacity: 0.8;
+}
+
 .mainlayout-page-title {
   font-size: 22px;
   font-weight: 600;
@@ -113,6 +124,10 @@ export default {
     flex-direction: column;
   }
 
+
+  .mainlayout-logo {
+    height: 32px;
+  }
   .main-content {
     height: auto;
   }

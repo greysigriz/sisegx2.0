@@ -1197,6 +1197,7 @@
 <script>
 import axios from 'axios';
 import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import ImageGallery from '@/components/ImageGallery.vue';
 
 export default {
@@ -1205,6 +1206,7 @@ export default {
     ImageGallery
   },
   setup() {
+    const route = useRoute();
     const loading = ref(true);
     const peticiones = ref([]);
     const peticionesFiltradas = ref([]);
@@ -2564,6 +2566,11 @@ export default {
         cargarDepartamentos(),
         cargarMunicipios() // ✅ NUEVO: Cargar municipios
       ]);
+
+      // Si viene con ?folio= desde Bienvenido, ponerlo en el filtro
+      if (route.query.folio) {
+        filtros.folio = route.query.folio;
+      }
 
       document.addEventListener('click', cerrarMenusAcciones);
 

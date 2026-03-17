@@ -49,8 +49,8 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(22, 92, 177, 0.2);
-  margin-top: 5px;
-  margin-bottom: 20px;
+  margin-top: 15px;
+  margin-bottom: 5px;
 }
 
 .back-button:hover {

@@ -99,7 +99,7 @@
       <div class="carousel-container">
         <div class="carousel-track" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
           <div
-            v-for="(image, index) in images"
+            v-for="(image, index) in finalImages"
             :key="image.id"
             class="carousel-slide"
             @click="openModal(index)"
@@ -149,77 +149,74 @@
     </div>
 
     <!-- Modal de imagen ampliada -->
-    <div v-if="modalVisible" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <!-- Header del modal -->
-        <div class="modal-header">
-          <div class="modal-title">
+    <Teleport to="body">
+    <div v-if="modalVisible" class="ig-modal-overlay" @click.self="closeModal">
+      <div class="ig-modal-content">
+        <div class="ig-modal-header">
+          <div class="ig-modal-title">
             <h3>{{ currentImage?.filename_original }}</h3>
-            <div class="modal-counter">{{ modalIndex + 1 }} de {{ finalImages.length }}</div>
+            <div class="ig-modal-counter">{{ modalIndex + 1 }} de {{ finalImages.length }}</div>
           </div>
-          <button @click="closeModal" class="close-btn">
+          <button @click="closeModal" class="ig-close-btn">
             <font-awesome-icon icon="fa-solid fa-times" />
           </button>
         </div>
 
-        <!-- Contenido del modal -->
-        <div class="modal-body">
-          <div class="modal-image-container">
+        <div class="ig-modal-body">
+          <div class="ig-modal-image-container">
             <img
               :src="currentImage?.url_acceso"
               :alt="currentImage?.filename_original"
-              class="modal-image"
+              class="ig-modal-image"
               @error="onImageError"
             />
 
-            <!-- Navegación en modal -->
             <button
-              v-if="images.length > 1"
+              v-if="finalImages.length > 1"
               @click="prevModalImage"
-              class="modal-nav-btn prev"
+              class="ig-modal-nav-btn ig-prev"
               :disabled="modalIndex === 0"
             >
               <font-awesome-icon icon="fa-solid fa-chevron-left" />
             </button>
             <button
-              v-if="images.length > 1"
+              v-if="finalImages.length > 1"
               @click="nextModalImage"
-              class="modal-nav-btn next"
-              :disabled="modalIndex === images.length - 1"
+              class="ig-modal-nav-btn ig-next"
+              :disabled="modalIndex === finalImages.length - 1"
             >
               <font-awesome-icon icon="fa-solid fa-chevron-right" />
             </button>
           </div>
         </div>
 
-        <!-- Footer del modal -->
-        <div class="modal-footer">
-          <div class="image-details">
-            <div class="detail-group">
-              <span class="label">Tamaño:</span>
-              <span class="value">{{ formatFileSize(currentImage?.file_size) }}</span>
+        <div class="ig-modal-footer">
+          <div class="ig-image-details">
+            <div class="ig-detail-group">
+              <span class="ig-label">Tamaño:</span>
+              <span class="ig-value">{{ formatFileSize(currentImage?.file_size) }}</span>
             </div>
-            <div v-if="currentImage?.width && currentImage?.height" class="detail-group">
-              <span class="label">Dimensiones:</span>
-              <span class="value">{{ currentImage.width }} × {{ currentImage.height }}</span>
+            <div v-if="currentImage?.width && currentImage?.height" class="ig-detail-group">
+              <span class="ig-label">Dimensiones:</span>
+              <span class="ig-value">{{ currentImage.width }} × {{ currentImage.height }}</span>
             </div>
-            <div class="detail-group">
-              <span class="label">Tipo:</span>
-              <span class="value">{{ currentImage?.mime_type }}</span>
+            <div class="ig-detail-group">
+              <span class="ig-label">Tipo:</span>
+              <span class="ig-value">{{ currentImage?.mime_type }}</span>
             </div>
-            <div class="detail-group">
-              <span class="label">Subida:</span>
-              <span class="value">{{ formatDate(currentImage?.fecha_subida) }}</span>
+            <div class="ig-detail-group">
+              <span class="ig-label">Subida:</span>
+              <span class="ig-value">{{ formatDate(currentImage?.fecha_subida) }}</span>
             </div>
-            <div v-if="currentImage?.usuario_nombre" class="detail-group">
-              <span class="label">Por:</span>
-              <span class="value">{{ currentImage.usuario_nombre }}</span>
+            <div v-if="currentImage?.usuario_nombre" class="ig-detail-group">
+              <span class="ig-label">Por:</span>
+              <span class="ig-value">{{ currentImage.usuario_nombre }}</span>
             </div>
           </div>
-          <div class="modal-actions">
+          <div class="ig-modal-actions">
             <button
               @click="downloadImage(currentImage)"
-              class="btn-download"
+              class="ig-btn-download"
               title="Descargar imagen"
             >
               <font-awesome-icon icon="fa-solid fa-download" />
@@ -228,7 +225,7 @@
             <button
               v-if="allowDelete"
               @click="deleteImage(currentImage, modalIndex)"
-              class="btn-delete"
+              class="ig-btn-delete"
               title="Eliminar imagen"
             >
               <font-awesome-icon icon="fa-solid fa-trash" />
@@ -238,6 +235,7 @@
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 
   <!-- Estado vacío -->
@@ -799,12 +797,18 @@ export default {
   flex: 0 0 100%;
   position: relative;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  height: 280px;
+  overflow: hidden;
 }
 
 .carousel-image {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   display: block;
 }
 
@@ -875,202 +879,6 @@ export default {
   background: #6c757d;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 90vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #dee2e6;
-  background: #f8f9fa;
-}
-
-.modal-title {
-  flex: 1;
-}
-
-.modal-title h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.2rem;
-  color: #333;
-}
-
-.modal-counter {
-  font-size: 0.9rem;
-  color: #6c757d;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6c757d;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.close-btn:hover {
-  background: rgba(0,0,0,0.1);
-  color: #dc3545;
-}
-
-.modal-body {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-  position: relative;
-}
-
-.modal-image-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-}
-
-.modal-image {
-  max-width: 100%;
-  max-height: 70vh;
-  object-fit: contain;
-}
-
-.modal-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.5);
-  color: white;
-  border: none;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1.5rem;
-  transition: background 0.3s ease;
-}
-
-.modal-nav-btn:hover:not(:disabled) {
-  background: rgba(0,0,0,0.7);
-}
-
-.modal-nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.modal-nav-btn.prev {
-  left: 20px;
-}
-
-.modal-nav-btn.next {
-  right: 20px;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-top: 1px solid #dee2e6;
-  background: #f8f9fa;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.image-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  flex: 1;
-}
-
-.detail-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #6c757d;
-}
-
-.value {
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-download, .btn-delete {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-download {
-  background: #007bff;
-  color: white;
-}
-
-.btn-download:hover {
-  background: #0056b3;
-}
-
-.btn-delete {
-  background: #dc3545;
-  color: white;
-}
-
-.btn-delete:hover {
-  background: #c82333;
-}
-
 /* Estado vacío */
 .gallery-empty {
   display: flex;
@@ -1126,38 +934,15 @@ export default {
     justify-content: center;
   }
 
-  .carousel-image {
-    height: 250px;
+  .carousel-slide {
+    height: 220px;
   }
 
-  .modal-content {
-    max-width: 95vw;
-    max-height: 95vh;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .image-details {
-    width: 100%;
-  }
-
-  .modal-actions {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 @media (max-width: 480px) {
   .gallery-grid {
     grid-template-columns: 1fr !important;
-  }
-
-  .detail-group {
-    flex: 1;
-    min-width: 45%;
   }
 }
 
@@ -1209,5 +994,272 @@ export default {
 .error-text p {
   color: #6c757d;
   font-size: 0.9rem;
+}
+</style>
+
+<style>
+/* Modal de ImageGallery - sin scoped porque usa Teleport to body */
+.ig-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.ig-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90vw;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.ig-modal-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #dee2e6;
+  background: #f8f9fa;
+  gap: 12px;
+}
+
+.ig-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #0074D9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.ig-back-btn:hover {
+  background: #0056a6;
+}
+
+.ig-modal-title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.ig-modal-title h3 {
+  margin: 0 0 2px 0;
+  font-size: 1rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ig-modal-counter {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.ig-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.ig-close-btn:hover {
+  background: #fee2e2;
+  color: #dc3545;
+}
+
+.ig-modal-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  position: relative;
+  background: #1a1a2e;
+  min-height: 300px;
+}
+
+.ig-modal-image-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+.ig-modal-image {
+  max-width: 100%;
+  max-height: 65vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.ig-modal-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ig-modal-nav-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.3);
+}
+
+.ig-modal-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ig-modal-nav-btn.ig-prev {
+  left: 16px;
+}
+
+.ig-modal-nav-btn.ig-next {
+  right: 16px;
+}
+
+.ig-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-top: 1px solid #dee2e6;
+  background: #f8f9fa;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ig-image-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  flex: 1;
+}
+
+.ig-detail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ig-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ig-value {
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.ig-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ig-btn-download, .ig-btn-delete {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ig-btn-download {
+  background: #0074D9;
+  color: white;
+}
+
+.ig-btn-download:hover {
+  background: #0056a6;
+}
+
+.ig-btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.ig-btn-delete:hover {
+  background: #c82333;
+}
+
+@media (max-width: 768px) {
+  .ig-modal-content {
+    width: 95vw;
+    max-height: 95vh;
+  }
+
+  .ig-modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ig-image-details {
+    width: 100%;
+  }
+
+  .ig-modal-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ig-back-btn span {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .ig-detail-group {
+    flex: 1;
+    min-width: 45%;
+  }
 }
 </style>
