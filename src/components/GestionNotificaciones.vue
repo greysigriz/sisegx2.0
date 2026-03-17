@@ -1,5 +1,8 @@
 <template>
   <div class="notificaciones-container">
+    <!-- Botón de volver -->
+    <BackButton />
+    
     <!-- Estadísticas -->
     <div class="notificaciones-stats-grid">
       <div class="notificaciones-stat-card">
@@ -271,9 +274,13 @@ import axios from 'axios';
 import { ref, computed, onMounted } from 'vue';
 import AuthService from '@/services/auth';
 import { useRouter } from 'vue-router';
+import BackButton from '@/components/BackButton.vue';
 
 export default {
   name: 'GestionNotificaciones',
+  components: {
+    BackButton
+  },
   setup() {
     const router = useRouter();
     const loading = ref(true);
@@ -495,7 +502,7 @@ export default {
 <style scoped>
 /* Container */
 .notificaciones-container {
-  padding: 20px;
+  padding: 0 1rem;
   max-width: 1400px;
   margin: 0 auto;
 }

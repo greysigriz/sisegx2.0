@@ -1,9 +1,9 @@
 <template>
   <div class="bienvenido-container">
     <!-- Loading State -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
+    <div v-if="isLoading" class="bienvenido-loading-overlay">
+      <div class="bienvenido-loading-box">
+        <div class="bienvenido-spinner"></div>
         <p>Cargando tu dashboard...</p>
       </div>
     </div>
@@ -977,33 +977,33 @@ export default {
 
 /* Sección de contenido principal */
 /* Loading State */
-.bienvenido-container .loading-overlay {
+.bienvenido-container .bienvenido-loading-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 60vh;
 }
 
-.bienvenido-container .loading-spinner {
+.bienvenido-container .bienvenido-loading-box {
   text-align: center;
 }
 
-.bienvenido-container .spinner {
+.bienvenido-container .bienvenido-spinner {
   width: 60px;
   height: 60px;
   margin: 0 auto 1rem;
   border: 4px solid #e2e8f0;
   border-top: 4px solid #0074D9;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: bienvenido-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes bienvenido-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-.bienvenido-container .loading-spinner p {
+.bienvenido-container .bienvenido-loading-box p {
   color: #64748b;
   font-size: 0.9rem;
   font-weight: 500;

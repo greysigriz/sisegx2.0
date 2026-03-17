@@ -1,5 +1,8 @@
 <template>
   <div class="usuarios-container">
+    <!-- Botón de volver -->
+    <BackButton />
+    
     <!-- Estadísticas -->
     <div class="usuarios-stats-grid">
       <div class="usuarios-stat-card">
@@ -336,9 +339,13 @@
 
 <script>
 import axios from 'axios';
+import BackButton from '@/components/BackButton.vue';
 
 export default {
   name: 'RolesList',
+  components: {
+    BackButton
+  },
   data() {
     return {
       loading: true,

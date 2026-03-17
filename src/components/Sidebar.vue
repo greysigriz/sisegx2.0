@@ -184,15 +184,18 @@ export default {
       });
     }
   },
+  watch: {
+    '$route'() {
+      // Ocultar sidebar al cambiar de ruta para mostrar la vista limpia
+      this.isSidebarHidden = true;
+    }
+  },
   async created() {
     // Inicializar componente de forma segura
     await this.initializeComponent();
 
-    // Restaurar preferencia de visibilidad
-    const savedVisibility = localStorage.getItem('sidebarHidden');
-    if (savedVisibility !== null) {
-      this.isSidebarHidden = savedVisibility === 'true';
-    }
+    // Sidebar siempre inicia oculto
+    this.isSidebarHidden = true;
   },
   async mounted() {
     // Asegurar que el componente esté completamente montado
@@ -247,11 +250,6 @@ export default {
 
     toggleSidebar() {
       this.isSidebarHidden = !this.isSidebarHidden;
-
-      // Guardar preferencia
-      if (this.currentUser) {
-        localStorage.setItem('sidebarHidden', this.isSidebarHidden);
-      }
     },
 
     async navigateTo(path) {
@@ -317,11 +315,6 @@ export default {
         this.navigationTimeout = setTimeout(() => {
           this.isNavigating = false;
         }, 500);
-      }
-
-      // Ocultar sidebar en móvil después de navegar
-      if (window.innerWidth < 768) {
-        this.isSidebarHidden = true;
       }
     },
 

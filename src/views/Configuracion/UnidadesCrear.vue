@@ -1,5 +1,8 @@
 <template>
     <div class="usuarios-container">
+      <!-- Botón de volver -->
+      <BackButton />
+      
       <div class="card">
         <div class="card-header">
           <h3>Registrar Nueva Unidad</h3>
@@ -63,6 +66,7 @@
   import { ref } from 'vue'
   import axios from 'axios'
   import { useRouter } from 'vue-router'
+  import BackButton from '@/components/BackButton.vue'
   
   const router = useRouter()
   
