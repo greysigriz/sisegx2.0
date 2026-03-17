@@ -1,6 +1,6 @@
 <template>
-  <button 
-    class="back-button" 
+  <button
+    class="back-button"
     @click="handleBack"
     :title="title"
   >

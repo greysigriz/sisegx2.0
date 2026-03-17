@@ -2,7 +2,7 @@
   <div class="usuarios-container">
     <!-- Botón de volver -->
     <BackButton />
-    
+
     <!-- Estadísticas -->
     <div class="usuarios-stats-grid">
       <div class="usuarios-stat-card">

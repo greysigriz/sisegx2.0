@@ -2,7 +2,7 @@
   <div class="notificaciones-container">
     <!-- Botón de volver -->
     <BackButton />
-    
+
     <!-- Estadísticas -->
     <div class="notificaciones-stats-grid">
       <div class="notificaciones-stat-card">
