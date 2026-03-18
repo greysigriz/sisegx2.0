@@ -34,6 +34,39 @@
   flex-wrap: wrap;
 }
 
+/* Filtro activo en el mapa */
+.map-filter-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.map-filter-label {
+  font-size: 0.82rem;
+  color: #1e40af;
+  background: #eff6ff;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.map-filter-clear {
+  padding: 4px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.map-filter-clear:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
 .loading-badge {
   font-size: 0.875rem;
   font-weight: 600;
@@ -69,48 +102,92 @@
   top: 1rem;
   right: 1rem;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.96);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  padding: 1rem;
-  min-width: 200px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 14px;
+  width: 190px;
   backdrop-filter: blur(10px);
-  border: 2px solid #93c5fd;
+  border: 1px solid #e2e8f0;
 }
 
 .legend-choropleth-title {
-  margin: 0 0 0.875rem 0;
-  font-size: 0.875rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #1e3a8a;
   text-align: left;
 }
 
-.legend-choropleth-scale {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-  margin-bottom: 0.75rem;
+/* Barra de gradiente visual */
+.legend-gradient-bar {
+  margin-bottom: 0.5rem;
 }
 
+.gradient-track {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to right, #f1f5f9, #bfdbfe, #60a5fa, #3b82f6, #1e3a8a);
+  border: 1px solid #e2e8f0;
+}
+
+.gradient-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Resumen en leyenda */
+.legend-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.legend-summary-item {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-radius: 8px;
+}
+
+.legend-summary-val {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  line-height: 1.2;
+}
+
+.legend-summary-label {
+  font-size: 0.6rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Legacy classes kept for compat */
 .legend-scale-item {
   display: flex;
   align-items: center;
   gap: 0.625rem;
 }
 
-.legend-scale-color {
+.legend-swatch {
   display: inline-block;
-  width: 32px;
-  height: 20px;
-  border-radius: 4px;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 20px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.1);
   flex-shrink: 0;
 }
 
-.legend-scale-label {
-  font-size: 0.75rem;
+.legend-label {
+  font-size: 0.72rem;
   color: #475569;
   font-weight: 500;
 }
@@ -126,27 +203,6 @@
   padding: 0.625rem;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-radius: 8px;
-}
-
-.legend-choropleth-total .total-label {
-  font-size: 0.625rem;
-  color: #6b7280;
-  font-weight: 600;
-  margin: 0 0 0.25rem 0;
-}
-
-.legend-choropleth-total .total-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1e3a8a;
-  line-height: 1;
-  margin: 0 0 0.25rem 0;
-}
-
-.legend-choropleth-total .total-subtitle {
-  font-size: 0.625rem;
-  color: #6b7280;
-  margin: 0;
 }
 
 /* Estilos para la leyenda de estados con puntos de colores */
@@ -195,11 +251,11 @@
 
 /* Popup personalizado */
 .leaflet-popup-content-wrapper {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   overflow: visible !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
   padding: 0 !important;
-  border: 2px solid #3b82f6 !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 .leaflet-popup-content {
@@ -207,7 +263,7 @@
   padding: 0 !important;
   font-family: "Inter", "Segoe UI", sans-serif;
   width: auto !important;
-  min-width: 280px !important;
+  min-width: auto !important;
 }
 
 .leaflet-popup-tip-container {

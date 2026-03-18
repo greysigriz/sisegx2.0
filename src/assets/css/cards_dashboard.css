@@ -29,22 +29,53 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 16px 24px;
+  gap: 4px;
+  padding: 14px 20px;
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(15px);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 280px;
+  min-width: 150px;
+  flex: 1;
 }
 
 .resumen-label {
-  font-size: 15px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
   font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* Tendencias */
+.resumen-trend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.trend-good {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.trend-bad {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.trend-neutral {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trend-dash {
+  font-size: 0.7rem;
 }
 
 .resumen-valor {
@@ -61,6 +92,16 @@
 .resumen-valor.success {
   color: #10b981;
   text-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.resumen-valor.danger {
+  color: #f87171;
+  text-shadow: 0 2px 4px rgba(248, 113, 113, 0.2);
+}
+
+.resumen-valor.info {
+  color: #93c5fd;
+  text-shadow: 0 2px 4px rgba(147, 197, 253, 0.2);
 }
 
 /* ── Loading/Error States ── */

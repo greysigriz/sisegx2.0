@@ -70,7 +70,7 @@
       </div>
 
       <!-- Accesos Directos (SOLO Director y Super Usuario) -->
-      <div v-if="isAdmin && filteredQuickActions.length > 0" class="bv-shortcuts bv-fade-in">
+      <!-- <div v-if="isAdmin && filteredQuickActions.length > 0" class="bv-shortcuts bv-fade-in">
         <h2 class="bv-section-title">
           <span class="bv-section-icon"><i class="fas fa-th-large"></i></span>
           <span>Accesos directos</span>
@@ -89,7 +89,7 @@
             <span class="bv-shortcut-label">{{ action.label }}</span>
           </button>
         </div>
-      </div>
+      </div> -->
 
       <!-- ============================================ -->
       <!-- ADMIN (Director / Super Usuario)             -->
@@ -227,6 +227,9 @@
           </div>
         </div>
 
+
+
+
         <!-- Estados -->
         <div v-if="dashboardData.statistics.por_estado" class="bv-states-grid bv-fade-in">
           <div
@@ -245,52 +248,8 @@
           </div>
         </div>
 
-        <!-- Top Departamentos -->
-        <div v-if="dashboardData.statistics.departamentos_top && dashboardData.statistics.departamentos_top.length > 0" class="bv-card">
-          <h3 class="bv-card-title">
-            <i class="fas fa-building"></i>
-            Departamentos con mas peticiones
-          </h3>
-          <div class="bv-ranking-list">
-            <div
-              v-for="(dept, index) in dashboardData.statistics.departamentos_top"
-              :key="index"
-              class="bv-ranking-item"
-            >
-              <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
-              <span class="bv-ranking-name">{{ dept.departamento }}</span>
-              <span class="bv-ranking-count">{{ dept.cantidad }}</span>
-              <div class="bv-ranking-bar">
-                <div class="bv-ranking-fill" :style="{ width: getPercentage(dept.cantidad, dashboardData.statistics.departamentos_top.map(d => d.cantidad)) + '%' }"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Top Municipios (Estatal) -->
-        <div v-if="isCanalizadorEstatal && dashboardData.statistics.top_municipios" class="bv-card">
-          <h3 class="bv-card-title">
-            <i class="fas fa-map-marked-alt"></i>
-            Municipios con mas peticiones
-          </h3>
-          <div class="bv-ranking-list">
-            <div
-              v-for="(mun, index) in dashboardData.statistics.top_municipios"
-              :key="index"
-              class="bv-ranking-item"
-            >
-              <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
-              <span class="bv-ranking-name">{{ mun.Municipio || 'Sin municipio' }}</span>
-              <span class="bv-ranking-count">{{ mun.cantidad }}</span>
-              <div class="bv-ranking-bar">
-                <div class="bv-ranking-fill" :style="{ width: getPercentage(mun.cantidad, dashboardData.statistics.top_municipios.map(m => m.cantidad)) + '%' }"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Peticiones urgentes -->
-        <div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="bv-card bv-card--carousel">
+<!-- Peticiones urgentes -->
+<div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="bv-card bv-card--carousel">
           <h3 class="bv-card-title">
             <i class="fas fa-exclamation-triangle"></i>
             Peticiones que requieren atencion
@@ -349,6 +308,53 @@
             </SwiperSlide>
           </Swiper>
         </div>
+
+        <!-- Top Departamentos -->
+        <div v-if="dashboardData.statistics.departamentos_top && dashboardData.statistics.departamentos_top.length > 0" class="bv-card">
+          <h3 class="bv-card-title">
+            <i class="fas fa-building"></i>
+            Departamentos con mas peticiones
+          </h3>
+          <div class="bv-ranking-list">
+            <div
+              v-for="(dept, index) in dashboardData.statistics.departamentos_top"
+              :key="index"
+              class="bv-ranking-item"
+            >
+              <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
+              <span class="bv-ranking-name">{{ dept.departamento }}</span>
+              <span class="bv-ranking-count">{{ dept.cantidad }}</span>
+              <div class="bv-ranking-bar">
+                <div class="bv-ranking-fill" :style="{ width: getPercentage(dept.cantidad, dashboardData.statistics.departamentos_top.map(d => d.cantidad)) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Municipios (Estatal) -->
+        <div v-if="isCanalizadorEstatal && dashboardData.statistics.top_municipios" class="bv-card">
+          <h3 class="bv-card-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Municipios con mas peticiones
+          </h3>
+          <div class="bv-ranking-list">
+            <div
+              v-for="(mun, index) in dashboardData.statistics.top_municipios"
+              :key="index"
+              class="bv-ranking-item"
+            >
+              <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
+              <span class="bv-ranking-name">{{ mun.Municipio || 'Sin municipio' }}</span>
+              <span class="bv-ranking-count">{{ mun.cantidad }}</span>
+              <div class="bv-ranking-bar">
+                <div class="bv-ranking-fill" :style="{ width: getPercentage(mun.cantidad, dashboardData.statistics.top_municipios.map(m => m.cantidad)) + '%' }"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peticiones urgentes -->
+
       </template>
 
       <!-- ============================================ -->
@@ -500,9 +506,161 @@
       </template>
 
       <!-- ============================================ -->
-      <!-- OTROS ROLES (Formulario, etc)                -->
+      <!-- ROL FORMULARIO                               -->
       <!-- ============================================ -->
-      <template v-if="!isAdmin && !isCanalizadorMunicipal && !isCanalizadorEstatal && !isDepartmentUser && dashboardData">
+      <template v-if="isFormulario && !isAdmin">
+        <div class="bv-info-card bv-fade-in">
+          <div class="bv-info-header">
+            <div class="bv-info-icon-wrapper">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div>
+              <h2 class="bv-info-title">Sistema TRAMITIA</h2>
+              <p class="bv-info-subtitle">Plataforma de Gestion de Peticiones Ciudadanas</p>
+            </div>
+          </div>
+
+          <p class="bv-info-desc">
+            TRAMITIA es el sistema oficial para registrar peticiones ciudadanas. A traves de este formulario,
+            los ciudadanos pueden reportar problemas o solicitudes que seran canalizadas al departamento
+            correspondiente para su atencion y seguimiento. Cada peticion recibe un <strong>folio unico</strong>
+            que permite al ciudadano consultar el estado de su solicitud en todo momento.
+          </p>
+
+          <!-- IA Section -->
+          <div class="bv-info-ia-section bv-fade-in">
+            <div class="bv-info-ia-header">
+              <div class="bv-info-ia-icon"><i class="fas fa-robot"></i></div>
+              <div>
+                <h3>Clasificacion Inteligente con IA</h3>
+                <p>El sistema cuenta con inteligencia artificial integrada</p>
+              </div>
+            </div>
+            <p class="bv-info-ia-desc">
+              Al escribir la <strong>descripcion del problema</strong>, el sistema de IA analiza automaticamente
+              el texto y sugiere a que <strong>dependencia o departamento</strong> debe canalizarse la peticion.
+              El sistema muestra varias sugerencias ordenadas por <strong>porcentaje de confianza</strong>,
+              y tu puedes seleccionar la que mejor se adapte al caso. Si ninguna sugerencia es adecuada,
+              tambien puedes clasificar manualmente eligiendo la dependencia de un catalogo.
+            </p>
+            <div class="bv-info-ia-steps">
+              <div class="bv-info-ia-step">
+                <span class="bv-info-ia-step-num">1</span>
+                <p>Vas a describir el problema del ciudadano en el formulario</p>
+              </div>
+              <div class="bv-info-ia-step">
+                <span class="bv-info-ia-step-num">2</span>
+                <p>La IA analiza las palabras clave y sugiere dependencias</p>
+              </div>
+              <div class="bv-info-ia-step">
+                <span class="bv-info-ia-step-num">3</span>
+                <p>Tu seleccionas la sugerencia correcta o clasificas manualmente</p>
+              </div>
+              <div class="bv-info-ia-step">
+                <span class="bv-info-ia-step-num">4</span>
+                <p>La peticion se envia con la clasificacion para agilizar su atencion</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="bv-info-fields-title">
+            <i class="fas fa-list-ul"></i>
+            Campos del formulario de peticion
+          </h3>
+
+          <div class="bv-info-fields">
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-user"></i></div>
+              <div>
+                <strong>Nombre del solicitante</strong>
+                <p>Nombre completo de la persona que realiza la peticion. Es obligatorio para poder dar seguimiento.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-phone"></i></div>
+              <div>
+                <strong>Telefono del solicitante</strong>
+                <p>Numero de contacto para comunicarse con el ciudadano sobre el avance de su peticion.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-map-pin"></i></div>
+              <div>
+                <strong>Direccion donde sucede el problema</strong>
+                <p>Ubicacion exacta del problema reportado para que el departamento asignado pueda atenderlo.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-map-marker-alt"></i></div>
+              <div>
+                <strong>Municipio de Yucatan</strong>
+                <p>Municipio donde se encuentra el problema. Permite canalizar la peticion al area correspondiente.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-map-signs"></i></div>
+              <div>
+                <strong>Localidad / Colonia</strong>
+                <p>Colonia o localidad especifica dentro del municipio para una ubicacion mas precisa.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-flag"></i></div>
+              <div>
+                <strong>Nivel de Importancia</strong>
+                <p>Urgencia de la peticion del 1 al 4. Ayuda a priorizar la atencion de cada caso:</p>
+                <div class="bv-info-niveles">
+                  <span class="bv-info-nivel bv-info-nivel--1">1 - Critico: atencion inmediata</span>
+                  <span class="bv-info-nivel bv-info-nivel--2">2 - Alto: problema urgente</span>
+                  <span class="bv-info-nivel bv-info-nivel--3">3 - Medio: problema importante</span>
+                  <span class="bv-info-nivel bv-info-nivel--4">4 - Bajo: problema menor</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-align-left"></i></div>
+              <div>
+                <strong>Descripcion del problema</strong>
+                <p>Detalle del problema o solicitud (minimo 10 caracteres). <strong>Este campo activa la clasificacion por IA</strong>: entre mas informacion se proporcione, mejor sera la sugerencia de departamento y mas rapida la atencion.</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field">
+              <div class="bv-info-field-icon"><i class="fas fa-camera"></i></div>
+              <div>
+                <strong>Imagenes del problema</strong>
+                <span class="bv-info-optional">Opcional</span>
+                <p>Hasta 3 fotografias que evidencien el problema reportado (maximo 10MB cada una, formatos JPG, PNG, WebP, GIF, BMP).</p>
+              </div>
+            </div>
+
+            <div class="bv-info-field bv-info-field--highlight">
+              <div class="bv-info-field-icon"><i class="fas fa-share-alt"></i></div>
+              <div>
+                <strong>Red social del solicitante</strong>
+                <span class="bv-info-recommended">Muy recomendable</span>
+                <p>Cuenta de red social del ciudadano. Aunque es opcional, <strong>es muy recomendable obtenerla</strong> ya que sirve como medio alternativo de contacto cuando no se puede localizar al ciudadano por telefono.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bv-info-tip">
+            <i class="fas fa-lightbulb"></i>
+            <p>Los campos marcados con <strong>*</strong> en el formulario son obligatorios. Llena todos los datos con la mayor precision posible para agilizar la atencion de cada peticion.</p>
+          </div>
+        </div>
+      </template>
+
+      <!-- ============================================ -->
+      <!-- OTROS ROLES                                  -->
+      <!-- ============================================ -->
+      <template v-if="!isAdmin && !isCanalizadorMunicipal && !isCanalizadorEstatal && !isDepartmentUser && !isFormulario && dashboardData">
         <UserMetricsCards
           v-if="dashboardData.statistics"
           :stats="dashboardData.statistics"
@@ -586,6 +744,7 @@ export default {
     const isDepartmentUser = computed(() => hasRole('Departamento') || hasPermission('gestion_peticiones_departamento'))
     const isCanalizadorMunicipal = computed(() => hasRole('Canalizador Municipal') || hasPermission('peticiones_municipio'))
     const isCanalizadorEstatal = computed(() => hasRole('Canalizador Estatal') || hasPermission('peticiones_estatal'))
+    const isFormulario = computed(() => hasRole('Formulario'))
 
     // --- Quick actions (SOLO para admin) ---
     const quickActions = [
@@ -672,7 +831,7 @@ export default {
     return {
       isLoading, isRefreshing, error, dashboardData,
       userName, userInitial, userRole, userRoleId, userDivision,
-      isAdmin, isDepartmentUser, isCanalizadorMunicipal, isCanalizadorEstatal,
+      isAdmin, isDepartmentUser, isCanalizadorMunicipal, isCanalizadorEstatal, isFormulario,
       filteredQuickActions, swiperModules,
       loadDashboardData, refreshData,
       slugify, getPercentage, getTrendHeight, formatShortDate,
@@ -1743,6 +1902,7 @@ export default {
 /* --- Petition carousel (Swiper) --- */
 .bv-card--carousel {
   padding-bottom: 2.5rem;
+  overflow: hidden;
 }
 
 .bv-card-count {
@@ -1757,6 +1917,11 @@ export default {
 
 .bv-swiper {
   padding-bottom: 2rem;
+}
+
+.bv-swiper :deep(.swiper-slide) {
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 
 .bv-swiper :deep(.swiper-pagination) {
@@ -1816,7 +1981,7 @@ export default {
 .bv-petition-card:hover {
   background: #f1f5f9;
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 
 .bv-petition-card.bv-nivel--1 { border-top-color: #ef4444; }
@@ -1941,6 +2106,351 @@ export default {
     width: 48px;
     height: 48px;
     font-size: 1.15rem;
+  }
+}
+
+/* =============================================
+   FORMULARIO INFO CARD
+   ============================================= */
+.bv-info-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  margin-top: 1.5rem;
+}
+
+.bv-info-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.bv-info-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #0074D9, #0056a8);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bv-info-icon-wrapper i {
+  font-size: 1.5rem;
+  color: #ffffff;
+}
+
+.bv-info-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0074D9;
+  margin: 0 0 0.25rem;
+}
+
+.bv-info-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.bv-info-desc {
+  font-size: 1rem;
+  color: #475569;
+  line-height: 1.7;
+  margin: 0 0 2rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #0074D9;
+}
+
+.bv-info-fields-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.bv-info-fields-title i {
+  color: #0074D9;
+}
+
+.bv-info-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bv-info-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.bv-info-field:hover {
+  background: #f1f5f9;
+  transform: translateX(4px);
+}
+
+.bv-info-field-icon {
+  width: 40px;
+  height: 40px;
+  background: #e0efff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bv-info-field-icon i {
+  font-size: 1rem;
+  color: #0074D9;
+}
+
+.bv-info-field strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.2rem;
+}
+
+.bv-info-field p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.bv-info-optional {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #0074D9;
+  background: #e0efff;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bv-info-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-radius: 12px;
+  border: 1px solid #fde68a;
+}
+
+.bv-info-tip > i {
+  font-size: 1.25rem;
+  color: #d97706;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.bv-info-tip p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #92400e;
+  line-height: 1.6;
+}
+
+/* --- IA Section --- */
+.bv-info-ia-section {
+  background: linear-gradient(135deg, #eff6ff, #e0efff);
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.bv-info-ia-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bv-info-ia-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #0074D9, #0056a8);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bv-info-ia-icon i {
+  font-size: 1.3rem;
+  color: #fff;
+}
+
+.bv-info-ia-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0 0 0.15rem;
+}
+
+.bv-info-ia-header p {
+  font-size: 0.85rem;
+  color: #3b82f6;
+  margin: 0;
+  font-weight: 500;
+}
+
+.bv-info-ia-desc {
+  font-size: 0.925rem;
+  color: #1e40af;
+  line-height: 1.7;
+  margin: 0 0 1.25rem;
+}
+
+.bv-info-ia-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.bv-info-ia-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: rgba(255,255,255,0.7);
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+}
+
+.bv-info-ia-step-num {
+  width: 28px;
+  height: 28px;
+  background: #0074D9;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.bv-info-ia-step p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #1e3a5f;
+  line-height: 1.4;
+}
+
+/* --- Niveles badges --- */
+.bv-info-niveles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.bv-info-nivel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.bv-info-nivel--1 {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.bv-info-nivel--2 {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.bv-info-nivel--3 {
+  background: #fefce8;
+  color: #ca8a04;
+  border: 1px solid #fef08a;
+}
+
+.bv-info-nivel--4 {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* --- Recommended tag --- */
+.bv-info-recommended {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* --- Highlight field --- */
+.bv-info-field--highlight {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.bv-info-field--highlight:hover {
+  background: #fef3c7;
+}
+
+@media (max-width: 640px) {
+  .bv-info-card {
+    padding: 1.5rem;
+  }
+
+  .bv-info-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .bv-info-field {
+    padding: 0.85rem 1rem;
+  }
+
+  .bv-info-ia-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .bv-info-niveles {
+    flex-direction: column;
   }
 }
 </style>

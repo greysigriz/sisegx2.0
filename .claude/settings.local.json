@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(find C:xampphtdocsSISEEapi -type f -name *.php)",
+      "Bash(npm run:*)",
+      "Bash(php -l c:/xampp/htdocs/SISEE/api/dashboard-director.php)"
     ]
   }
 }

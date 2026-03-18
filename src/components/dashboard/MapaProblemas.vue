@@ -1,73 +1,53 @@
 <template>
   <div class="map-wrapper">
     <div class="map-header">
-      <h2>
-        Mapa Interactivo de Reportes - {{ mapScope }}
-        <span v-if="isLoadingMunicipios" class="loading-badge">🔄 Cargando municipios...</span>
-      </h2>
+      <h2>Mapa de Peticiones por Municipio</h2>
+      <span v-if="isLoadingMap" class="loading-badge">Cargando...</span>
+      <div v-if="filtroMunicipio" class="map-filter-active">
+        <span class="map-filter-label">Filtrado: <strong>{{ filteredMuniName }}</strong></span>
+        <button class="map-filter-clear" @click="clearFilter">Quitar filtro</button>
+      </div>
     </div>
 
     <div class="map-container">
       <l-map
-        ref="map"
-        :zoom="8.5"
+        ref="mapRef"
+        :zoom="8.3"
         :center="[20.7099, -89.0943]"
         :options="mapOptions"
         style="height: 100%; width: 100%;"
         @ready="onMapReady"
       >
-        <l-tile-layer
-          :url="tileUrl"
-          :attribution="attribution"
-        />
-
+        <l-tile-layer :url="tileUrl" :attribution="attribution" />
         <l-control-zoom position="topleft" />
       </l-map>
 
-      <!-- Leyenda de intensidad -->
+      <!-- Leyenda con gradiente visual -->
       <div class="map-legend-choropleth">
-        <h4 class="legend-choropleth-title">Reportes por Municipio</h4>
+        <h4 class="legend-choropleth-title">Peticiones por municipio</h4>
 
-        <div class="legend-status-colors">
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #ef4444;"></span>
-            <span class="legend-status-text">Nivel 1 - Crítico</span>
-          </div>
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #f59e0b;"></span>
-            <span class="legend-status-text">Nivel 2 - Alto</span>
-          </div>
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #0074D9;"></span>
-            <span class="legend-status-text">Nivel 3 - Medio</span>
-          </div>
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #10b981;"></span>
-            <span class="legend-status-text">Nivel 4 - Bajo</span>
-          </div>
-          <div class="legend-status-item">
-            <span class="legend-status-dot" style="background-color: #94a3b8;"></span>
-            <span class="legend-status-text">Nivel 5 - Muy Bajo</span>
+        <!-- Barra de gradiente -->
+        <div class="legend-gradient-bar">
+          <div class="gradient-track"></div>
+          <div class="gradient-labels">
+            <span>0</span>
+            <span>{{ Math.round(maxPeticiones / 2) }}</span>
+            <span>{{ maxPeticiones }}+</span>
           </div>
         </div>
 
         <div class="legend-choropleth-divider"></div>
 
-        <div class="legend-bubble-size">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-            <div class="bubble-demo" style="width: 20px; height: 20px; background: #10b981; border-radius: 50%; opacity: 0.6;"></div>
-            <div class="bubble-demo" style="width: 28px; height: 28px; background: #0074D9; border-radius: 50%; opacity: 0.6;"></div>
-            <div class="bubble-demo" style="width: 36px; height: 36px; background: #ef4444; border-radius: 50%; opacity: 0.6;"></div>
-            <span style="font-size: 11px; color: #475569; margin-left: 4px;">= Volumen de reportes</span>
+        <!-- Resumen rapido -->
+        <div class="legend-summary">
+          <div class="legend-summary-item">
+            <span class="legend-summary-val">{{ totalGeneral }}</span>
+            <span class="legend-summary-label">Peticiones</span>
           </div>
-        </div>
-
-        <div class="legend-choropleth-divider"></div>
-
-        <div class="legend-choropleth-total">
-          <div class="total-label">Total:</div>
-          <div class="total-value">{{ totalGeneral.toLocaleString() }}</div>
-          <div class="total-subtitle">reportes en Yucatán</div>
+          <div class="legend-summary-item">
+            <span class="legend-summary-val">{{ municipiosConDatos }}</span>
+            <span class="legend-summary-label">Municipios</span>
+          </div>
         </div>
       </div>
     </div>
@@ -75,356 +55,242 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { LMap, LTileLayer, LControlZoom } from '@vue-leaflet/vue-leaflet'
 import 'leaflet/dist/leaflet.css'
 import '@/assets/css/mapaproblemas_dashboard.css'
 import L from 'leaflet'
+import { useDashboardStore } from '@/composables/useDashboardStore.js'
 
-// Fix de íconos
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 
 delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-})
+L.Icon.Default.mergeOptions({ iconRetinaUrl: markerIcon2x, iconUrl: markerIcon, shadowUrl: markerShadow })
 
-// Referencias
-const map = ref(null)
-const isLoadingMunicipios = ref(true)
-const mapScope = ref('Yucatán')
+const { mapData, filtroMunicipio, setFiltro, fetchDashboard } = useDashboardStore()
 
-// Configuración del mapa
+const mapRef = ref(null)
+const isLoadingMap = ref(true)
+let mapInstance = null
+let geojsonLayer = null
+let labelsAdded = false
+let cachedGeoJSON = null
+
 const tileUrl = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
 const tileUrlLabels = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
-const attribution = '©OpenStreetMap, ©CartoDB'
+const attribution = '&copy;OpenStreetMap, &copy;CartoDB'
 
-// API URL
-const API_URL = import.meta.env.VITE_API_URL || '/api'
-
-// Colores por intensidad de reportes
-const CHOROPLETH_COLORS = {
-  'Bajo': '#cbd5e1',
-  'Medio': '#cbd5e1',
-  'Alto': '#cbd5e1',
-  'Muy Alto': '#cbd5e1',
-  'Sin datos': '#e2e8f0'
+const mapOptions = {
+  zoomControl: false,
+  attributionControl: true,
+  minZoom: 7,
+  maxZoom: 14,
+  renderer: L.svg()
 }
 
-// Colores por estado (para popup)
-const STATUS_COLORS = {
-  'Rechazado': '#ef4444',
-  'Atendido': '#10b981',
-  'Pendiente': '#f59e0b',
-  'En Proceso': '#3b82f6'
-}
-
-// Colores por nivel de importancia (para burbujas)
-const NIVEL_COLORS = {
-  1: '#ef4444',  // Crítico - Rojo
-  2: '#f59e0b',  // Alto - Naranja
-  3: '#0074D9',  // Medio - Azul
-  4: '#10b981',  // Bajo - Verde
-  5: '#94a3b8'   // Muy Bajo - Gris
-}
-
-const NIVEL_BORDER_COLORS = {
-  1: '#dc2626',
-  2: '#d97706',
-  3: '#0056a6',
-  4: '#059669',
-  5: '#64748b'
-}
-
-// Datos de municipios con reportes
-const municipiosData = ref([])
-const estadisticasAPI = ref(null)
-const rangosMedios = ref([0, 0, 0])
-
-// Función para cargar datos desde la API
-const loadMunicipiosData = async () => {
-  try {
-    isLoadingMunicipios.value = true
-    console.log('🔄 Cargando datos de peticiones desde API...')
-
-    const response = await fetch(`${API_URL}/peticiones-mapa.php`)
-
-    if (!response.ok) {
-      throw new Error('Error al cargar datos del servidor')
-    }
-
-    const data = await response.json()
-
-    // ============================================================
-    // 🔍 DIAGNÓSTICO: Ver estructura completa del primer municipio
-    // ============================================================
-    if (data.municipios && data.municipios.length > 0) {
-      console.log('🔍 DIAGNÓSTICO - Estructura del primer municipio:')
-      console.log(JSON.stringify(data.municipios[0], null, 2))
-      console.log('🔍 ¿Tiene estados?', !!data.municipios[0].estados)
-      console.log('🔍 ¿Tiene problemas?', !!data.municipios[0].problemas)
-    }
-    // ============================================================
-
-    if (data.success && data.municipios) {
-      municipiosData.value = data.municipios
-      estadisticasAPI.value = data.estadisticas
-      console.log(`✅ ${data.municipios.length} municipios cargados desde la base de datos`)
-    } else {
-      throw new Error(data.message || 'No se pudieron cargar los datos')
-    }
-  } catch (error) {
-    console.error('❌ Error cargando datos:', error)
-    municipiosData.value = []
-    estadisticasAPI.value = null
-  }
-}
-
-// Función para normalizar texto
 const normalize = (text) => {
   if (!text) return ''
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
 }
 
-// Función reutilizable para generar el HTML del popup
-const buildPopupHTML = (nombre, total, estados, problemas) => {
-  let html = `
-    <div style="padding: 16px; min-width: 280px; font-family: system-ui, sans-serif;">
-      <h3 style="margin: 0 0 4px 0; color: #1f2937; font-size: 20px; font-weight: 700;">
-        ${nombre}
-      </h3>
-      <div style="margin-bottom: 12px; color: #374151; font-size: 14px;">
-        Total de reportes: <strong>${total}</strong>
-      </div>
-  `
+const filteredMuniName = computed(() => {
+  if (!filtroMunicipio.value || !mapData.value) return ''
+  const m = mapData.value.find(x => Number(x.municipio_id) === Number(filtroMunicipio.value))
+  return m ? m.municipio : 'Municipio ' + filtroMunicipio.value
+})
 
-  if (estados && Object.keys(estados).length > 0) {
-    Object.entries(estados).forEach(([estado, count]) => {
-      const color = STATUS_COLORS[estado] || '#6b7280'
-      html += `
-        <div style="display: flex; align-items: center; margin: 5px 0; font-size: 14px;">
-          <span style="width: 12px; height: 12px; background: ${color}; border-radius: 50%; margin-right: 8px; flex-shrink:0;"></span>
-          <span style="color: #374151;">${estado}: <strong>${count}</strong></span>
-        </div>
-      `
-    })
+function clearFilter() {
+  setFiltro('filtroMunicipio', null)
+  fetchDashboard()
+}
+
+const totalGeneral = computed(() => {
+  if (!mapData.value) return 0
+  return mapData.value.reduce((s, m) => s + Number(m.total || 0), 0)
+})
+
+const municipiosConDatos = computed(() => {
+  if (!mapData.value) return 0
+  return mapData.value.filter(m => Number(m.total) > 0).length
+})
+
+const maxPeticiones = computed(() => {
+  if (!mapData.value || mapData.value.length === 0) return 10
+  return Math.max(...mapData.value.map(m => Number(m.total || 0)))
+})
+
+// Escala de color continua: blanco-azul basada en el maximo real
+function getColor(total, max) {
+  if (total === 0) return '#f1f5f9'
+  const ratio = Math.min(total / Math.max(max, 1), 1)
+  // Interpolar de #bfdbfe (azul claro) a #1e3a8a (azul oscuro)
+  const r = Math.round(191 - ratio * (191 - 30))
+  const g = Math.round(219 - ratio * (219 - 58))
+  const b = Math.round(254 - ratio * (254 - 138))
+  return `rgb(${r},${g},${b})`
+}
+
+function buildPopup(nombre, data) {
+  const total = data ? Number(data.total) : 0
+
+  if (!data || total === 0) {
+    return `<div style="padding:10px 14px;font-family:system-ui,sans-serif;">
+      <strong style="font-size:14px;color:#1e293b;">${nombre}</strong>
+      <div style="color:#94a3b8;margin-top:3px;font-size:12px;">Sin peticiones registradas</div>
+    </div>`
   }
 
-  if (problemas && problemas.length > 0) {
-    html += `
-      <div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 10px;">
-        <strong style="color: #374151; font-size: 13px;">Problemas principales:</strong>
-        <div style="margin-top: 6px;">
-    `
-    problemas.forEach(problema => {
-      html += `
-        <div style="color: #374151; font-size: 13px; margin: 4px 0;">
-          ${problema.tipo}: <strong>${problema.cantidad}</strong>
-        </div>
-      `
-    })
-    html += `</div></div>`
+  const activas = Number(data.activas || 0)
+  const completadas = Number(data.completadas || 0)
+  const urgentes = Number(data.urgentes || 0)
+  const porAsignar = Number(data.por_asignar || 0)
+  const enProceso = Number(data.en_proceso || 0)
+  const topDepts = data.top_departamentos || []
+  const completadoPct = total > 0 ? Math.round((completadas / total) * 100) : 0
+
+  // Popup compacto: header + barra + 1 fila de stats + depts inline
+  let html = `<div style="padding:12px 14px;width:240px;font-family:system-ui,sans-serif;">
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px;padding-right:18px;">
+      <strong style="font-size:14px;color:#1e293b;">${nombre}</strong>
+      <span style="font-size:16px;font-weight:800;color:#1e3a8a;">${total}</span>
+    </div>
+    <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:6px;">
+      <div style="height:100%;width:${completadoPct}%;background:#10b981;border-radius:3px;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:${urgentes > 0 || topDepts.length > 0 ? '8' : '0'}px;">
+      <span><span style="color:#f59e0b;font-weight:700;">${porAsignar}</span> por asignar</span>
+      <span><span style="color:#3b82f6;font-weight:700;">${enProceso}</span> en proceso</span>
+      <span><span style="color:#10b981;font-weight:700;">${completadas}</span> compl.</span>
+    </div>`
+
+  if (urgentes > 0) {
+    html += `<div style="font-size:11px;color:#dc2626;font-weight:600;margin-bottom:${topDepts.length > 0 ? '8' : '0'}px;">${urgentes} urgente${urgentes > 1 ? 's' : ''}</div>`
   }
+
+  if (topDepts.length > 0) {
+    html += `<div style="border-top:1px solid #f1f5f9;padding-top:6px;font-size:11px;color:#64748b;">
+      <div style="font-weight:600;margin-bottom:3px;">Departamentos</div>`
+    topDepts.forEach(d => {
+      const maxW = Math.round((Number(d.total) / total) * 100)
+      html += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+        <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1e293b;">${d.departamento}</div>
+        <div style="width:40px;height:4px;background:#f1f5f9;border-radius:2px;flex-shrink:0;">
+          <div style="height:100%;width:${maxW}%;background:#3b82f6;border-radius:2px;"></div>
+        </div>
+        <span style="font-weight:700;color:#1e293b;width:20px;text-align:right;">${d.total}</span>
+      </div>`
+    })
+    html += `</div>`
+  }
+
+  // Boton filtrar
+  html += `<div style="border-top:1px solid #f1f5f9;padding-top:8px;margin-top:8px;">
+    <button onclick="window.__filterByMunicipio(${data.municipio_id})" style="width:100%;padding:6px;border:none;background:#1e40af;color:white;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Filtrar dashboard por ${nombre}</button>
+  </div>`
 
   html += `</div>`
   return html
 }
 
-const mapOptions = {
-  zoomControl: false,
-  attributionControl: true,
-  preferCanvas: false,
-  minZoom: 6,
-  maxZoom: 18,
-  renderer: L.svg()
+// Funcion global para el boton del popup
+window.__filterByMunicipio = (id) => {
+  setFiltro('filtroMunicipio', id)
+  fetchDashboard()
+  if (mapInstance) mapInstance.closePopup()
 }
 
-const onMapReady = async (mapInstance) => {
-  console.log('✅ Mapa cargado')
-  console.log('🚀 INICIANDO CARGA DE DATOS DEL MAPA...')
+async function renderMap() {
+  if (!mapInstance) return
 
-  await loadMunicipiosData()
-
-  if (municipiosData.value.length === 0) {
-    console.warn('⚠️ No hay datos de municipios para mostrar')
-    isLoadingMunicipios.value = false
-    return
+  const max = maxPeticiones.value
+  const dataMap = {}
+  if (mapData.value) {
+    mapData.value.forEach(m => {
+      dataMap[normalize(m.municipio)] = m
+    })
   }
 
-  mapScope.value = 'Yucatán'
-  mapInstance.setView([20.7, -89.0], 8.5)
+  // Cachear GeoJSON (2.9MB, solo descargar una vez)
+  if (!cachedGeoJSON) {
+    try {
+      const resp = await fetch('../../municipios-yucatan.geojson')
+      if (!resp.ok) throw new Error('GeoJSON no encontrado')
+      cachedGeoJSON = await resp.json()
+    } catch (e) {
+      console.error('Error cargando GeoJSON:', e)
+      isLoadingMap.value = false
+      return
+    }
+  }
+  const geojson = cachedGeoJSON
 
-  const totales = municipiosData.value.map(m => m.total).filter(t => t > 0).sort((a, b) => a - b)
-  const maxTotal = Math.max(...totales)
-
-  const rango1 = Math.floor(maxTotal * 0.25)
-  const rango2 = Math.floor(maxTotal * 0.50)
-  const rango3 = Math.floor(maxTotal * 0.75)
-  rangosMedios.value = [rango1, rango2, rango3]
-
-  const getColorForTotal = (total) => {
-    if (total === 0) return { color: CHOROPLETH_COLORS['Sin datos'], label: 'Sin datos' }
-    if (total <= rango1) return { color: CHOROPLETH_COLORS['Bajo'], label: 'Bajo' }
-    if (total <= rango2) return { color: CHOROPLETH_COLORS['Medio'], label: 'Medio' }
-    if (total <= rango3) return { color: CHOROPLETH_COLORS['Alto'], label: 'Alto' }
-    return { color: CHOROPLETH_COLORS['Muy Alto'], label: 'Muy Alto' }
+  if (geojsonLayer) {
+    mapInstance.removeLayer(geojsonLayer)
+    geojsonLayer = null
   }
 
-  const municipioDataMap = {}
-  const municipioCoordinates = {}
-
-  municipiosData.value.forEach(m => {
-    const nombreNormalizado = normalize(m.municipio)
-    municipioDataMap[nombreNormalizado] = m
-  })
-
-  console.log('🗺️ Cargando GeoJSON...')
-
-  let geojson
-  try {
-    const response = await fetch('../../municipios-yucatan.geojson')
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-    geojson = await response.json()
-    console.log('✅ GeoJSON cargado:', geojson.features?.length, 'features')
-  } catch (error) {
-    console.error('❌ Error cargando GeoJSON:', error)
-    isLoadingMunicipios.value = false
-    return
-  }
-
-  if (!geojson || !geojson.features || geojson.features.length === 0) {
-    console.error('❌ GeoJSON inválido')
-    isLoadingMunicipios.value = false
-    return
-  }
-
-  const geojsonLayer = L.geoJSON(geojson, {
+  geojsonLayer = L.geoJSON(geojson, {
     style: (feature) => {
-      const nombreMunicipio = normalize(feature.properties.NOMGEO)
-      const datos = municipioDataMap[nombreMunicipio]
-      const total = datos ? datos.total : 0
-      const colorData = getColorForTotal(total)
+      const key = normalize(feature.properties.NOMGEO)
+      const data = dataMap[key]
+      const total = data ? Number(data.total) : 0
 
       return {
-        fillColor: colorData.color,
-        fillOpacity: 0.40,
-        color: '#000000',
-        weight: 0.5,
-        opacity: 0.5
+        fillColor: getColor(total, max),
+        fillOpacity: 0.8,
+        color: total > 0 ? '#64748b' : '#cbd5e1',
+        weight: total > 0 ? 1.2 : 0.6,
+        opacity: 0.7
       }
     },
-
     onEachFeature: (feature, layer) => {
-      const nombreMunicipio = normalize(feature.properties.NOMGEO)
-      const datos = municipioDataMap[nombreMunicipio]
+      const key = normalize(feature.properties.NOMGEO)
+      const data = dataMap[key]
+      const nombre = feature.properties.NOMGEO
 
-      if (layer.getBounds) {
-        const center = layer.getBounds().getCenter()
-        municipioCoordinates[nombreMunicipio] = center
-      }
+      layer.bindPopup(buildPopup(nombre, data), {
+        maxWidth: 340,
+        className: 'custom-popup'
+      })
 
-      if (datos) {
-        // Si tiene datos, mantener clic pero sin hover effects
-        const popupContent = buildPopupHTML(
-          feature.properties.NOMGEO,
-          datos.total,
-          datos.estados,
-          datos.problemas
-        )
-
-        layer.bindPopup(popupContent, { maxWidth: 320, className: 'custom-popup' })
-      } else {
-        // Municipios sin reportes - mantener interactividad y efectos hover
-        layer.on({
-          mouseover: (e) => {
-            e.target.setStyle({ weight: 4, color: '#000000', fillOpacity: 0.95 })
-            e.target.bringToFront()
-          },
-          mouseout: (e) => {
-            geojsonLayer.resetStyle(e.target)
-          }
-        })
-
-        layer.bindPopup(`<div style="padding: 12px;"><strong>${feature.properties.NOMGEO}</strong><br>Sin reportes</div>`, { className: 'custom-popup' })
-      }
+      layer.on({
+        mouseover: (e) => {
+          e.target.setStyle({
+            weight: 3,
+            color: '#1e40af',
+            fillOpacity: 0.95
+          })
+          e.target.bringToFront()
+        },
+        mouseout: (e) => {
+          geojsonLayer.resetStyle(e.target)
+        }
+      })
     }
   })
 
   geojsonLayer.addTo(mapInstance)
-  console.log('✅ Capa GeoJSON agregada al mapa')
 
-  // Crear pane para burbujas con z-index alto
-  const bubblesPane = mapInstance.createPane('bubbles')
-  bubblesPane.style.zIndex = 600
-  bubblesPane.style.pointerEvents = 'auto'
+  if (!labelsAdded) {
+    const labelsPane = mapInstance.getPane('labels') || mapInstance.createPane('labels')
+    labelsPane.style.zIndex = 650
+    labelsPane.style.pointerEvents = 'none'
+    L.tileLayer(tileUrlLabels, { pane: 'labels' }).addTo(mapInstance)
+    labelsAdded = true
+  }
 
-  console.log('🔵 Agregando burbujas al mapa...')
-
-  municipiosData.value.forEach(municipio => {
-    const nombreNormalizado = normalize(municipio.municipio)
-    const coords = municipioCoordinates[nombreNormalizado]
-
-    if (municipio.total > 0 && coords) {
-      const baseRadius = 6
-      const scaleFactor = 1.5
-      const maxRadius = 30
-      const radius = Math.min(baseRadius + (municipio.total * scaleFactor), maxRadius)
-
-      // Obtener color según nivel predominante
-      const nivelPredominante = municipio.nivel_predominante || 3
-      const bubbleColor = NIVEL_COLORS[nivelPredominante] || NIVEL_COLORS[3]
-      const bubbleBorderColor = NIVEL_BORDER_COLORS[nivelPredominante] || NIVEL_BORDER_COLORS[3]
-
-      const circle = L.circleMarker([coords.lat, coords.lng], {
-        radius: radius,
-        fillColor: bubbleColor,
-        color: bubbleBorderColor,
-        weight: 2,
-        opacity: 0.8,
-        fillOpacity: 0.6,
-        pane: 'bubbles'
-      })
-
-      const bubblePopup = buildPopupHTML(
-        municipio.municipio,
-        municipio.total,
-        municipio.estados,
-        municipio.problemas
-      )
-
-      circle.bindPopup(bubblePopup, { maxWidth: 320, className: 'custom-popup' })
-
-      circle.addTo(mapInstance)
-    }
-  })
-
-  console.log('✅ Burbujas agregadas al mapa')
-
-  const labelsPane = mapInstance.createPane('labels')
-  labelsPane.style.zIndex = 650
-  labelsPane.style.pointerEvents = 'none'
-
-  L.tileLayer(tileUrlLabels, {
-    attribution: attribution,
-    pane: 'labels'
-  }).addTo(mapInstance)
-
-  isLoadingMunicipios.value = false
+  isLoadingMap.value = false
 }
 
-const totalGeneral = computed(() => {
-  return municipiosData.value.reduce((acc, m) => acc + m.total, 0)
-})
+const onMapReady = async (instance) => {
+  mapInstance = instance
+  instance.setView([20.7, -89.0], 8.3)
+  await renderMap()
+}
 
-onMounted(() => {
-  console.log('✅ Componente montado')
-})
+watch(mapData, () => {
+  if (mapInstance) renderMap()
+}, { deep: true })
 </script>

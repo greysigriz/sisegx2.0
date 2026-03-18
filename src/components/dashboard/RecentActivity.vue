@@ -357,6 +357,11 @@ export default {
   padding-bottom: 2rem;
 }
 
+.ra-swiper :deep(.swiper-slide) {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
 .ra-swiper :deep(.swiper-pagination) {
   bottom: 0;
 }
@@ -414,7 +419,7 @@ export default {
 .petition-card:hover {
   background: #f1f5f9;
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .petition-card.nivel--1 { border-top-color: #ef4444; }
