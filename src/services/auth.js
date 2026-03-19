@@ -271,33 +271,9 @@ class AuthService {
     this.serverCheckCounter = 0;
   }
 
-  // Mostrar mensaje de logout
+  // Mostrar mensaje de logout (solo consola)
   showLogoutMessage(message) {
-    // Evitar múltiples notificaciones
-    if (document.querySelector('.logout-notification')) return;
-
-    const notification = document.createElement('div');
-    notification.className = 'logout-notification';
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #f44336;
-      color: white;
-      padding: 15px 20px;
-      border-radius: 5px;
-      z-index: 10000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      font-family: Arial, sans-serif;
-    `;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 3000);
+    console.warn('[AUTH]', message);
   }
 
   // Verificar sesión en el servidor

@@ -175,21 +175,19 @@ axios.interceptors.response.use(
 
     // Manejar errores de conexión y timeout
     if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      console.error('Timeout de conexión');
-      showNetworkError('Timeout de conexión. Por favor, intente nuevamente.');
+      console.error('[NETWORK] Timeout de conexión. Por favor, intente nuevamente.');
       return Promise.reject(error);
     }
 
     // Manejar errores de red
     if (!error.response) {
-      console.error('Error de red');
-      showNetworkError('Error de conexión con el servidor. Verifique su conexión a internet.');
+      console.error('[NETWORK] Error de conexión con el servidor. Verifique su conexión a internet.');
       return Promise.reject(error);
     }
 
     // Manejar errores del servidor
     if (error.response?.status >= 500) {
-      showNetworkError('Error del servidor. Por favor, intente más tarde.');
+      console.error('[SERVER] Error del servidor:', error.response.status, error.response.data);
     }
 
     return Promise.reject(error);
@@ -229,122 +227,10 @@ async function handleAuthError() {
   }
 }
 
-// Función para mostrar mensaje de sesión expirada
+// Función para manejar sesión expirada (solo consola)
 function showSessionExpiredMessage() {
-  // Evitar múltiples notificaciones
-  if (document.querySelector('.session-expired-notification')) return;
-
-  const notification = document.createElement('div');
-  notification.className = 'session-expired-notification';
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #ff5722;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    max-width: 300px;
-    animation: slideInRight 0.3s ease-out;
-  `;
-
-  // Agregar animación CSS
-  if (!document.querySelector('#notification-styles')) {
-    const style = document.createElement('style');
-    style.id = 'notification-styles';
-    style.textContent = `
-      @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  notification.innerHTML = `
-    <div style="display: flex; align-items: center;">
-      <div style="margin-right: 10px;">⚠️</div>
-      <div>Su sesión ha expirado. Redirigiendo al login...</div>
-    </div>
-  `;
-
-  document.body.appendChild(notification);
-
-  // Remover después de 3 segundos
-  setTimeout(() => {
-    if (notification.parentNode) {
-      notification.style.animation = 'slideOutRight 0.3s ease-in forwards';
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 300);
-    }
-  }, 3000);
+  console.warn('[AUTH] Su sesión ha expirado. Redirigiendo al login...');
 }
-
-// Función para mostrar errores de red
-function showNetworkError(message) {
-  // Evitar múltiples notificaciones del mismo tipo
-  if (document.querySelector('.network-error-notification')) return;
-
-  const notification = document.createElement('div');
-  notification.className = 'network-error-notification';
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #f44336;
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    max-width: 300px;
-    animation: slideInRight 0.3s ease-out;
-  `;
-
-  notification.innerHTML = `
-    <div style="display: flex; align-items: center;">
-      <div style="margin-right: 10px;">🌐</div>
-      <div>${message}</div>
-    </div>
-  `;
-
-  document.body.appendChild(notification);
-
-  // Remover después de 4 segundos
-  setTimeout(() => {
-    if (notification.parentNode) {
-      notification.style.animation = 'slideOutRight 0.3s ease-in forwards';
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 300);
-    }
-  }, 4000);
-}
-
-// Función para limpiar notificaciones existentes
-export const clearNotifications = () => {
-  const notifications = document.querySelectorAll('.session-expired-notification, .network-error-notification');
-  notifications.forEach(notification => {
-    if (notification.parentNode) {
-      notification.parentNode.removeChild(notification);
-    }
-  });
-};
 
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {

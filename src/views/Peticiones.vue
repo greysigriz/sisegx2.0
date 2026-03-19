@@ -3021,17 +3021,17 @@ export default {
   gap: 10px;
   padding: 1rem;
   background: white;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #f1f5f9;
   margin-bottom: 0.5rem;
-  border-radius: 8px;
+  border-radius: 10px;
   min-width: max-content;
 }
 
 .peticiones-container .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  border-radius: 6px;
+  border-radius: 8px;
   height: 20px;
 }
 
@@ -3123,7 +3123,7 @@ export default {
   min-width: 1410px !important;
   width: max-content !important;
   box-sizing: border-box !important;
-  border-radius: 12px 12px 0 0 !important;
+  border-radius: 16px 16px 0 0 !important;
   gap: 10px !important;
   align-items: center !important;
 }
@@ -3148,7 +3148,7 @@ export default {
   grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px !important;
   align-items: center !important;
   padding: 1rem 0 !important;
-  border-bottom: 1px solid #e9ecef !important;
+  border-bottom: 1px solid #f1f5f9 !important;
   transition: all 0.2s ease !important;
   min-width: max-content !important;
   gap: 10px !important;
@@ -3156,9 +3156,9 @@ export default {
 }
 
 .peticiones-container .peticion-item:hover {
-  background-color: #f8f9fa !important;
+  background-color: #f8fafc !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
 /* ✅ ESTILOS ESPECÍFICOS PARA CADA COLUMNA */
@@ -3692,13 +3692,13 @@ export default {
 }
 
 .peticiones-container .peticion-info {
-  background: #f8f9fa;
+  background: #f8fafc;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 1.5rem;
   border-left: 4px solid #0074D9;
   font-size: 14px;
-  color: #495057;
+  color: #475569;
 }
 
 .peticiones-container .opciones-departamentos {
@@ -3839,7 +3839,7 @@ export default {
   padding: 1.1rem;
   background: linear-gradient(135deg, #0074D9, #0056b3);
   color: white;
-  border-radius: 12px 12px 0 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .peticiones-container .modal-detalles-header h3 {
@@ -3858,7 +3858,7 @@ export default {
 
 .peticiones-container .modal-detalles-body {
   padding: 2rem;
-  background: #f8f9fa;
+  background: #f8fafc;
   overflow-x: hidden;
   word-wrap: break-word;
 }
@@ -3874,10 +3874,10 @@ export default {
 
 .peticiones-container .detalle-seccion {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -3889,10 +3889,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #495057;
+  color: #1e293b;
   margin-bottom: 1.5rem;
   font-size: 1.1rem;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 2px solid #f1f5f9;
   padding-bottom: 0.5rem;
 }
 
@@ -3952,10 +3952,10 @@ export default {
 .peticiones-container .no-departamentos {
   text-align: center;
   padding: 2rem 1rem;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  border: 2px dashed #dee2e6;
-  border-radius: 12px;
-  color: #6c757d;
+  background: #f8fafc;
+  border: 2px dashed #e5e7eb;
+  border-radius: 16px;
+  color: #64748b;
   font-size: 14px;
   display: flex;
   flex-direction: column;

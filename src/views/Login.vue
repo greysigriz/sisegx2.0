@@ -80,7 +80,6 @@
                     <div class="form-options stagger-5" :class="{ 'visible': mounted }">
                         <label class="remember-me">
                             <input type="checkbox" v-model="rememberMe">
-                            <span class="checkmark"></span>
                             Recordar sesión
                         </label>
                     </div>

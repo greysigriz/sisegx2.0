@@ -1,11 +1,16 @@
 <template>
   <div class="bv-page">
-    <!-- Loading -->
-    <div v-if="isLoading" class="bv-loading">
-      <div class="bv-loading-box">
-        <div class="bv-spinner"></div>
-        <p>Cargando tu panel...</p>
+    <!-- Loading overlay -->
+    <Transition name="bv-fade-loading">
+      <div v-if="isLoading" class="bv-loading-overlay">
+        <div class="bv-loading-bar"></div>
       </div>
+    </Transition>
+
+    <!-- Loading placeholder -->
+    <div v-if="isLoading" class="bv-loading-placeholder">
+      <div class="bv-loading-spinner"></div>
+      <p class="bv-loading-text">Cargando tu panel...</p>
     </div>
 
     <!-- Error -->
@@ -866,38 +871,75 @@ export default {
 }
 
 .bv-page {
-  padding: 1.5rem 1.75rem;
-  max-width: 1340px;
+  max-width: 1600px;
   margin: 0 auto;
+  padding: 0 24px;
+  background-color: #f8fafc;
   min-height: 80vh;
+  position: relative;
 }
 
-/* --- Loading --- */
-.bv-loading {
+/* --- Loading overlay (slim bar like TableroDash) --- */
+.bv-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
+  pointer-events: none;
+}
+
+.bv-loading-bar {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6);
+  background-size: 200% 100%;
+  border-radius: 0 2px 2px 0;
+  animation: bv-loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes bv-loading-slide {
+  0% { transform: translateX(-100%); width: 40%; }
+  50% { width: 60%; }
+  100% { transform: translateX(300%); width: 40%; }
+}
+
+.bv-fade-loading-enter-active { transition: opacity 0.15s; }
+.bv-fade-loading-leave-active { transition: opacity 0.4s; }
+.bv-fade-loading-enter-from,
+.bv-fade-loading-leave-to { opacity: 0; }
+
+/* --- Loading placeholder --- */
+.bv-loading-placeholder {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 60vh;
+  gap: 1.25rem;
 }
 
-.bv-loading-box {
-  text-align: center;
-}
-
-.bv-spinner {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 1.25rem;
+.bv-loading-spinner {
+  width: 44px;
+  height: 44px;
   border: 3px solid #e2e8f0;
-  border-top: 3px solid #0074D9;
+  border-top-color: #0074D9;
   border-radius: 50%;
   animation: bv-spin 0.8s linear infinite;
 }
 
-.bv-loading-box p {
+.bv-loading-text {
   color: #64748b;
   font-size: 0.9rem;
   font-weight: 500;
+  margin: 0;
+}
+
+/* --- Content wrapper --- */
+.bv-content {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
 }
 
 /* --- Error --- */
@@ -905,8 +947,9 @@ export default {
   text-align: center;
   padding: 3rem 2rem;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
   max-width: 440px;
   margin: 3rem auto;
 }
@@ -963,9 +1006,10 @@ export default {
 /* --- Hero Welcome --- */
 .bv-hero {
   position: relative;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
   margin-bottom: 1.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   animation: bv-fadeUp 0.4s ease-out both;
 }
 
@@ -1135,7 +1179,7 @@ export default {
   align-items: center;
   gap: 0.875rem;
   padding: 1rem 1.15rem;
-  border-radius: 12px;
+  border-radius: 16px;
   border-left: 4px solid;
   transition: all 0.25s ease;
 }
@@ -1244,15 +1288,16 @@ export default {
   align-items: center;
   gap: 0.75rem;
   background: white;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
   padding: 1.25rem 0.75rem;
-  border-radius: 14px;
+  border-radius: 16px;
   font-weight: 600;
   font-size: 0.85rem;
   color: #1e293b;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .bv-shortcut-icon {
@@ -1304,14 +1349,14 @@ export default {
 
 .bv-state-card {
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 1.15rem;
   display: flex;
   align-items: center;
   gap: 0.875rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
   border-top: 3px solid #cbd5e1;
-  border-left: none;
   transition: all 0.3s ease;
 }
 
@@ -1402,10 +1447,10 @@ export default {
   gap: 1rem;
   padding: 1.35rem;
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
   border-top: 3px solid;
-  border-left: none;
   transition: all 0.3s ease;
 }
 
@@ -1465,7 +1510,7 @@ export default {
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
   transition: box-shadow 0.3s ease;
   animation: bv-fadeUp 0.5s ease-out both;
 }
@@ -1967,11 +2012,12 @@ export default {
 }
 
 .bv-petition-card {
-  background: #f8fafc;
-  border-radius: 14px;
+  background: white;
+  border-radius: 16px;
   padding: 1.15rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
   border-top: 3px solid #cbd5e1;
   height: 100%;
   display: flex;
@@ -2009,6 +2055,7 @@ export default {
   background: white;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
 }
 
 .bv-empty i {
@@ -2033,7 +2080,7 @@ export default {
 /* --- Responsive --- */
 @media (max-width: 768px) {
   .bv-page {
-    padding: 0.75rem;
+    padding: 0 12px;
   }
 
   .bv-hero-content {
@@ -2114,8 +2161,9 @@ export default {
    ============================================= */
 .bv-info-card {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e5e7eb;
   padding: 2.5rem;
   margin-top: 1.5rem;
 }
