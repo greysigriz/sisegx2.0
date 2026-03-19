@@ -65,6 +65,16 @@ async function fetchDashboard() {
 async function _doFetch() {
   state.isLoading = true
   state.error = null
+
+  // Reset drill-down states on full refresh
+  state.selectedCard = null
+  state.cardDetalle = null
+  state.cardDetalleLoading = false
+  state.detalleDepartamento = null
+  state.detalleMunicipio = null
+  state.selectedDeptId = null
+  state.selectedMuniId = null
+
   const myId = ++requestId
 
   const params = {}

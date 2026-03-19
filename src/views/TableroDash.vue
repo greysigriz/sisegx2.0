@@ -1,5 +1,12 @@
 <template>
   <div class="dashboard-container">
+    <!-- Loading overlay -->
+    <Transition name="fade-loading">
+      <div v-if="isLoading" class="dashboard-loading-overlay">
+        <div class="dashboard-loading-bar"></div>
+      </div>
+    </Transition>
+
     <!-- Header -->
     <YucatanHeader />
 
@@ -52,13 +59,13 @@ export default {
     MapaProblemas
   },
   setup() {
-    const { fetchDashboard } = useDashboardStore()
+    const { fetchDashboard, isLoading } = useDashboardStore()
 
     onMounted(() => {
       fetchDashboard()
     })
 
-    return {}
+    return { isLoading }
   }
 }
 </script>

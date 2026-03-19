@@ -303,6 +303,22 @@ const muniView = ref('resumen')
 const deptFilterMuni = ref(null)   // Filtrar departamento por municipio
 const muniFilterDept = ref(null)   // Filtrar municipio por departamento
 
+// Reset local state when store clears detail (e.g. date filter change)
+watch(detalleDepartamento, (val) => {
+  if (!val) {
+    deptId.value = null
+    deptView.value = 'resumen'
+    deptFilterMuni.value = null
+  }
+})
+watch(detalleMunicipio, (val) => {
+  if (!val) {
+    muniId.value = null
+    muniView.value = 'resumen'
+    muniFilterDept.value = null
+  }
+})
+
 // Municipios disponibles en el departamento seleccionado
 const deptMuniOptions = computed(() => {
   if (!detalleDepartamento.value || !detalleDepartamento.value.municipios) return []

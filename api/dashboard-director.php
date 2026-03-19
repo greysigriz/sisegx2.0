@@ -98,7 +98,29 @@ try {
     $stmtProm = $db->query($qProm);
     $kpis['promedio_dias_resolucion'] = $stmtProm->fetch(PDO::FETCH_ASSOC)['promedio'];
 
-    // KPIs del periodo anterior (ultimos 30 dias vs 30 dias previos)
+    // KPIs del periodo anterior (periodo equivalente previo al seleccionado)
+    $prevWhere = [];
+    $prevParams = [];
+    if ($filtroMunicipio) {
+        $prevWhere[] = "p.division_id = :prev_muni";
+        $prevParams[':prev_muni'] = $filtroMunicipio;
+    }
+    if ($filtroFechaInicio && $filtroFechaFin) {
+        // Periodo custom: calcular diferencia y obtener periodo anterior equivalente
+        $diff = (strtotime($filtroFechaFin) - strtotime($filtroFechaInicio));
+        $prevEnd = date('Y-m-d', strtotime($filtroFechaInicio) - 1);
+        $prevStart = date('Y-m-d', strtotime($prevEnd) - $diff);
+        $prevWhere[] = "p.fecha_registro BETWEEN :prev_fi AND :prev_ff";
+        $prevParams[':prev_fi'] = $prevStart . ' 00:00:00';
+        $prevParams[':prev_ff'] = $prevEnd . ' 23:59:59';
+    } else {
+        // Basado en dias: periodo anterior de misma longitud
+        $prevWhere[] = "p.fecha_registro BETWEEN DATE_SUB(CURDATE(), INTERVAL :prev_dias2 DAY) AND DATE_SUB(CURDATE(), INTERVAL :prev_dias1 DAY)";
+        $prevParams[':prev_dias2'] = $filtroDias * 2;
+        $prevParams[':prev_dias1'] = $filtroDias;
+    }
+    $prevWhereSQL = count($prevWhere) > 0 ? " WHERE " . implode(" AND ", $prevWhere) : "";
+
     $qPrev = "SELECT
         COUNT(*) as total_peticiones,
         SUM(CASE WHEN p.estado = 'Aceptada en proceso' THEN 1 ELSE 0 END) as en_proceso,
@@ -106,9 +128,10 @@ try {
         SUM(CASE WHEN p.NivelImportancia = 1 THEN 1 ELSE 0 END) as criticas,
         SUM(CASE WHEN p.estado NOT IN ('Completado','Cancelada','Improcedente')
             AND DATEDIFF(CURDATE(), p.fecha_registro) > 30 THEN 1 ELSE 0 END) as retrasadas
-    FROM peticiones p
-    WHERE p.fecha_registro BETWEEN DATE_SUB(CURDATE(), INTERVAL 60 DAY) AND DATE_SUB(CURDATE(), INTERVAL 30 DAY)";
-    $stmtPrev = $db->query($qPrev);
+    FROM peticiones p $prevWhereSQL";
+    $stmtPrev = $db->prepare($qPrev);
+    foreach ($prevParams as $k => $v) $stmtPrev->bindValue($k, $v);
+    $stmtPrev->execute();
     $kpisPrev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
 
     // ===================== 2. DISTRIBUCIÓN POR ESTADO =====================
@@ -258,24 +281,52 @@ try {
     $stmtRecientes->execute();
     $recientes = $stmtRecientes->fetchAll(PDO::FETCH_ASSOC);
 
-    // ===================== 8. ALERTAS (respetan filtro de municipio) =====================
+    // ===================== 8. ALERTAS (respetan filtros de municipio y fecha) =====================
     $alerts = [];
-    $alertMuniFilter = "";
-    $alertMuniParams = [];
-    $alertDeptMuniFilter = "";
-    $alertDeptMuniParams = [];
+    $alertFilter = "";
+    $alertParams = [];
+    $alertDeptFilter = "";
+    $alertDeptParams = [];
 
     if ($filtroMunicipio) {
-        $alertMuniFilter = " AND p.division_id = :alert_muni";
-        $alertMuniParams[':alert_muni'] = $filtroMunicipio;
-        $alertDeptMuniFilter = " AND pd.peticion_id IN (SELECT id FROM peticiones WHERE division_id = :alert_dept_muni)";
-        $alertDeptMuniParams[':alert_dept_muni'] = $filtroMunicipio;
+        $alertFilter .= " AND p.division_id = :alert_muni";
+        $alertParams[':alert_muni'] = $filtroMunicipio;
+    }
+    if ($filtroFechaInicio) {
+        $alertFilter .= " AND p.fecha_registro >= :alert_fi";
+        $alertParams[':alert_fi'] = $filtroFechaInicio . ' 00:00:00';
+    }
+    if ($filtroFechaFin) {
+        $alertFilter .= " AND p.fecha_registro <= :alert_ff";
+        $alertParams[':alert_ff'] = $filtroFechaFin . ' 23:59:59';
+    }
+    if (!$filtroFechaInicio && !$filtroFechaFin) {
+        $alertFilter .= " AND p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL :alert_dias DAY)";
+        $alertParams[':alert_dias'] = $filtroDias;
+    }
+
+    // Dept alerts: join con peticiones para filtrar por fecha
+    if ($filtroMunicipio) {
+        $alertDeptFilter .= " AND pd.peticion_id IN (SELECT id FROM peticiones WHERE division_id = :alert_dept_muni)";
+        $alertDeptParams[':alert_dept_muni'] = $filtroMunicipio;
+    }
+    if ($filtroFechaInicio) {
+        $alertDeptFilter .= " AND pd.fecha_asignacion >= :alert_dept_fi";
+        $alertDeptParams[':alert_dept_fi'] = $filtroFechaInicio . ' 00:00:00';
+    }
+    if ($filtroFechaFin) {
+        $alertDeptFilter .= " AND pd.fecha_asignacion <= :alert_dept_ff";
+        $alertDeptParams[':alert_dept_ff'] = $filtroFechaFin . ' 23:59:59';
+    }
+    if (!$filtroFechaInicio && !$filtroFechaFin) {
+        $alertDeptFilter .= " AND pd.fecha_asignacion >= DATE_SUB(CURDATE(), INTERVAL :alert_dept_dias DAY)";
+        $alertDeptParams[':alert_dept_dias'] = $filtroDias;
     }
 
     // Peticiones criticas sin atender
-    $qCriticas = "SELECT COUNT(*) as c FROM peticiones p WHERE p.NivelImportancia = 1 AND p.estado IN ('Sin revisar', 'Esperando recepción', 'Por asignar departamento')" . $alertMuniFilter;
+    $qCriticas = "SELECT COUNT(*) as c FROM peticiones p WHERE p.NivelImportancia = 1 AND p.estado IN ('Sin revisar', 'Esperando recepción', 'Por asignar departamento')" . $alertFilter;
     $stmtCriticas = $db->prepare($qCriticas);
-    foreach ($alertMuniParams as $k => $v) $stmtCriticas->bindValue($k, $v);
+    foreach ($alertParams as $k => $v) $stmtCriticas->bindValue($k, $v);
     $stmtCriticas->execute();
     $criticasCount = $stmtCriticas->fetch(PDO::FETCH_ASSOC)['c'];
     if ($criticasCount > 0) {
@@ -283,9 +334,9 @@ try {
     }
 
     // Peticiones retrasadas (+30 dias)
-    $qRetrasadas = "SELECT COUNT(*) as c FROM peticiones p WHERE p.estado NOT IN ('Completado', 'Cancelada', 'Improcedente') AND DATEDIFF(CURDATE(), p.fecha_registro) > 30" . $alertMuniFilter;
+    $qRetrasadas = "SELECT COUNT(*) as c FROM peticiones p WHERE p.estado NOT IN ('Completado', 'Cancelada', 'Improcedente') AND DATEDIFF(CURDATE(), p.fecha_registro) > 30" . $alertFilter;
     $stmtRetrasadas = $db->prepare($qRetrasadas);
-    foreach ($alertMuniParams as $k => $v) $stmtRetrasadas->bindValue($k, $v);
+    foreach ($alertParams as $k => $v) $stmtRetrasadas->bindValue($k, $v);
     $stmtRetrasadas->execute();
     $retrasadasCount = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['c'];
     if ($retrasadasCount > 0) {
@@ -293,9 +344,9 @@ try {
     }
 
     // Departamentos sin responder (+15 dias)
-    $qDeptSinResp = "SELECT COUNT(*) as c FROM peticion_departamento pd WHERE pd.estado = 'Esperando recepción' AND DATEDIFF(CURDATE(), pd.fecha_asignacion) > 15" . $alertDeptMuniFilter;
+    $qDeptSinResp = "SELECT COUNT(*) as c FROM peticion_departamento pd WHERE pd.estado = 'Esperando recepción' AND DATEDIFF(CURDATE(), pd.fecha_asignacion) > 15" . $alertDeptFilter;
     $stmtDeptSinResp = $db->prepare($qDeptSinResp);
-    foreach ($alertDeptMuniParams as $k => $v) $stmtDeptSinResp->bindValue($k, $v);
+    foreach ($alertDeptParams as $k => $v) $stmtDeptSinResp->bindValue($k, $v);
     $stmtDeptSinResp->execute();
     $deptSinRespCount = $stmtDeptSinResp->fetch(PDO::FETCH_ASSOC)['c'];
     if ($deptSinRespCount > 0) {
@@ -542,6 +593,23 @@ try {
     }
 
     // ===================== 14. DATOS PARA MAPA CHOROPLETH =====================
+    // Construir filtro de fecha para mapa
+    $mapWhere = [];
+    $mapParams = [];
+    if ($filtroFechaInicio) {
+        $mapWhere[] = "p.fecha_registro >= :map_fi";
+        $mapParams[':map_fi'] = $filtroFechaInicio . ' 00:00:00';
+    }
+    if ($filtroFechaFin) {
+        $mapWhere[] = "p.fecha_registro <= :map_ff";
+        $mapParams[':map_ff'] = $filtroFechaFin . ' 23:59:59';
+    }
+    if (!$filtroFechaInicio && !$filtroFechaFin) {
+        $mapWhere[] = "p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL :map_dias DAY)";
+        $mapParams[':map_dias'] = $filtroDias;
+    }
+    $mapWhereSQL = count($mapWhere) > 0 ? " WHERE " . implode(" AND ", $mapWhere) : "";
+
     $qMapData = "SELECT d.Id as municipio_id, d.Municipio as municipio,
         COUNT(p.id) as total,
         SUM(CASE WHEN p.estado NOT IN ('Completado','Cancelada','Improcedente') THEN 1 ELSE 0 END) as activas,
@@ -553,9 +621,12 @@ try {
         ROUND(SUM(CASE WHEN p.estado = 'Completado' THEN 1 ELSE 0 END)*100.0/NULLIF(COUNT(p.id),0),1) as tasa_resolucion
     FROM peticiones p
     INNER JOIN DivisionAdministrativa d ON p.division_id = d.Id
+    $mapWhereSQL
     GROUP BY d.Id, d.Municipio
     ORDER BY total DESC";
-    $stmtMap = $db->query($qMapData);
+    $stmtMap = $db->prepare($qMapData);
+    foreach ($mapParams as $k => $v) $stmtMap->bindValue($k, $v);
+    $stmtMap->execute();
     $mapData = $stmtMap->fetchAll(PDO::FETCH_ASSOC);
 
     // Top 3 departamentos por municipio en UNA sola query (elimina N+1)
@@ -565,9 +636,12 @@ try {
         FROM peticion_departamento pd
         INNER JOIN peticiones p ON pd.peticion_id = p.id
         INNER JOIN unidades u ON pd.departamento_id = u.id
+        $mapWhereSQL
         GROUP BY p.division_id, u.id, u.nombre_unidad
     ) ranked WHERE ranked.rn <= 3";
-    $stmtAllTD = $db->query($qAllTopDepts);
+    $stmtAllTD = $db->prepare($qAllTopDepts);
+    foreach ($mapParams as $k => $v) $stmtAllTD->bindValue($k, $v);
+    $stmtAllTD->execute();
     $allTopDepts = $stmtAllTD->fetchAll(PDO::FETCH_ASSOC);
 
     // Indexar por municipio_id

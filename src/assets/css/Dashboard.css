@@ -3,7 +3,39 @@
   margin: 0 auto;
   padding: 0 24px;
   background-color: #f8fafc;
+  position: relative;
 }
+
+/* Loading overlay */
+.dashboard-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
+  pointer-events: none;
+}
+
+.dashboard-loading-bar {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd, #60a5fa, #3b82f6);
+  background-size: 200% 100%;
+  border-radius: 0 2px 2px 0;
+  animation: loading-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  0% { transform: translateX(-100%); width: 40%; }
+  50% { width: 60%; }
+  100% { transform: translateX(300%); width: 40%; }
+}
+
+.fade-loading-enter-active { transition: opacity 0.15s; }
+.fade-loading-leave-active { transition: opacity 0.4s; }
+.fade-loading-enter-from,
+.fade-loading-leave-to { opacity: 0; }
 
 /* Alertas compactas */
 .alerts-row {
