@@ -185,14 +185,14 @@ onMounted(() => {
 }
 
 /* Dark mode */
-:global(.dark-mode) .date-filter__presets { background: #1e293b; }
-:global(.dark-mode) .date-filter__btn { color: #94a3b8; }
-:global(.dark-mode) .date-filter__btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
-:global(.dark-mode) .date-filter__btn--active { background: #334155; color: #93c5fd; }
-:global(.dark-mode) .date-filter__field label { color: #64748b; }
-:global(.dark-mode) .date-filter__field input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
-:global(.dark-mode) .date-filter__field input:focus { border-color: #3b82f6; }
-:global(.dark-mode) .date-filter__active { background: #1e3a5f; color: #93c5fd; }
+:global(html.dark-mode .date-filter__presets) { background: #1e293b; }
+:global(html.dark-mode .date-filter__btn) { color: #94a3b8; }
+:global(html.dark-mode .date-filter__btn:hover) { color: #e2e8f0; background: rgba(255,255,255,0.05); }
+:global(html.dark-mode .date-filter__btn--active) { background: #334155; color: #93c5fd; }
+:global(html.dark-mode .date-filter__field label) { color: #64748b; }
+:global(html.dark-mode .date-filter__field input) { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+:global(html.dark-mode .date-filter__field input:focus) { border-color: #3b82f6; }
+:global(html.dark-mode .date-filter__active) { background: #1e3a5f; color: #93c5fd; }
 
 @media (max-width: 768px) {
   .date-filter {

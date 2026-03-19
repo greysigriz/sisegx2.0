@@ -1,3 +1,7 @@
+/* ============================================ */
+/* TableroDash.vue - Layout Only (scoped)       */
+/* ============================================ */
+
 .dashboard-container {
   max-width: 1600px;
   margin: 0 auto;
@@ -37,51 +41,7 @@
 .fade-loading-enter-from,
 .fade-loading-leave-to { opacity: 0; }
 
-/* Alertas compactas */
-.alerts-row {
-  display: flex;
-  gap: 10px;
-  margin: 0.75rem auto;
-  max-width: 1600px;
-  flex-wrap: wrap;
-}
-
-.alert-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-left: 4px solid;
-}
-
-.alert-critical {
-  background: #fef2f2;
-  border-left-color: #ef4444;
-  color: #991b1b;
-}
-
-.alert-warning {
-  background: #fffbeb;
-  border-left-color: #f59e0b;
-  color: #92400e;
-}
-
-.alert-count {
-  background: white;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.8rem;
-}
-
-.alert-text {
-  flex: 1;
-}
-
-/* Grid de Analisis Principal */
+/* Grid de Analisis */
 .analytics-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -99,317 +59,36 @@
 }
 
 .analytics-card2 {
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
-/* Mapa y vistas */
 .department-views {
   margin: 0.5rem auto 1.5rem;
   max-width: 1600px;
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .analytics-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .analytics-grid {
-    grid-template-columns: 1fr;
-  }
-
   .dashboard-container {
-    padding: 0 16px;
-  }
-
-  .alerts-row {
-    flex-direction: column;
+    padding: 0 12px;
   }
 }
 
 /* ============================================ */
-/* MODO OSCURO                                  */
+/* Dark mode - TableroDash layout               */
 /* ============================================ */
-html.dark-mode {
-  color-scheme: dark;
-}
+html.dark-mode .dashboard-container { background-color: #0f172a; }
 
-html.dark-mode body {
-  background: #0f172a;
-  color: #e2e8f0;
-}
-
-html.dark-mode .dashboard-container {
-  background-color: #0f172a;
-}
-
-/* Header */
-html.dark-mode .dash-header {
-  background: #1e293b;
-  border-bottom-color: #3b82f6;
-}
-
-html.dark-mode .dash-header__name { color: #e2e8f0; }
-html.dark-mode .dash-header__sub { color: #94a3b8; }
-html.dark-mode .dash-header__date { color: #94a3b8; }
-html.dark-mode .dash-header__ok { color: #34d399; }
-
-html.dark-mode .dash-alert--critical { background: rgba(239,68,68,0.15); color: #fca5a5; }
-html.dark-mode .dash-alert--warning { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .dash-alert-badge__count { background: #334155; color: #e2e8f0; }
-
-html.dark-mode .dark-toggle { border-color: #475569; color: #94a3b8; }
-html.dark-mode .dark-toggle:hover { background: #334155; color: #e2e8f0; }
-
-/* KPI Cards - dark mode handled in DashboardCards.vue scoped + cards_dashboard.css */
-html.dark-mode .dashboard-metrics { background: #0f172a; }
-
-/* Analytics cards */
 html.dark-mode .analytics-card,
 html.dark-mode .analytics-card2 {
   background: #1e293b;
   border-color: #334155;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
-
-/* Analysis Panel */
-html.dark-mode .analysis-panel { background: #1e293b; border-color: #334155; }
-html.dark-mode .analysis-tabs { border-bottom-color: #334155; }
-html.dark-mode .analysis-tab { color: #94a3b8; }
-html.dark-mode .analysis-tab:hover { color: #60a5fa; background: #1e293b; }
-html.dark-mode .analysis-tab.active { color: #60a5fa; border-bottom-color: #3b82f6; background: #0f172a; }
-html.dark-mode .analysis-select { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-html.dark-mode .ranking-title { color: #94a3b8; }
-html.dark-mode .ranking-item:hover { background: #0f172a; }
-html.dark-mode .ranking-name { color: #e2e8f0; }
-html.dark-mode .ranking-total { color: #e2e8f0; }
-html.dark-mode .ranking-bar-bg { background: #334155; }
-html.dark-mode .detail-kpi { background: #0f172a; border-color: #334155; }
-html.dark-mode .detail-kpi-val { color: #e2e8f0; }
-html.dark-mode .detail-header h4 { color: #e2e8f0; }
-html.dark-mode .clear-btn { background: #334155; border-color: #475569; color: #94a3b8; }
-html.dark-mode .breakdown-item:hover { background: #0f172a; }
-html.dark-mode .breakdown-name { color: #e2e8f0; }
-html.dark-mode .badge { background: #334155; color: #cbd5e1; }
-html.dark-mode .detail-subtitle { color: #94a3b8; border-top-color: #334155; }
-
-/* Side panel (PieChart) */
-html.dark-mode .side-panel { background: #1e293b; border-color: #334155; }
-html.dark-mode .side-panel__title { color: #e2e8f0; }
-html.dark-mode .side-panel__section + .side-panel__section { border-top-color: #334155; }
-html.dark-mode .feed-item:hover { background: #0f172a; }
-html.dark-mode .feed-name { color: #e2e8f0; }
-html.dark-mode .feed-meta { color: #64748b; }
-
-/* Area chart */
-html.dark-mode .area-chart-card { background: #1e293b; border-color: #334155; }
-html.dark-mode .area-chart-card-header { border-bottom-color: #334155; }
-html.dark-mode .card-title { color: #e2e8f0; }
-html.dark-mode .card-description { color: #64748b; }
-
-/* Mapa */
-html.dark-mode .map-wrapper { background: #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-html.dark-mode .map-header { background: #1e293b; border-bottom-color: #334155; }
-html.dark-mode .map-header h2 { color: #e2e8f0; }
-html.dark-mode .map-legend-choropleth {
-  background: rgba(30,41,59,0.95);
-  border-color: #475569;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-}
-html.dark-mode .legend-choropleth-title { color: #93c5fd; }
-html.dark-mode .legend-summary-item { background: linear-gradient(135deg, #1e293b, #334155); }
-html.dark-mode .legend-summary-val { color: #93c5fd; }
-html.dark-mode .legend-summary-label { color: #94a3b8; }
-html.dark-mode .gradient-labels span { color: #94a3b8; }
-html.dark-mode .gradient-track { border-color: #475569; }
-
-/* Alerts */
-html.dark-mode .alert-pill { border-left-color: currentColor; }
-html.dark-mode .alert-critical { background: rgba(239,68,68,0.12); color: #fca5a5; }
-html.dark-mode .alert-warning { background: rgba(245,158,11,0.12); color: #fcd34d; }
-html.dark-mode .alert-count { background: #334155; color: #e2e8f0; }
-
-/* Analysis extras */
-html.dark-mode .ranking-pos { background: #334155; color: #94a3b8; }
-html.dark-mode .ranking-rate { background: rgba(255,255,255,0.05); }
-html.dark-mode .ranking-urgentes { color: #f87171; }
-html.dark-mode .health-green { box-shadow: 0 0 4px rgba(16,185,129,0.3); }
-html.dark-mode .health-yellow { box-shadow: 0 0 4px rgba(245,158,11,0.3); }
-html.dark-mode .health-red { box-shadow: 0 0 4px rgba(239,68,68,0.3); }
-html.dark-mode .badge-green { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-html.dark-mode .badge-yellow { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .badge-blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
-html.dark-mode .empty-msg { color: #64748b; }
-
-/* Feed statuses */
-html.dark-mode .feed-status--new { background: rgba(139,92,246,0.15); color: #c4b5fd; }
-html.dark-mode .feed-status--pending { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .feed-status--progress { background: rgba(59,130,246,0.15); color: #93c5fd; }
-html.dark-mode .feed-status--done { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-html.dark-mode .feed-status--other { background: rgba(148,163,184,0.1); color: #94a3b8; }
-
-/* Map extras */
-html.dark-mode .map-container { background: #1a2332; }
-html.dark-mode .map-filter-banner { background: linear-gradient(135deg, #1e293b, #1a2744); border-bottom-color: #3b82f6; color: #93c5fd; }
-html.dark-mode .map-filter-banner strong { color: #bfdbfe; }
-html.dark-mode .map-filter-clear { background: #334155; border-color: #7f1d1d; color: #fca5a5; }
-html.dark-mode .map-filter-clear:hover { background: #7f1d1d; border-color: #ef4444; }
-html.dark-mode .loading-badge { background: rgba(59,130,246,0.2); color: #93c5fd; }
-html.dark-mode .legend-choropleth-divider { background: linear-gradient(to right, transparent, #475569, transparent); }
-
-/* Leaflet dark */
-html.dark-mode .leaflet-popup-content-wrapper { background: #1e293b !important; border-color: #475569 !important; }
-html.dark-mode .leaflet-popup-tip { background: #1e293b; }
-html.dark-mode .leaflet-popup-close-button { color: #94a3b8 !important; }
-html.dark-mode .leaflet-control-zoom a { background: #1e293b !important; color: #93c5fd !important; }
-html.dark-mode .leaflet-control-zoom a:hover { background: #3b82f6 !important; color: white !important; }
-
-/* Map detail panel */
-html.dark-mode .map-detalle-panel { background: #1e293b; border-top-color: #3b82f6; }
-html.dark-mode .map-detalle-header { background: #1a2332; border-bottom-color: #334155; }
-html.dark-mode .map-detalle-title { color: #93c5fd; }
-html.dark-mode .map-detalle-count { background: #334155; color: #94a3b8; }
-html.dark-mode .map-csv-btn { background: #14532d; color: #86efac; border-color: #166534; }
-html.dark-mode .map-csv-btn:hover { background: #166534; border-color: #22c55e; }
-html.dark-mode .map-close-btn { color: #94a3b8; border-color: #475569; }
-html.dark-mode .map-close-btn:hover { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
-html.dark-mode .map-detalle-table th { background: #1a2332; color: #94a3b8; border-color: #334155; }
-html.dark-mode .map-detalle-table td { color: #cbd5e1; border-color: #1e293b; }
-html.dark-mode .map-detalle-table tbody tr:hover { background: #1a2332; }
-html.dark-mode .map-detalle-loading { color: #94a3b8; }
-html.dark-mode .map-detalle-empty { color: #64748b; }
-html.dark-mode .mp-td-folio { color: #60a5fa; }
-html.dark-mode .mp-td-nombre { color: #e2e8f0; }
-html.dark-mode .mp-td-desc { color: #94a3b8; }
-html.dark-mode .mp-td-fecha { color: #94a3b8; }
-html.dark-mode .mp-td-dias { color: #e2e8f0; }
-html.dark-mode .mp-td-dias--alerta { color: #f87171; }
-
-/* Estado/Importancia badges dark */
-html.dark-mode .mp-e-pend, html.dark-mode .estado--pendiente { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .mp-e-proc, html.dark-mode .estado--proceso { background: rgba(59,130,246,0.15); color: #93c5fd; }
-html.dark-mode .mp-e-ok, html.dark-mode .estado--completado { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-html.dark-mode .mp-e-dev, html.dark-mode .estado--devuelto { background: rgba(239,68,68,0.15); color: #fca5a5; }
-html.dark-mode .mp-e-cerr, html.dark-mode .estado--cerrado { background: rgba(148,163,184,0.1); color: #94a3b8; }
-html.dark-mode .mp-i-crit, html.dark-mode .imp--critica { background: rgba(239,68,68,0.15); color: #fca5a5; }
-html.dark-mode .mp-i-alta, html.dark-mode .imp--alta { background: rgba(249,115,22,0.15); color: #fdba74; }
-html.dark-mode .mp-i-med, html.dark-mode .imp--media { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .mp-i-baja, html.dark-mode .imp--baja { background: rgba(148,163,184,0.1); color: #94a3b8; }
-
-/* Map container/tiles dark bg */
-html.dark-mode .map-container { background: #1a2332; }
-html.dark-mode .map-container .leaflet-container { background: #1a2332; }
-
-/* Popup interior dark text fix */
-html.dark-mode .leaflet-popup-content { color: #e2e8f0; }
-
-/* Analysis detail extras */
-html.dark-mode .detail-kpi-label { color: #94a3b8; }
-html.dark-mode .detail-kpi-val.success { color: #34d399; }
-html.dark-mode .detail-kpi-val.warning { color: #fbbf24; }
-html.dark-mode .detail-kpi-val.danger { color: #f87171; }
-html.dark-mode .clear-btn:hover { background: #475569; color: #e2e8f0; }
-
-/* Analysis select focus */
-html.dark-mode .analysis-select:focus { border-color: #3b82f6; }
-
-/* Ranking bar dark */
-html.dark-mode .ranking-bar { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-html.dark-mode .ranking-bar-muni { background: linear-gradient(90deg, #10b981, #34d399); }
-
-/* Donut center text */
-html.dark-mode .side-panel__donut text { fill: #e2e8f0 !important; }
-
-/* Global table/badge dark mode for all detail panels */
-html.dark-mode .td-folio { color: #60a5fa; }
-html.dark-mode .td-nombre { color: #e2e8f0; }
-html.dark-mode .td-desc { color: #94a3b8; }
-html.dark-mode .td-fecha { color: #94a3b8; }
-html.dark-mode .td-dias { color: #e2e8f0; }
-html.dark-mode .td-dias--alerta { color: #f87171; }
-html.dark-mode .estado-badge { color: inherit; }
-html.dark-mode .estado--pendiente { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .estado--proceso { background: rgba(59,130,246,0.15); color: #93c5fd; }
-html.dark-mode .estado--completado { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-html.dark-mode .estado--devuelto { background: rgba(239,68,68,0.15); color: #fca5a5; }
-html.dark-mode .estado--cerrado { background: rgba(148,163,184,0.1); color: #94a3b8; }
-html.dark-mode .imp-badge { color: inherit; }
-html.dark-mode .imp--critica { background: rgba(239,68,68,0.15); color: #fca5a5; }
-html.dark-mode .imp--alta { background: rgba(249,115,22,0.15); color: #fdba74; }
-html.dark-mode .imp--media { background: rgba(245,158,11,0.15); color: #fcd34d; }
-html.dark-mode .imp--baja { background: rgba(148,163,184,0.1); color: #94a3b8; }
-
-/* Date filter */
-html.dark-mode .date-filter__presets { background: #1e293b; }
-html.dark-mode .date-filter__btn { color: #94a3b8; }
-html.dark-mode .date-filter__btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.05); }
-html.dark-mode .date-filter__btn--active { background: #334155; color: #93c5fd; }
-html.dark-mode .date-filter__field label { color: #64748b; }
-html.dark-mode .date-filter__field input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-html.dark-mode .date-filter__field input:focus { border-color: #3b82f6; }
-html.dark-mode .date-filter__active { background: #1e3a5f; color: #93c5fd; }
-
-/* Card detail panel */
-html.dark-mode .card-detalle-panel { background: #1e293b; border-color: #334155; border-top-color: #3b82f6; }
-html.dark-mode .card-detalle-header { background: #1a2332; border-color: #334155; }
-html.dark-mode .card-detalle-title { color: #93c5fd; }
-html.dark-mode .card-detalle-count { background: #334155; color: #94a3b8; }
-html.dark-mode .card-detalle-loading { color: #94a3b8; }
-html.dark-mode .card-detalle-empty { color: #64748b; }
-html.dark-mode .card-detalle-table th { background: #1a2332; color: #94a3b8; border-color: #334155; }
-html.dark-mode .card-detalle-table td { color: #cbd5e1; border-color: #1e293b; }
-html.dark-mode .card-detalle-table tbody tr:hover { background: #1a2332; }
-html.dark-mode .card-detalle-csv { background: #14532d; color: #86efac; border-color: #166534; }
-html.dark-mode .card-detalle-csv:hover { background: #166534; border-color: #22c55e; }
-html.dark-mode .card-detalle-close { color: #94a3b8; border-color: #475569; }
-html.dark-mode .card-detalle-close:hover { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
-html.dark-mode .loading-spinner-sm { border-color: #334155; border-top-color: #3b82f6; }
-
-/* Resumen card interactions */
-html.dark-mode .resumen-item--clickable:hover { border-color: #3b82f6; background: #1a2744 !important; }
-html.dark-mode .resumen-item--clickable:hover::before { background: #3b82f6; }
-html.dark-mode .resumen-item--active { background: #1a2744 !important; border-color: #3b82f6 !important; }
-html.dark-mode .resumen-item--active::before { background: #2563eb !important; width: 100% !important; }
-html.dark-mode .resumen-chevron { color: #475569; }
-html.dark-mode .resumen-item--clickable:hover .resumen-chevron { color: #60a5fa; }
-html.dark-mode .resumen-chevron--open { color: #60a5fa; }
-
-/* Analysis panel extras */
-html.dark-mode .detail-subtabs { background: #334155; }
-html.dark-mode .detail-subtab { color: #94a3b8; }
-html.dark-mode .detail-subtab:hover { color: #e2e8f0; }
-html.dark-mode .detail-subtab.active { background: #1e293b; color: #60a5fa; box-shadow: none; }
-html.dark-mode .subtab-count { background: rgba(59,130,246,0.2); color: #93c5fd; }
-html.dark-mode .detail-subfilter { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-html.dark-mode .detail-lista-info { color: #94a3b8; }
-html.dark-mode .csv-btn { background: #14532d; color: #86efac; border-color: #166534; }
-html.dark-mode .csv-btn:hover { background: #166534; border-color: #22c55e; }
-html.dark-mode .detail-table-wrap { border-color: #334155; }
-html.dark-mode .detail-table th { background: #1a2332; color: #94a3b8; border-color: #334155; }
-html.dark-mode .detail-table td { color: #cbd5e1; border-color: #1e293b; }
-html.dark-mode .detail-table tbody tr:hover { background: #1a2332; }
-html.dark-mode .detail-loading { color: #94a3b8; }
-html.dark-mode .analysis-content { color: #e2e8f0; }
-
-/* PieChart priority detail */
-html.dark-mode .prio-legend-item { background: #334155; border-color: #475569; }
-html.dark-mode .prio-legend-item:hover { background: #3b4f6b; border-color: #64748b; }
-html.dark-mode .prio-legend-item--active { background: #1e3a5f; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
-html.dark-mode .prio-legend-name { color: #cbd5e1; }
-html.dark-mode .prio-legend-val { color: #e2e8f0; }
-html.dark-mode .prio-detalle { background: #1e293b; border-color: #334155; }
-html.dark-mode .prio-detalle-header { background: #1a2332; border-color: #334155; }
-html.dark-mode .prio-detalle-title { color: #93c5fd; }
-html.dark-mode .prio-detalle-count { background: #334155; color: #94a3b8; }
-html.dark-mode .prio-csv-btn { background: #14532d; color: #86efac; border-color: #166534; }
-html.dark-mode .prio-csv-btn:hover { background: #166534; border-color: #22c55e; }
-html.dark-mode .prio-close-btn { color: #94a3b8; border-color: #475569; }
-html.dark-mode .prio-close-btn:hover { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
-html.dark-mode .prio-table th { background: #1a2332; color: #94a3b8; border-color: #334155; }
-html.dark-mode .prio-table td { color: #cbd5e1; border-color: #1e293b; }
-html.dark-mode .prio-table tbody tr:hover { background: #1a2332; }
-html.dark-mode .prio-detalle-loading { color: #94a3b8; }
-html.dark-mode .prio-detalle-empty { color: #64748b; }

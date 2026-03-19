@@ -119,6 +119,10 @@ export default {
   padding: 0;
 }
 
+/* Dark mode */
+:global(html.dark-mode .app-container) { background-color: #0f172a; }
+:global(html.dark-mode .main-content) { background-color: #0f172a; }
+
 @media (max-width: 768px) {
   .app-container {
     flex-direction: column;

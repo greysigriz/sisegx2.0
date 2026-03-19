@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import '@/assets/css/areachartt_dashboard.css'
+// areachartt_dashboard.css loaded via <style scoped src> block
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useDashboardStore } from '@/composables/useDashboardStore.js'
@@ -215,3 +215,28 @@ onUnmounted(() => {
   if (chartInstance) chartInstance.dispose()
 })
 </script>
+<style scoped>
+@import '@/assets/css/areachartt_dashboard.css';
+
+/* Dark mode */
+:global(html.dark-mode .area-chart-card) {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border-color: #334155;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.3), 0 0 0 1px rgba(59,130,246,0.1);
+}
+:global(html.dark-mode .area-chart-card .card-title) { color: #93c5fd; }
+:global(html.dark-mode .area-chart-card .card-description) { color: #64748b; }
+:global(html.dark-mode .area-chart-card .range-selector) { background-color: #0f172a; border-color: #334155; color: #e2e8f0; }
+:global(html.dark-mode .area-chart-card .range-selector:hover) { border-color: #3b82f6; }
+:global(html.dark-mode .area-chart-card .chart-legend) { border-top-color: #334155; }
+:global(html.dark-mode .area-chart-card .legend-text) { color: #94a3b8; }
+:global(html.dark-mode .area-chart-card .legend-item:hover) { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.2); }
+:global(html.dark-mode .area-chart-card .loading-state) { color: #94a3b8; }
+:global(html.dark-mode .area-chart-card .loading-spinner) { border-color: #334155; border-top-color: #3b82f6; }
+:global(html.dark-mode .area-chart-card .debug-panel) { background: #0f172a; border-color: #334155; }
+:global(html.dark-mode .area-chart-card .debug-panel summary) { color: #94a3b8; }
+:global(html.dark-mode .area-chart-card .debug-panel summary:hover) { background: #334155; }
+:global(html.dark-mode .area-chart-card .debug-content) { border-top-color: #334155; }
+:global(html.dark-mode .area-chart-card .debug-row) { color: #94a3b8; }
+:global(html.dark-mode .area-chart-card .debug-row strong) { color: #e2e8f0; }
+</style>

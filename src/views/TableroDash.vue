@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import YucatanHeader from "@/components/dashboard/YucatanHeader.vue"
 import DateFilter from "@/components/dashboard/DateFilter.vue"
 import DashboardCards from "@/components/dashboard/DashboardCards.vue"
@@ -62,7 +62,16 @@ export default {
     const { fetchDashboard, isLoading } = useDashboardStore()
 
     onMounted(() => {
+      // Restore dark mode if it was active
+      if (localStorage.getItem('dashboard-dark') === '1') {
+        document.documentElement.classList.add('dark-mode')
+      }
       fetchDashboard()
+    })
+
+    onUnmounted(() => {
+      // Remove dark mode when leaving the dashboard
+      document.documentElement.classList.remove('dark-mode')
     })
 
     return { isLoading }
@@ -70,4 +79,9 @@ export default {
 }
 </script>
 
-<style src="@/assets/css/Dashboard.css"></style>
+<style scoped src="@/assets/css/Dashboard.css"></style>
+<style>
+/* Global dark mode base - only html/body rules */
+html.dark-mode { color-scheme: dark; }
+html.dark-mode body { background: #0f172a; color: #e2e8f0; }
+</style>

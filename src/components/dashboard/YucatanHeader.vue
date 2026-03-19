@@ -134,6 +134,15 @@ export default {
   color: #1e293b;
 }
 
+/* Dark mode */
+:global(html.dark-mode .dash-header) { background: #1e293b; border-bottom-color: #3b82f6; }
+:global(html.dark-mode .dash-header__icon) { color: #60a5fa; }
+:global(html.dark-mode .dash-header__name) { color: #e2e8f0; }
+:global(html.dark-mode .dash-header__sub) { color: #94a3b8; }
+:global(html.dark-mode .dash-header__date) { color: #94a3b8; }
+:global(html.dark-mode .dark-toggle) { border-color: #475569; color: #94a3b8; }
+:global(html.dark-mode .dark-toggle:hover) { background: #334155; color: #e2e8f0; }
+
 @media (max-width: 768px) {
   .dash-header {
     flex-wrap: wrap;

@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import '@/assets/css/cards_dashboard.css'
+// cards_dashboard.css loaded via <style scoped src> block
 import { computed, defineComponent, h, ref, watch, onUnmounted } from 'vue'
 import { useDashboardStore } from '@/composables/useDashboardStore.js'
 
@@ -291,6 +291,28 @@ export default {
 </script>
 
 <style scoped>
+/* ── Base card styles (from cards_dashboard.css) ── */
+.dashboard-metrics { padding: 0.75rem 0 0; }
+.metrics-container { max-width: 1600px; margin: 0 auto; padding: 0 1.25rem; }
+.resumen-header { display: flex; gap: 12px; margin: 0.5rem auto; max-width: 1400px; flex-wrap: wrap; justify-content: center; padding: 0; }
+.resumen-item { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 20px; background: white; border-radius: 14px; border: 1px solid #e5e7eb; min-width: 150px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease; position: relative; }
+.resumen-item::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; border-radius: 0 0 3px 3px; background: #e5e7eb; transition: all 0.2s; }
+.resumen-label { font-size: 0.65rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-family: "Inter", "Segoe UI", sans-serif; }
+.resumen-trend { display: flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+.trend-good { color: #059669; background: #ecfdf5; }
+.trend-bad { color: #dc2626; background: #fef2f2; }
+.trend-neutral { color: #94a3b8; background: #f8fafc; }
+.trend-dash { font-size: 0.7rem; }
+.resumen-valor { font-size: 28px; font-weight: 800; color: #1e293b; line-height: 1; }
+.resumen-valor.warning { color: #d97706; }
+.resumen-valor.success { color: #059669; }
+.resumen-valor.danger { color: #dc2626; }
+.resumen-valor.info { color: #2563eb; }
+.loading-container, .error-container { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: #6b7280; max-width: 1400px; margin: 2rem auto; }
+.loading-spinner { width: 48px; height: 48px; border: 4px solid #dbeafe; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+.error-message { color: #ef4444; font-weight: 500; }
+@media (max-width: 768px) { .resumen-header { gap: 8px; padding: 0 12px; } .resumen-item { min-width: calc(50% - 4px); padding: 12px 14px; } .resumen-valor { font-size: 24px; } }
+
 /* Clickable cards */
 .resumen-item--clickable {
   cursor: pointer;
@@ -553,27 +575,40 @@ export default {
   font-size: 0.85rem;
 }
 
-/* Dark mode — KPI card interactions (scoped classes) */
-:global(.dark-mode) .resumen-item--clickable:hover { border-color: #3b82f6; background: #1a2744 !important; }
-:global(.dark-mode) .resumen-item--clickable:hover::before { background: #3b82f6; }
-:global(.dark-mode) .resumen-item--active { background: #1a2744 !important; border-color: #3b82f6 !important; }
-:global(.dark-mode) .resumen-item--active::before { background: #2563eb !important; }
-:global(.dark-mode) .resumen-chevron { color: #475569; }
-:global(.dark-mode) .resumen-item--clickable:hover .resumen-chevron { color: #60a5fa; }
-:global(.dark-mode) .resumen-chevron--open { color: #60a5fa; }
+/* Dark mode — KPI cards */
+:global(html.dark-mode .resumen-item) { background: #1e293b; border-color: #334155; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+:global(html.dark-mode .resumen-item)::before { background: #475569; }
+:global(html.dark-mode .resumen-label) { color: #94a3b8; }
+:global(html.dark-mode .resumen-valor) { color: #f1f5f9; }
+:global(html.dark-mode .resumen-valor.danger) { color: #f87171; }
+:global(html.dark-mode .resumen-valor.success) { color: #34d399; }
+:global(html.dark-mode .resumen-valor.warning) { color: #fbbf24; }
+:global(html.dark-mode .resumen-valor.info) { color: #60a5fa; }
+:global(html.dark-mode .trend-good) { color: #34d399; background: rgba(5,150,105,0.15); }
+:global(html.dark-mode .trend-bad) { color: #f87171; background: rgba(220,38,38,0.15); }
+:global(html.dark-mode .trend-neutral) { color: #64748b; background: rgba(148,163,184,0.1); }
+:global(html.dark-mode .loading-container) { color: #94a3b8; }
+:global(html.dark-mode .loading-spinner) { border-color: #334155; border-top-color: #3b82f6; }
+:global(html.dark-mode .resumen-item--clickable:hover) { border-color: #3b82f6; background: #1a2744 !important; }
+:global(html.dark-mode .resumen-item--clickable:hover)::before { background: #3b82f6; }
+:global(html.dark-mode .resumen-item--active) { background: #1a2744 !important; border-color: #3b82f6 !important; }
+:global(html.dark-mode .resumen-item--active)::before { background: #2563eb !important; }
+:global(html.dark-mode .resumen-chevron) { color: #94a3b8; }
+:global(html.dark-mode .resumen-item--clickable:hover .resumen-chevron) { color: #60a5fa; }
+:global(html.dark-mode .resumen-chevron--open) { color: #60a5fa; }
 
 /* Dark mode — detail panel (scoped classes) */
-:global(.dark-mode) .card-detalle-panel { background: #1e293b; border-color: #334155; border-top-color: #3b82f6; }
-:global(.dark-mode) .card-detalle-header { background: #1a2332; border-color: #334155; }
-:global(.dark-mode) .card-detalle-title { color: #93c5fd; }
-:global(.dark-mode) .card-detalle-count { background: #334155; color: #94a3b8; }
-:global(.dark-mode) .card-detalle-loading { color: #94a3b8; }
-:global(.dark-mode) .card-detalle-empty { color: #64748b; }
-:global(.dark-mode) .card-detalle-table th { background: #1a2332; color: #94a3b8; border-color: #334155; }
-:global(.dark-mode) .card-detalle-table td { color: #cbd5e1; border-color: #1e293b; }
-:global(.dark-mode) .card-detalle-table tbody tr:hover { background: #1a2332; }
-:global(.dark-mode) .card-detalle-csv { background: #14532d; color: #86efac; border-color: #166534; }
-:global(.dark-mode) .card-detalle-csv:hover { background: #166534; border-color: #22c55e; }
-:global(.dark-mode) .card-detalle-close { color: #94a3b8; border-color: #475569; }
-:global(.dark-mode) .card-detalle-close:hover { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
+:global(html.dark-mode .card-detalle-panel) { background: #1e293b; border-color: #334155; border-top-color: #3b82f6; }
+:global(html.dark-mode .card-detalle-header) { background: #1a2332; border-color: #334155; }
+:global(html.dark-mode .card-detalle-title) { color: #93c5fd; }
+:global(html.dark-mode .card-detalle-count) { background: #334155; color: #94a3b8; }
+:global(html.dark-mode .card-detalle-loading) { color: #94a3b8; }
+:global(html.dark-mode .card-detalle-empty) { color: #64748b; }
+:global(html.dark-mode .card-detalle-table th) { background: #1a2332; color: #94a3b8; border-color: #334155; }
+:global(html.dark-mode .card-detalle-table td) { color: #cbd5e1; border-color: #1e293b; }
+:global(html.dark-mode .card-detalle-table tbody tr:hover) { background: #1a2332; }
+:global(html.dark-mode .card-detalle-csv) { background: #14532d; color: #86efac; border-color: #166534; }
+:global(html.dark-mode .card-detalle-csv:hover) { background: #166534; border-color: #22c55e; }
+:global(html.dark-mode .card-detalle-close) { color: #94a3b8; border-color: #475569; }
+:global(html.dark-mode .card-detalle-close:hover) { background: #7f1d1d; color: #fca5a5; border-color: #991b1b; }
 </style>

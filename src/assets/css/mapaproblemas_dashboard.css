@@ -3,10 +3,6 @@
 /* Mapa de calor con polígonos GeoJSON          */
 /* ============================================ */
 
-* {
-  box-sizing: border-box;
-}
-
 /* Contenedor principal */
 .map-wrapper {
   width: 100%;
@@ -151,10 +147,7 @@
   border: 1px solid #e2e8f0;
 }
 
-html.dark-mode .gradient-track {
-  background: linear-gradient(to right, #1e293b, #1e3a5f, #2563eb, #3b82f6);
-  border-color: #475569;
-}
+/* gradient-track dark mode: in MapaProblemas.vue scoped */
 
 .gradient-labels {
   display: flex;
@@ -551,6 +544,11 @@ path.leaflet-interactive:focus {
   font-size: 0.85rem;
 }
 
+/* Dark mode: moved to MapaProblemas.vue <style scoped> using :global(html.dark-mode) */
+
+/* ============================================ */
+/* RESPONSIVO                                   */
+/* ============================================ */
 @media (max-width: 768px) {
   .map-header {
     padding: 1rem;

@@ -142,24 +142,7 @@
   font-weight: 500;
 }
 
-/* ── Dark mode ── */
-html.dark-mode .resumen-item {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-html.dark-mode .resumen-item::before { background: #475569; }
-html.dark-mode .resumen-label { color: #94a3b8; }
-html.dark-mode .resumen-valor { color: #f1f5f9; }
-html.dark-mode .resumen-valor.danger { color: #f87171; }
-html.dark-mode .resumen-valor.success { color: #34d399; }
-html.dark-mode .resumen-valor.warning { color: #fbbf24; }
-html.dark-mode .resumen-valor.info { color: #60a5fa; }
-html.dark-mode .trend-good { color: #34d399; background: rgba(5,150,105,0.15); }
-html.dark-mode .trend-bad { color: #f87171; background: rgba(220,38,38,0.15); }
-html.dark-mode .trend-neutral { color: #64748b; background: rgba(148,163,184,0.1); }
-html.dark-mode .loading-container { color: #94a3b8; }
-html.dark-mode .loading-spinner { border-color: #334155; border-top-color: #3b82f6; }
+/* Dark mode: moved to DashboardCards.vue <style scoped> using :global(html.dark-mode) */
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
