@@ -21,6 +21,7 @@ const state = reactive({
   // Detalle por departamento
   detalleDepartamento: null,
   selectedDeptId: null,
+  detalleLoading: false,
 
   // Detalle por municipio
   detalleMunicipio: null,
@@ -33,6 +34,11 @@ const state = reactive({
   filtroDias: 9999,
   filtroFechaInicio: null,
   filtroFechaFin: null,
+
+  // Drill-down de tarjetas
+  cardDetalle: null,
+  cardDetalleLoading: false,
+  selectedCard: null,
 
   // UI
   isLoading: false,
@@ -109,14 +115,72 @@ async function _doFetch() {
   }
 }
 
-function selectDepartamento(id) {
+async function selectDepartamento(id) {
   state.selectedDeptId = id || null
-  fetchDashboard()
+  state.detalleDepartamento = null
+  if (!id) return
+
+  state.detalleLoading = true
+  try {
+    const res = await axios.get('dashboard-detalle.php', { params: { tipo: 'departamento', id, _nonce: Date.now() } })
+    if (res.data && res.data.success) {
+      state.detalleDepartamento = res.data
+    }
+  } catch (err) {
+    console.error('Error detalle departamento:', err)
+  } finally {
+    state.detalleLoading = false
+  }
 }
 
-function selectMunicipio(id) {
+async function selectMunicipio(id) {
   state.selectedMuniId = id || null
-  fetchDashboard()
+  state.detalleMunicipio = null
+  if (!id) return
+
+  state.detalleLoading = true
+  try {
+    const res = await axios.get('dashboard-detalle.php', { params: { tipo: 'municipio', id, _nonce: Date.now() } })
+    if (res.data && res.data.success) {
+      state.detalleMunicipio = res.data
+    }
+  } catch (err) {
+    console.error('Error detalle municipio:', err)
+  } finally {
+    state.detalleLoading = false
+  }
+}
+
+async function fetchCardDetalle(tipo) {
+  // Toggle: si ya está seleccionada, cerrar
+  if (state.selectedCard === tipo) {
+    state.selectedCard = null
+    state.cardDetalle = null
+    return
+  }
+
+  state.selectedCard = tipo
+  state.cardDetalleLoading = true
+  state.cardDetalle = null
+
+  const params = { card_detalle: tipo, skip_lists: 1 }
+  if (state.filtroMunicipio) params.municipio_id = state.filtroMunicipio
+  if (state.filtroFechaInicio) params.fecha_inicio = state.filtroFechaInicio
+  if (state.filtroFechaFin) params.fecha_fin = state.filtroFechaFin
+  if (!state.filtroFechaInicio && !state.filtroFechaFin) params.dias = state.filtroDias
+
+  try {
+    params._nonce = Date.now()
+    const res = await axios.get('dashboard-director.php', { params })
+    if (res.data && res.data.success && res.data.card_detalle) {
+      state.cardDetalle = res.data.card_detalle
+    }
+  } catch (err) {
+    console.error('Error card detalle:', err)
+    state.cardDetalle = null
+  } finally {
+    state.cardDetalleLoading = false
+  }
 }
 
 function setFiltro(key, value) {
@@ -138,6 +202,7 @@ export function useDashboardStore() {
   return {
     ...toRefs(state),
     fetchDashboard,
+    fetchCardDetalle,
     selectDepartamento,
     selectMunicipio,
     setFiltro,

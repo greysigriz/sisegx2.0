@@ -463,7 +463,85 @@ try {
         }
     }
 
-    // ===================== 13. DATOS PARA MAPA CHOROPLETH =====================
+    // ===================== 13. DETALLE POR TARJETA (DRILL-DOWN KPIs) =====================
+    $cardDetalle = null;
+    $cardTipo = isset($_GET['card_detalle']) ? trim($_GET['card_detalle']) : null;
+
+    if ($cardTipo) {
+        $cardWhere = [];
+        $cardParams = [];
+
+        // Filtros base (municipio, fecha)
+        if ($filtroMunicipio) {
+            $cardWhere[] = "p.division_id = :cd_muni";
+            $cardParams[':cd_muni'] = $filtroMunicipio;
+        }
+        if ($filtroFechaInicio) {
+            $cardWhere[] = "p.fecha_registro >= :cd_fi";
+            $cardParams[':cd_fi'] = $filtroFechaInicio . ' 00:00:00';
+        }
+        if ($filtroFechaFin) {
+            $cardWhere[] = "p.fecha_registro <= :cd_ff";
+            $cardParams[':cd_ff'] = $filtroFechaFin . ' 23:59:59';
+        }
+        if (!$filtroFechaInicio && !$filtroFechaFin) {
+            $cardWhere[] = "p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL :cd_dias DAY)";
+            $cardParams[':cd_dias'] = $filtroDias;
+        }
+
+        // Condiciones específicas por tipo de tarjeta
+        switch ($cardTipo) {
+            case 'total':
+                // Todas las peticiones del periodo
+                break;
+            case 'criticas':
+                $cardWhere[] = "p.NivelImportancia = 1";
+                break;
+            case 'proceso':
+                $cardWhere[] = "p.estado = 'Aceptada en proceso'";
+                break;
+            case 'completadas':
+                $cardWhere[] = "p.estado = 'Completado'";
+                break;
+            case 'retrasadas':
+                $cardWhere[] = "p.estado NOT IN ('Completado', 'Cancelada', 'Improcedente')";
+                $cardWhere[] = "DATEDIFF(CURDATE(), p.fecha_registro) > 30";
+                break;
+            case 'importancia_1': case 'importancia_2': case 'importancia_3':
+            case 'importancia_4': case 'importancia_5':
+                $nivel = intval(str_replace('importancia_', '', $cardTipo));
+                $cardWhere[] = "p.NivelImportancia = :cd_nivel";
+                $cardParams[':cd_nivel'] = $nivel;
+                break;
+            default:
+                $cardTipo = null; // tipo no válido, ignorar
+        }
+
+        if ($cardTipo) {
+            $cardWhereSQL = count($cardWhere) > 0 ? " WHERE " . implode(" AND ", $cardWhere) : "";
+
+            $qCard = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                p.NivelImportancia, p.fecha_registro, p.localidad,
+                d.Municipio,
+                DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
+            FROM peticiones p
+            LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+            $cardWhereSQL
+            ORDER BY p.fecha_registro DESC";
+
+            $stmtCard = $db->prepare($qCard);
+            foreach ($cardParams as $k => $v) {
+                $stmtCard->bindValue($k, $v);
+            }
+            $stmtCard->execute();
+            $cardDetalle = [
+                'tipo' => $cardTipo,
+                'peticiones' => $stmtCard->fetchAll(PDO::FETCH_ASSOC)
+            ];
+        }
+    }
+
+    // ===================== 14. DATOS PARA MAPA CHOROPLETH =====================
     $qMapData = "SELECT d.Id as municipio_id, d.Municipio as municipio,
         COUNT(p.id) as total,
         SUM(CASE WHEN p.estado NOT IN ('Completado','Cancelada','Improcedente') THEN 1 ELSE 0 END) as activas,
@@ -482,7 +560,7 @@ try {
 
     // Top 3 departamentos por municipio en UNA sola query (elimina N+1)
     $qAllTopDepts = "SELECT ranked.* FROM (
-        SELECT p.division_id as muni_id, u.nombre_unidad as departamento, COUNT(pd.id) as total,
+        SELECT p.division_id as muni_id, u.id as departamento_id, u.nombre_unidad as departamento, COUNT(pd.id) as total,
             ROW_NUMBER() OVER (PARTITION BY p.division_id ORDER BY COUNT(pd.id) DESC) as rn
         FROM peticion_departamento pd
         INNER JOIN peticiones p ON pd.peticion_id = p.id
@@ -495,7 +573,7 @@ try {
     // Indexar por municipio_id
     $deptsByMuni = [];
     foreach ($allTopDepts as $row) {
-        $deptsByMuni[$row['muni_id']][] = ['departamento' => $row['departamento'], 'total' => $row['total']];
+        $deptsByMuni[$row['muni_id']][] = ['departamento_id' => $row['departamento_id'], 'departamento' => $row['departamento'], 'total' => $row['total']];
     }
     foreach ($mapData as &$muni) {
         $muni['top_departamentos'] = $deptsByMuni[$muni['municipio_id']] ?? [];
@@ -518,6 +596,7 @@ try {
         'departamentos_list' => $departamentosList,
         'detalle_departamento' => $detalleDepartamento,
         'detalle_municipio' => $detalleMunicipio,
+        'card_detalle' => $cardDetalle,
         'map_data' => $mapData,
         'filtros_aplicados' => [
             'municipio_id' => $filtroMunicipio,

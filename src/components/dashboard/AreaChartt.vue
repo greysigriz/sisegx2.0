@@ -81,14 +81,15 @@ function renderChart() {
   const option = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(255,255,255,0.95)',
-      borderColor: '#e5e7eb', borderWidth: 1, borderRadius: 8,
-      textStyle: { color: '#1F2937', fontSize: 12 },
-      axisPointer: { type: 'cross', crossStyle: { color: '#e5e7eb' } },
+      backgroundColor: document.documentElement.classList.contains('dark-mode') ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.95)',
+      borderColor: document.documentElement.classList.contains('dark-mode') ? '#475569' : '#e5e7eb', borderWidth: 1, borderRadius: 8,
+      textStyle: { color: document.documentElement.classList.contains('dark-mode') ? '#e2e8f0' : '#1F2937', fontSize: 12 },
+      axisPointer: { type: 'cross', crossStyle: { color: document.documentElement.classList.contains('dark-mode') ? '#475569' : '#e5e7eb' } },
       formatter: function (params) {
         if (!params || params.length === 0) return ''
-        let r = `<div style="min-width:160px;">
-          <div style="font-weight:600;color:#64748b;margin-bottom:6px;font-size:12px;padding-bottom:5px;border-bottom:1px solid #e5e7eb;">${params[0].axisValue}</div>`
+        const _dk = document.documentElement.classList.contains('dark-mode')
+        let r = `<div style="min-width:160px;color:${_dk ? '#e2e8f0' : '#1f2937'};">
+          <div style="font-weight:600;color:${_dk ? '#94a3b8' : '#64748b'};margin-bottom:6px;font-size:12px;padding-bottom:5px;border-bottom:1px solid ${_dk ? '#475569' : '#e5e7eb'};">${params[0].axisValue}</div>`
         params.forEach(item => {
           const dash = item.seriesType === 'line' ? 'border-radius:1px;' : 'border-radius:2px;'
           r += `<div style="display:flex;align-items:center;justify-content:space-between;margin:3px 0;font-size:12px;">
@@ -125,7 +126,7 @@ function renderChart() {
         nameTextStyle: { color: '#94a3b8', fontSize: 10 },
         axisLine: { show: false },
         axisLabel: { color: '#94a3b8', fontSize: 11 },
-        splitLine: { lineStyle: { color: '#f1f5f9' } }
+        splitLine: { lineStyle: { color: document.documentElement.classList.contains('dark-mode') ? '#334155' : '#f1f5f9' } }
       },
       {
         type: 'value',
@@ -195,17 +196,22 @@ watch(timeline, async () => {
   renderChart()
 }, { deep: true })
 
+function onThemeChange() {
+  if (chartInstance) renderChart()
+}
+
 onMounted(() => {
   useVisibilityReflow()
-  // Solo inicializar si ya hay datos
   if (timeline.value && timeline.value.length > 0) {
     initChart()
   }
   window.addEventListener('resize', onResize)
+  window.addEventListener('dashboard-theme-change', onThemeChange)
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('dashboard-theme-change', onThemeChange)
   if (chartInstance) chartInstance.dispose()
 })
 </script>

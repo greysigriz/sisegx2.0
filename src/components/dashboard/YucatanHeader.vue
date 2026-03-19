@@ -12,19 +12,6 @@
       </div>
     </div>
 
-    <!-- Centro: alertas como badges -->
-    <div class="dash-header__alerts" v-if="alerts && alerts.length > 0">
-      <div v-for="(alert, i) in alerts" :key="i"
-        class="dash-alert-badge"
-        :class="alert.type === 'critical' ? 'dash-alert--critical' : 'dash-alert--warning'">
-        <span class="dash-alert-badge__count">{{ alert.count }}</span>
-        <span class="dash-alert-badge__text">{{ shortMessage(alert.message) }}</span>
-      </div>
-    </div>
-    <div v-else class="dash-header__alerts">
-      <span class="dash-header__ok">Sin alertas</span>
-    </div>
-
     <!-- Derecha: fecha + dark mode toggle -->
     <div class="dash-header__right">
       <span class="dash-header__date">{{ currentDate }}</span>
@@ -38,19 +25,17 @@
 
 <script>
 import { computed, ref } from 'vue'
-import { useDashboardStore } from '@/composables/useDashboardStore.js'
 
 export default {
   name: "YucatanHeader",
   setup() {
-    const { alerts } = useDashboardStore()
-
     const isDark = ref(localStorage.getItem('dashboard-dark') === '1')
 
     function toggleDark() {
       isDark.value = !isDark.value
       localStorage.setItem('dashboard-dark', isDark.value ? '1' : '0')
       document.documentElement.classList.toggle('dark-mode', isDark.value)
+      window.dispatchEvent(new CustomEvent('dashboard-theme-change', { detail: { dark: isDark.value } }))
     }
 
     // Aplicar al montar
@@ -68,19 +53,7 @@ export default {
       })
     })
 
-    function shortMessage(msg) {
-      // Quitar el numero del texto (ya se muestra en el badge count)
-      // "Hay 26 peticiones críticas pendientes" → "criticas pendientes"
-      return msg
-        .replace(/^Hay\s+/i, '')
-        .replace(/^\d+\s+/, '')
-        .replace('peticiones llevan más de 30 días sin resolver', 'retrasadas (+30d)')
-        .replace('peticiones críticas pendientes', 'criticas pendientes')
-        .replace('peticiones críticas pendientes', 'criticas pendientes')
-        .replace('asignaciones a departamentos sin respuesta (+15 días)', 'deptos sin respuesta')
-    }
-
-    return { alerts, currentDate, shortMessage, isDark, toggleDark }
+    return { currentDate, isDark, toggleDark }
   }
 }
 </script>
@@ -128,63 +101,13 @@ export default {
   letter-spacing: 0.06em;
 }
 
-/* Alertas */
-.dash-header__alerts {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.dash-header__ok {
-  font-size: 0.78rem;
-  color: #10b981;
-  font-weight: 600;
-}
-
-.dash-alert-badge {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.dash-alert--critical {
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-.dash-alert--warning {
-  background: #fffbeb;
-  color: #92400e;
-}
-
-.dash-alert-badge__count {
-  background: white;
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-weight: 800;
-  font-size: 0.7rem;
-}
-
-.dash-alert-badge__text {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Derecha */
 .dash-header__right {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
 }
 
 .dash-header__date {
@@ -215,12 +138,6 @@ export default {
   .dash-header {
     flex-wrap: wrap;
     gap: 0.5rem;
-  }
-
-  .dash-header__alerts {
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
   }
 }
 </style>

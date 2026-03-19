@@ -3,8 +3,16 @@
     <!-- Header -->
     <YucatanHeader />
 
+    <!-- Filtro de fecha -->
+    <DateFilter />
+
     <!-- KPIs compactos -->
     <DashboardCards />
+
+    <!-- Mapa Choropleth -->
+    <div class="department-views">
+      <MapaProblemas />
+    </div>
 
     <!-- Panel de Analisis (Dept/Muni) + Distribucion por Estado -->
     <div class="analytics-grid">
@@ -18,17 +26,13 @@
 
     <!-- Timeline de progreso -->
     <AreaChart />
-
-    <!-- Mapa Choropleth -->
-    <div class="department-views">
-      <MapaProblemas />
-    </div>
   </div>
 </template>
 
 <script>
 import { onMounted } from 'vue'
 import YucatanHeader from "@/components/dashboard/YucatanHeader.vue"
+import DateFilter from "@/components/dashboard/DateFilter.vue"
 import DashboardCards from "@/components/dashboard/DashboardCards.vue"
 import AnalysisPanel from "@/components/dashboard/AnalysisPanel.vue"
 import AreaChart from "@/components/dashboard/AreaChartt.vue"
@@ -40,6 +44,7 @@ export default {
   name: "DashboardReportes",
   components: {
     YucatanHeader,
+    DateFilter,
     DashboardCards,
     AnalysisPanel,
     AreaChart,
