@@ -434,7 +434,7 @@ async function renderMap() {
 
   geojsonLayer = L.geoJSON(geojson, {
     style: (feature) => {
-      const key = normalize(feature.properties.NOMGEO)
+      const key = normalize(feature.properties.NOMGEO || feature.properties.nombre)
       const data = dataMap[key]
       const total = data ? Number(data.total) : 0
 
@@ -450,9 +450,9 @@ async function renderMap() {
       }
     },
     onEachFeature: (feature, layer) => {
-      const key = normalize(feature.properties.NOMGEO)
+      const key = normalize(feature.properties.NOMGEO || feature.properties.nombre)
       const data = dataMap[key]
-      const nombre = feature.properties.NOMGEO
+      const nombre = feature.properties.NOMGEO || feature.properties.nombre
 
       layer.bindPopup(buildPopup(nombre, data), {
         maxWidth: 340,
