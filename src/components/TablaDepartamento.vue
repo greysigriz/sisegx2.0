@@ -171,7 +171,7 @@
                       </span>
                     </div>
                     <!-- Estado de la petición general (secundario) -->
-                    <div v-if="peticion.estado_peticion"
+                    <div v-if="peticion.estado_peticion && peticion.estado_peticion.toLowerCase().replace(/[ao]\s/g, ' ').replace(/[ao]$/,'') !== peticion.estado_departamento.toLowerCase().replace(/[ao]\s/g, ' ').replace(/[ao]$/,'')"
                          class="estado-secundario"
                          :class="`estado-secundario-${(peticion.estado_peticion || '').toLowerCase().replace(/ /g, '-')}`"
                          :title="`Estado general de la petición: ${peticion.estado_peticion}`">
@@ -1582,7 +1582,7 @@ export default {
   gap: 0.35rem;
   padding: 0.35rem 0.6rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 10px;
+  border-radius: 4px;
   font-size: 10px;
   color: #6c757d;
   border: 1px solid #dee2e6;
@@ -1708,7 +1708,7 @@ export default {
   margin-bottom: 2rem;
   padding: 1.5rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #dee2e6;
 }
 
@@ -1739,7 +1739,7 @@ export default {
   font-weight: 500;
   padding: 0.5rem 0.75rem;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #ced4da;
 }
 
@@ -1747,7 +1747,7 @@ export default {
   margin-top: 1.5rem;
   padding: 1.5rem;
   background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #c3e6cb;
 }
 
@@ -1775,7 +1775,7 @@ export default {
   margin-top: 1.5rem;
   padding: 1.5rem;
   background: linear-gradient(135deg, #e8f4f8 0%, #d6eaf8 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #aed6f1;
 }
 
@@ -1919,7 +1919,7 @@ export default {
   margin-bottom: 1.5rem;
   padding: 1.25rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #dee2e6;
 }
 
@@ -2019,7 +2019,7 @@ export default {
   margin-top: 2rem;
   padding: 1.5rem;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #e9ecef;
 }
 

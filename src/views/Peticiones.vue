@@ -227,7 +227,7 @@
                      :class="{ 'clickeable': puedeEditarPeticion(peticion), 'no-clickeable': !puedeEditarPeticion(peticion) }"
                      :title="puedeEditarPeticion(peticion) ? 'Click para cambiar estado' : 'Sin permisos para editar esta petición'">
                   <div class="peticion-estado-container">
-                    <span v-if="requiereAtencionPeticion(peticion)" class="atencion-badge" title="Requiere atención"></span>
+                    <!-- <span v-if="requiereAtencionPeticion(peticion)" class="atencion-badge" title="Requiere atención"></span> -->
                     <span :class="['estado-badge', 'estado-' + peticion.estado.toLowerCase().replace(/\s+/g, '-')]">
                       {{ peticion.estado }}
                     </span>
@@ -253,10 +253,10 @@
                       <span class="badge-text">{{ peticion.departamentos.length }}</span>
                       <i class="fas fa-cog badge-icon"></i>
                     </div>
-                    <!-- Barra de progreso compacta -->
-                    <div class="progreso-inline" :title="calcularProgresoPeticion(peticion).texto">
+                    <!-- Barra de progreso compacta (oculta) -->
+                    <!-- <div class="progreso-inline" :title="calcularProgresoPeticion(peticion).texto">
                       <div class="progreso-barra-inline" :style="{ width: calcularProgresoPeticion(peticion).porcentaje + '%' }"></div>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
 
@@ -842,7 +842,16 @@
             </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;">
+          <button
+            v-if="puedeEditarPeticion(peticionDeptEstados)"
+            type="button"
+            class="btn-opcion"
+            style="border-color:#f59e0b;color:#d97706;font-size:0.85rem;padding:0.6rem 1rem;"
+            @click="cerrarModalDepartamentosEstados(); gestionarDepartamentos(peticionDeptEstados);"
+          >
+            <i class="fas fa-cog"></i> Gestionar departamentos
+          </button>
           <button type="button" class="btn-secondary" @click="cerrarModalDepartamentosEstados">
             <i class="fas fa-times"></i> Cerrar
           </button>
@@ -2076,10 +2085,16 @@ export default {
       showDepartamentosModal.value = true;
     };
 
-    // Función para mostrar menú de opciones de departamentos
+    // Función para mostrar departamentos - va directo sin menú intermedio
     const mostrarMenuDepartamentos = (peticion) => {
       peticionSeleccionadaMenu.value = peticion;
-      showMenuDepartamentos.value = true;
+      if (peticion.departamentos && peticion.departamentos.length > 0) {
+        // Tiene departamentos: abrir estados directamente
+        abrirModalDepartamentosEstados(peticion);
+      } else {
+        // Sin departamentos: abrir gestionar directamente
+        gestionarDepartamentos(peticion);
+      }
     };
 
     // Función para ver estados desde el menú
@@ -3017,14 +3032,14 @@ export default {
 
 .peticiones-container .skeleton-item {
   display: grid;
-  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px;
-  gap: 10px;
+  grid-template-columns: 65px 1.2fr 1.4fr 0.9fr 0.8fr 1.2fr 1.1fr 1.1fr 1fr;
+  gap: 6px;
   padding: 1rem;
   background: white;
   border-bottom: 1px solid #f1f5f9;
   margin-bottom: 0.5rem;
-  border-radius: 10px;
-  min-width: max-content;
+  border-radius: 6px;
+  min-width: 0;
 }
 
 .peticiones-container .skeleton {
@@ -3093,7 +3108,7 @@ export default {
 
 .peticiones-container .tabla-scroll-container {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: visible;
   position: relative;
   -webkit-overflow-scrolling: touch;
@@ -3101,7 +3116,7 @@ export default {
 
 .peticiones-container .tabla-contenido {
   width: 100%;
-  min-width: max-content;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -3109,22 +3124,22 @@ export default {
 /* Estilos con máxima especificidad para forzar el header */
 .peticiones-container .peticiones-list .tabla-scroll-container .tabla-contenido .list-header.header-forzado {
   display: grid !important;
-  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px !important;
+  grid-template-columns: 65px 1.2fr 1.4fr 0.9fr 0.8fr 1.2fr 1.1fr 1.1fr 1fr !important;
   background: linear-gradient(135deg, #0074D9, #0056b3) !important;
   color: white !important;
-  padding: 1rem !important;
+  padding: 1rem 0.5rem !important;
   font-weight: 600 !important;
-  font-size: 0.9rem !important;
+  font-size: 0.75rem !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 0.3px !important;
   position: sticky !important;
   top: 0 !important;
   z-index: 100 !important;
-  min-width: 1410px !important;
-  width: max-content !important;
+  min-width: 0 !important;
+  width: 100% !important;
   box-sizing: border-box !important;
-  border-radius: 16px 16px 0 0 !important;
-  gap: 10px !important;
+  border-radius: 8px 8px 0 0 !important;
+  gap: 6px !important;
   align-items: center !important;
 }
 
@@ -3132,26 +3147,27 @@ export default {
   color: white !important;
   background: transparent !important;
   text-align: center !important;
-  padding: 0.5rem !important;
+  padding: 0.25rem !important;
   white-space: normal !important;
   word-wrap: break-word !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   line-height: 1.3 !important;
 }
 
+
 /* ✅ ESTILOS PARA FILAS DE LA TABLA CON GRID CONSISTENTE */
 .peticiones-container .peticion-item {
   display: grid !important;
-  grid-template-columns: 120px 130px 200px 120px 150px 180px 150px 150px 130px !important;
+  grid-template-columns: 65px 1.2fr 1.4fr 0.9fr 0.8fr 1.2fr 1.1fr 1.1fr 1fr !important;
   align-items: center !important;
-  padding: 1rem 0 !important;
+  padding: 0.6rem 0.5rem !important;
   border-bottom: 1px solid #f1f5f9 !important;
   transition: all 0.2s ease !important;
-  min-width: max-content !important;
-  gap: 10px !important;
+  min-width: 0 !important;
+  gap: 6px !important;
   background: white;
 }
 
@@ -3166,10 +3182,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0.5rem;
   overflow: hidden;
-  max-width: 120px;
-  width: 120px;
 }
 
 .peticiones-container .peticion-folio {
@@ -3177,11 +3190,8 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 130px;
-  width: 130px;
 }
 
 .peticiones-container .peticion-folio:hover {
@@ -3194,11 +3204,8 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 200px;
-  width: 200px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -3213,11 +3220,8 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 120px;
-  width: 120px;
 }
 
 .peticiones-container .peticion-telefono:hover {
@@ -3230,11 +3234,8 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 150px;
-  width: 150px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -3249,11 +3250,7 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
-  overflow: hidden;
-  max-width: 180px;
-  width: 180px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -3267,10 +3264,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
   overflow: hidden;
-  max-width: 150px;
-  width: 150px;
 }
 
 .peticiones-container .peticion-prioridad {
@@ -3279,11 +3273,8 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 150px;
-  width: 150px;
 }
 
 .peticiones-container .peticion-prioridad:hover {
@@ -3296,12 +3287,9 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0.5rem;
   font-size: 13px;
   transition: all 0.2s ease;
   overflow: hidden;
-  max-width: 130px;
-  width: 130px;
   word-break: break-word;
   overflow-wrap: break-word;
 }
@@ -3316,7 +3304,7 @@ export default {
   background: linear-gradient(135deg, #0074D9, #0056b3);
   color: white;
   padding: 6px 10px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   white-space: normal;
@@ -3402,8 +3390,6 @@ export default {
   justify-content: center;
   flex-direction: column;
   width: 100%;
-  max-width: 100%;
-  overflow: hidden;
 }
 
 /* Estilos para wrapper de departamentos */
@@ -3436,7 +3422,7 @@ export default {
 /* ✅ ESTILOS DE ESTADO - Mejor espaciado */
 .peticiones-container .estado-badge {
   padding: 6px 12px;
-  border-radius: 14px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -3469,7 +3455,7 @@ export default {
   gap: 8px;
   background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 13px;
   color: #2e7d32;
   border: 1px solid #a5d6a7;
@@ -3551,7 +3537,7 @@ export default {
   margin-top: 12px;
   padding: 12px;
   background: linear-gradient(135deg, #fff9e6, #fff3d9);
-  border-radius: 10px;
+  border-radius: 6px;
   border: 1px solid #ffe0a3;
 }
 
@@ -3577,7 +3563,7 @@ export default {
   padding: 6px 14px;
   background: linear-gradient(135deg, #ffd700, #ffed4e);
   border: 1px solid #daa520;
-  border-radius: 18px;
+  border-radius: 6px;
   color: #8b6914;
   font-size: 12px;
   font-weight: 600;
@@ -3627,7 +3613,7 @@ export default {
   width: 100%;
   padding: 12px 40px 12px 16px;
   border: 2px solid #e0e0e0;
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 14px;
   transition: all 0.3s ease;
 }
@@ -3694,7 +3680,7 @@ export default {
 .peticiones-container .peticion-info {
   background: #f8fafc;
   padding: 1rem;
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 1.5rem;
   border-left: 4px solid #0074D9;
   font-size: 14px;
@@ -3712,7 +3698,7 @@ export default {
   align-items: center;
   padding: 1rem;
   border: 2px solid #e9ecef;
-  border-radius: 12px;
+  border-radius: 6px;
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -3839,7 +3825,7 @@ export default {
   padding: 1.1rem;
   background: linear-gradient(135deg, #0074D9, #0056b3);
   color: white;
-  border-radius: 16px 16px 0 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .peticiones-container .modal-detalles-header h3 {
@@ -3874,7 +3860,7 @@ export default {
 
 .peticiones-container .detalle-seccion {
   background: white;
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #e5e7eb;
@@ -3954,7 +3940,7 @@ export default {
   padding: 2rem 1rem;
   background: #f8fafc;
   border: 2px dashed #e5e7eb;
-  border-radius: 16px;
+  border-radius: 8px;
   color: #64748b;
   font-size: 14px;
   display: flex;
@@ -4000,7 +3986,7 @@ export default {
 
 .peticiones-container .dept-estado {
   padding: 4px 8px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4034,7 +4020,7 @@ export default {
 .peticiones-container .estado-badge,
 .peticiones-container .prioridad-badge {
   padding: 6px 10px;
-  border-radius: 14px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4133,7 +4119,7 @@ export default {
   align-items: center;
   gap: 3px;
   padding: 4px 6px;
-  border-radius: 10px;
+  border-radius: 4px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4225,7 +4211,7 @@ export default {
   justify-content: center;
   gap: 5px;
   padding: 5px 10px;
-  border-radius: 14px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -4484,7 +4470,7 @@ export default {
 /* Estilos para badges de estado grandes */
 .peticiones-container .estado-badge-large {
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4536,7 +4522,7 @@ export default {
 
 .peticiones-container .dept-mini-badge {
   padding: 3px 6px;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 9px;
   font-weight: 600;
   text-transform: uppercase;
@@ -4579,7 +4565,7 @@ export default {
 .peticiones-container .seguimiento-indicator {
   width: auto;
   padding: 3px 6px;
-  border-radius: 10px;
+  border-radius: 4px;
   font-size: 9px;
   display: inline-flex;
   align-items: center;
@@ -4628,7 +4614,7 @@ export default {
 
 .peticiones-container .nivel-importancia {
   padding: 4px 8px;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;

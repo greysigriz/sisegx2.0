@@ -1,28 +1,29 @@
-/* Estilos para TablaDepartamento - Copia adaptada de Petition.css con namespace único */
+/* Estilos para TablaDepartamento - Diseño limpio y moderno */
 
 /* Importar los estilos base de Petition.css */
 @import './Petition.css';
 
-/* Sobrescribir el contenedor principal con namespace único y !important */
+/* ── Contenedor principal ── */
 .tabla-departamento-container {
-  margin: 2rem auto !important;
-  padding: 1.5rem !important;
-  width: 95% !important;
+  margin: 1.5rem auto !important;
+  padding: 1rem !important;
+  width: 96% !important;
   max-width: 1600px !important;
 }
 
 .tabla-departamento-container .card {
   background: #ffffff !important;
   color: black !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
-  border: 1px solid rgba(0, 74, 217, 0.1) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  border: 1px solid #e5e7eb !important;
   overflow: hidden !important;
   position: relative !important;
 }
 
+/* ── Header ── */
 .tabla-departamento-container .card-header {
-  padding: 1.5rem !important;
+  padding: 1rem 1.25rem !important;
   background: linear-gradient(135deg, #0074D9, #0056b3) !important;
   color: white !important;
   border-bottom: none !important;
@@ -34,11 +35,292 @@
 .tabla-departamento-container .card-header h3 {
   margin: 0 !important;
   color: white !important;
-  font-size: 1.25rem !important;
+  font-size: 1.1rem !important;
   font-weight: 600 !important;
 }
 
 .tabla-departamento-container .header-actions {
   display: flex !important;
-  gap: 1rem !important;
+  gap: 0.75rem !important;
+  align-items: center !important;
+}
+
+/* ── Filtros ── */
+.tabla-departamento-container .filtros-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.75rem !important;
+  padding: 1rem !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  align-items: flex-end !important;
+}
+
+.tabla-departamento-container .filtro label {
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.tabla-departamento-container .filtro input,
+.tabla-departamento-container .filtro select {
+  border-radius: 6px !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.8rem !important;
+  transition: border-color 0.2s !important;
+}
+
+.tabla-departamento-container .filtro input:focus,
+.tabla-departamento-container .filtro select:focus {
+  border-color: #93c5fd !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15) !important;
+}
+
+.tabla-departamento-container .btn-filter {
+  border-radius: 6px !important;
+  font-size: 0.8rem !important;
+  padding: 0.4rem 0.8rem !important;
+}
+
+.tabla-departamento-container .btn-clear-filters {
+  border-radius: 6px !important;
+  font-size: 0.75rem !important;
+}
+
+/* ── Tabla: header y filas ── */
+.tabla-departamento-container .list-header {
+  background: linear-gradient(135deg, #0074D9, #0056b3) !important;
+  color: white !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  padding: 0.8rem 0.5rem !important;
+  border-radius: 6px 6px 0 0 !important;
+  gap: 6px !important;
+}
+
+.tabla-departamento-container .list-header > div {
+  text-align: center !important;
+  padding: 0.25rem !important;
+  overflow: visible !important;
+}
+
+.tabla-departamento-container .peticion-item {
+  padding: 0.6rem 0.5rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  gap: 6px !important;
+  transition: background 0.15s !important;
+}
+
+.tabla-departamento-container .peticion-item:hover {
+  background: #f8fafc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Badges ── */
+.tabla-departamento-container .folio-badge {
+  border-radius: 6px !important;
+  font-size: 0.7rem !important;
+  padding: 4px 8px !important;
+}
+
+.tabla-departamento-container .estado-badge {
+  border-radius: 6px !important;
+  font-size: 0.68rem !important;
+  padding: 4px 8px !important;
+}
+
+.tabla-departamento-container .estado-badge-large {
+  border-radius: 6px !important;
+}
+
+.tabla-departamento-container .nivel-importancia {
+  border-radius: 6px !important;
+  font-size: 0.7rem !important;
+}
+
+/* ── Colores de estado (pastel como Peticiones.vue) ── */
+.tabla-departamento-container .estado-badge {
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.tabla-departamento-container .estado-badge::before {
+  font-size: 11px !important;
+  margin-right: 4px !important;
+}
+
+.tabla-departamento-container .estado-sin-revisar {
+  background: #fff4e6 !important;
+  color: #d97706 !important;
+  border-color: #fde68a !important;
+}
+
+.tabla-departamento-container .estado-por-asignar-departamento {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+
+.tabla-departamento-container .estado-esperando-recepción {
+  background: #fef9e6 !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
+}
+
+.tabla-departamento-container .estado-aceptada-en-proceso,
+.tabla-departamento-container .estado-aceptado-en-proceso {
+  background: #e6f4f9 !important;
+  color: #1b6b8a !important;
+  border-color: #b8dae9 !important;
+}
+
+.tabla-departamento-container .estado-completado {
+  background: #e8f5f0 !important;
+  color: #2b8a5a !important;
+  border-color: #c3e6cb !important;
+}
+
+.tabla-departamento-container .estado-devuelto,
+.tabla-departamento-container .estado-devuelto-a-seguimiento {
+  background: #f3e8ff !important;
+  color: #7c3aed !important;
+  border-color: #ddd6fe !important;
+}
+
+.tabla-departamento-container .estado-rechazado,
+.tabla-departamento-container .estado-rechazado-por-departamento {
+  background: #ffe8eb !important;
+  color: #c92a3a !important;
+  border-color: #fecdd3 !important;
+}
+
+.tabla-departamento-container .estado-improcedente {
+  background: #f5f5f5 !important;
+  color: #6b7280 !important;
+  border-color: #d1d5db !important;
+}
+
+.tabla-departamento-container .estado-cancelada {
+  background: #fff0f0 !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+/* ── Colores de importancia (pastel como Peticiones.vue) ── */
+.tabla-departamento-container .nivel-1 {
+  background: #ffe8eb !important;
+  color: #c92a3a !important;
+  border: 1px solid #fecdd3 !important;
+}
+
+.tabla-departamento-container .nivel-2 {
+  background: #fff4e6 !important;
+  color: #e8590c !important;
+  border: 1px solid #fed7aa !important;
+}
+
+.tabla-departamento-container .nivel-3 {
+  background: #fff9e6 !important;
+  color: #c78116 !important;
+  border: 1px solid #fde68a !important;
+}
+
+.tabla-departamento-container .nivel-4 {
+  background: #e8f5f0 !important;
+  color: #2b8a5a !important;
+  border: 1px solid #c3e6cb !important;
+}
+
+.tabla-departamento-container .nivel-5 {
+  background: #f0f1f3 !important;
+  color: #5c6773 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* ── Folio badge (azul como Peticiones.vue) ── */
+.tabla-departamento-container .folio-badge {
+  background: linear-gradient(135deg, #0074D9, #0056b3) !important;
+  color: white !important;
+}
+
+/* ── Botones de acción ── */
+.tabla-departamento-container .action-btn {
+  border-radius: 6px !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 0.75rem !important;
+}
+
+.tabla-departamento-container .action-btn.menu {
+  border-radius: 6px !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+/* ── Modales ── */
+.tabla-departamento-container .modal-content {
+  border-radius: 8px !important;
+}
+
+.tabla-departamento-container .modal-header {
+  border-radius: 8px 8px 0 0 !important;
+  padding: 1rem 1.25rem !important;
+}
+
+.tabla-departamento-container .modal-header h3 {
+  font-size: 1rem !important;
+}
+
+/* ── Cards internas ── */
+.tabla-departamento-container .detalle-seccion,
+.tabla-departamento-container .departamento-item {
+  border-radius: 8px !important;
+}
+
+/* ── Paginación ── */
+.tabla-departamento-container .btn-paginacion {
+  border-radius: 6px !important;
+}
+
+.tabla-departamento-container .select-registros {
+  border-radius: 6px !important;
+}
+
+/* ── Scroll container ── */
+.tabla-departamento-container .tabla-scroll-container {
+  overflow-x: auto !important;
+}
+
+/* ── Info de resultados ── */
+.tabla-departamento-container .resultados-info {
+  font-size: 0.8rem !important;
+  color: #64748b !important;
+  padding: 0.5rem 0 !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .tabla-departamento-container {
+    padding: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .tabla-departamento-container .filtros-container {
+    flex-direction: column !important;
+  }
+
+  .tabla-departamento-container .card-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    text-align: center !important;
+  }
 }

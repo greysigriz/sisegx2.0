@@ -56,13 +56,14 @@
         </div>
       </div>
 
-      <!-- Alertas (todos los roles) -->
+      <!-- Alertas (todos los roles) - clickables para canalizador -->
       <div v-if="dashboardData && dashboardData.alerts && dashboardData.alerts.length > 0" class="bv-alerts">
         <div
           v-for="(alert, index) in dashboardData.alerts"
           :key="index"
-          class="bv-alert"
-          :class="'bv-alert--' + alert.type"
+          class="bv-alert bv-alert--clickable"
+          :class="['bv-alert--' + alert.type, { 'bv-alert--active': isDrillActive(alert.type === 'critical' ? 'alert_critical' : 'alert_retrasadas', null) }]"
+          @click="(isCanalizadorMunicipal || isCanalizadorEstatal) ? fetchDrillDown(alert.type === 'critical' ? 'alert_critical' : 'alert_retrasadas', null, alert.message) : null"
         >
           <div class="bv-alert-icon">
             <i :class="alert.type === 'critical' ? 'fas fa-exclamation-circle' : 'fas fa-clock'"></i>
@@ -71,8 +72,54 @@
             <span class="bv-alert-msg">{{ alert.message }}</span>
             <span class="bv-alert-count">{{ alert.count }} peticiones</span>
           </div>
+          <i v-if="isCanalizadorMunicipal || isCanalizadorEstatal" class="fas fa-chevron-down bv-drill-chevron bv-drill-chevron--sm" :class="{ 'bv-drill-chevron--open': isDrillActive(alert.type === 'critical' ? 'alert_critical' : 'alert_retrasadas', null) }"></i>
         </div>
       </div>
+
+      <!-- Drill-down for alerts -->
+      <Transition name="bv-slide-detail">
+        <div v-if="drillDown && (drillDown.tipo === 'alert_critical' || drillDown.tipo === 'alert_retrasadas')" class="bv-drill-panel bv-fade-in">
+          <div v-if="drillDownLoading" class="bv-drill-loading">
+            <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+            <span>Cargando peticiones...</span>
+          </div>
+          <template v-else-if="drillDownPetitions.length > 0">
+            <div class="bv-drill-header">
+              <span class="bv-drill-title">{{ drillDown.title }}</span>
+              <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+              <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                <i class="fas fa-download"></i> CSV
+              </button>
+              <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="bv-drill-table-wrap">
+              <table class="bv-drill-table">
+                <thead>
+                  <tr>
+                    <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                    <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                    <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                    <td>{{ pet.nombre || 'Anonimo' }}</td>
+                    <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                    <td>{{ pet.Municipio || '-' }}</td>
+                    <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                    <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                    <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                    <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+          <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
+        </div>
+      </Transition>
 
       <!-- Accesos Directos (SOLO Director y Super Usuario) -->
       <!-- <div v-if="isAdmin && filteredQuickActions.length > 0" class="bv-shortcuts bv-fade-in">
@@ -210,38 +257,87 @@
       <template v-if="(isCanalizadorMunicipal || isCanalizadorEstatal) && !isAdmin && dashboardData && dashboardData.statistics">
         <h2 class="bv-section-title bv-fade-in">
           <span class="bv-section-icon"><i class="fas fa-broadcast-tower"></i></span>
-          <span>{{ isCanalizadorMunicipal ? 'Panel de canalización municipal' : 'Panel de canalización estatal' }}</span>
+          <span>{{ isCanalizadorMunicipal ? 'Panel de canalizacion municipal' : 'Panel de canalizacion estatal' }}</span>
           <span class="bv-section-line"></span>
         </h2>
 
-        <!-- Métricas -->
+        <!-- Metricas clickables -->
         <div class="bv-metrics-row bv-fade-in">
-          <div class="bv-metric bv-metric--blue">
+          <div class="bv-metric bv-metric--blue bv-metric--clickable"
+               :class="{ 'bv-metric--active': isDrillActive('total', null) }"
+               @click="fetchDrillDown('total', null, 'Total peticiones')">
             <div class="bv-metric-icon"><i class="fas fa-inbox"></i></div>
             <div class="bv-metric-data">
               <div class="bv-metric-value">{{ dashboardData.statistics.total_peticiones || 0 }}</div>
               <div class="bv-metric-label">Total peticiones</div>
             </div>
+            <i class="fas fa-chevron-down bv-drill-chevron" :class="{ 'bv-drill-chevron--open': isDrillActive('total', null) }"></i>
           </div>
-          <div class="bv-metric bv-metric--amber">
+          <div class="bv-metric bv-metric--amber bv-metric--clickable"
+               :class="{ 'bv-metric--active': isDrillActive('retrasadas', null) }"
+               @click="fetchDrillDown('retrasadas', null, 'Peticiones retrasadas (+30 dias)')">
             <div class="bv-metric-icon"><i class="fas fa-hourglass-end"></i></div>
             <div class="bv-metric-data">
               <div class="bv-metric-value">{{ dashboardData.statistics.peticiones_retrasadas || 0 }}</div>
               <div class="bv-metric-label">Retrasadas (+30 dias)</div>
             </div>
+            <i class="fas fa-chevron-down bv-drill-chevron" :class="{ 'bv-drill-chevron--open': isDrillActive('retrasadas', null) }"></i>
           </div>
         </div>
 
+        <!-- Drill-down panel (after metrics) -->
+        <Transition name="bv-slide-detail">
+          <div v-if="drillDown && (drillDown.tipo === 'total' || drillDown.tipo === 'retrasadas')" class="bv-drill-panel bv-fade-in">
+            <div v-if="drillDownLoading" class="bv-drill-loading">
+              <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+              <span>Cargando peticiones...</span>
+            </div>
+            <template v-else-if="drillDownPetitions.length > 0">
+              <div class="bv-drill-header">
+                <span class="bv-drill-title">{{ drillDown.title }}</span>
+                <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+                <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                  <i class="fas fa-download"></i> CSV
+                </button>
+                <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="bv-drill-table-wrap">
+                <table class="bv-drill-table">
+                  <thead>
+                    <tr>
+                      <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                      <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                      <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                      <td>{{ pet.nombre || 'Anonimo' }}</td>
+                      <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                      <td>{{ pet.Municipio || '-' }}</td>
+                      <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                      <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                      <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                      <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+            <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
+          </div>
+        </Transition>
 
-
-
-        <!-- Estados -->
+        <!-- Estados clickables -->
         <div v-if="dashboardData.statistics.por_estado" class="bv-states-grid bv-fade-in">
           <div
             v-for="(estado, index) in dashboardData.statistics.por_estado"
             :key="index"
-            class="bv-state-card"
-            :class="'bv-state--' + slugify(estado.estado)"
+            class="bv-state-card bv-state-card--clickable"
+            :class="['bv-state--' + slugify(estado.estado), { 'bv-state-card--active': isDrillActive('estado', estado.estado) }]"
+            @click="fetchDrillDown('estado', estado.estado, estado.estado)"
           >
             <div class="bv-state-icon">
               <i :class="getEstadoIcon(estado.estado)"></i>
@@ -250,33 +346,152 @@
               <div class="bv-state-value">{{ estado.cantidad }}</div>
               <div class="bv-state-label">{{ estado.estado }}</div>
             </div>
+            <i class="fas fa-chevron-down bv-drill-chevron bv-drill-chevron--sm" :class="{ 'bv-drill-chevron--open': isDrillActive('estado', estado.estado) }"></i>
           </div>
         </div>
 
-<!-- Peticiones urgentes -->
-<div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="bv-card bv-card--carousel">
-          <h3 class="bv-card-title">
+        <!-- Drill-down panel (after estados) -->
+        <Transition name="bv-slide-detail">
+          <div v-if="drillDown && drillDown.tipo === 'estado'" class="bv-drill-panel bv-fade-in">
+            <div v-if="drillDownLoading" class="bv-drill-loading">
+              <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+              <span>Cargando peticiones...</span>
+            </div>
+            <template v-else-if="drillDownPetitions.length > 0">
+              <div class="bv-drill-header">
+                <span class="bv-drill-title">{{ drillDown.title }}</span>
+                <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+                <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                  <i class="fas fa-download"></i> CSV
+                </button>
+                <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div class="bv-drill-table-wrap">
+                <table class="bv-drill-table">
+                  <thead>
+                    <tr>
+                      <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                      <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                      <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                      <td>{{ pet.nombre || 'Anonimo' }}</td>
+                      <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                      <td>{{ pet.Municipio || '-' }}</td>
+                      <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                      <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                      <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                      <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+            <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
+          </div>
+        </Transition>
+
+        <!-- Peticiones urgentes -->
+        <div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="bv-card bv-card--carousel">
+          <h3 class="bv-card-title bv-card-title--clickable"
+              @click="fetchDrillDown('urgentes', null, 'Peticiones que requieren atencion')">
             <i class="fas fa-exclamation-triangle"></i>
             Peticiones que requieren atencion
-            <span class="bv-card-count">{{ dashboardData.recent_petitions.length }}</span>
+            <span class="bv-card-count">{{ filteredCarouselPetitions.length }}</span>
+            <i class="fas fa-chevron-down bv-drill-chevron bv-drill-chevron--title" :class="{ 'bv-drill-chevron--open': isDrillActive('urgentes', null) }"></i>
           </h3>
-          <Swiper
-            :modules="swiperModules"
-            :slides-per-view="1"
-            :space-between="16"
-            :navigation="true"
-            :pagination="{ clickable: true }"
-            :breakpoints="{
-              640: { slidesPerView: 1.5 },
-              900: { slidesPerView: 2 },
-              1200: { slidesPerView: 2.5 }
-            }"
-            class="bv-swiper"
-          >
-            <SwiperSlide
-              v-for="petition in dashboardData.recent_petitions"
-              :key="petition.id"
+
+          <!-- Filtros del carrusel -->
+          <div class="bv-sort-bar" @click.stop>
+            <span class="bv-sort-label">Filtrar:</span>
+            <div v-if="carouselMuniOptions.length > 1" class="bv-filter-select-wrap">
+              <i class="fas fa-map-marker-alt bv-filter-icon"></i>
+              <select v-model="carouselFilterMuni" class="bv-filter-select">
+                <option value="">Todos los municipios</option>
+                <option v-for="m in carouselMuniOptions" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+            <div v-if="carouselDeptOptions.length > 1" class="bv-filter-select-wrap">
+              <i class="fas fa-building bv-filter-icon"></i>
+              <select v-model="carouselFilterDept" class="bv-filter-select">
+                <option value="">Todos los departamentos</option>
+                <option v-for="d in carouselDeptOptions" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Drill-down inline for urgentes -->
+          <Transition name="bv-slide-detail">
+            <div v-if="isDrillActive('urgentes', null)" class="bv-drill-panel bv-drill-panel--inline">
+              <div v-if="drillDownLoading" class="bv-drill-loading">
+                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+                <span>Cargando peticiones...</span>
+              </div>
+              <template v-else-if="drillDownPetitions.length > 0">
+                <div class="bv-drill-header">
+                  <span class="bv-drill-title">{{ drillDown.title }}</span>
+                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                    <i class="fas fa-download"></i> CSV
+                  </button>
+                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="bv-drill-table-wrap">
+                  <table class="bv-drill-table">
+                    <thead>
+                      <tr>
+                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                        <td>{{ pet.nombre || 'Anonimo' }}</td>
+                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                        <td>{{ pet.Municipio || '-' }}</td>
+                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+              <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
+            </div>
+          </Transition>
+
+          <template v-if="!isDrillActive('urgentes', null)">
+            <div v-if="filteredCarouselPetitions.length === 0" class="bv-drill-empty">
+              No hay peticiones con los filtros seleccionados.
+            </div>
+            <Swiper
+              v-else
+              :key="carouselFilterMuni + carouselFilterDept"
+              :modules="swiperModules"
+              :slides-per-view="1"
+              :space-between="16"
+              :navigation="true"
+              :pagination="{ clickable: true }"
+              :breakpoints="{
+                640: { slidesPerView: 1.5 },
+                900: { slidesPerView: 2 },
+                1200: { slidesPerView: 2.5 }
+              }"
+              class="bv-swiper"
             >
+              <SwiperSlide
+                v-for="petition in filteredCarouselPetitions"
+                :key="petition.id"
+              >
               <div
                 class="bv-petition-card"
                 :class="'bv-nivel--' + petition.NivelImportancia"
@@ -312,53 +527,184 @@
               </div>
             </SwiperSlide>
           </Swiper>
+          </template>
         </div>
 
-        <!-- Top Departamentos -->
+        <!-- Top Departamentos clickables -->
         <div v-if="dashboardData.statistics.departamentos_top && dashboardData.statistics.departamentos_top.length > 0" class="bv-card">
           <h3 class="bv-card-title">
             <i class="fas fa-building"></i>
             Departamentos con mas peticiones
+            <span class="bv-card-count">{{ sortedDepartamentos.length }}</span>
           </h3>
+          <div class="bv-sort-bar">
+            <span class="bv-sort-label">Ordenar:</span>
+            <button class="bv-sort-btn" :class="{ 'bv-sort-btn--active': deptSort.startsWith('cantidad') }" @click="deptSort = deptSort === 'cantidad-desc' ? 'cantidad-asc' : 'cantidad-desc'">
+              Cantidad
+              <i class="fas" :class="deptSort === 'cantidad-asc' ? 'fa-arrow-up' : 'fa-arrow-down'"></i>
+            </button>
+            <button class="bv-sort-btn" :class="{ 'bv-sort-btn--active': deptSort.startsWith('nombre') }" @click="deptSort = deptSort === 'nombre-asc' ? 'nombre-desc' : 'nombre-asc'">
+              Nombre
+              <i class="fas" :class="deptSort === 'nombre-desc' ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+            </button>
+            <div v-if="availableMunicipiosForDeptFilter.length > 1" class="bv-filter-select-wrap">
+              <i class="fas fa-filter bv-filter-icon"></i>
+              <select v-model="deptFilterMuni" class="bv-filter-select">
+                <option value="">Todos los municipios</option>
+                <option v-for="m in availableMunicipiosForDeptFilter" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
           <div class="bv-ranking-list">
             <div
-              v-for="(dept, index) in dashboardData.statistics.departamentos_top"
-              :key="index"
-              class="bv-ranking-item"
+              v-for="(dept, index) in sortedDepartamentos"
+              :key="dept.departamento"
+              class="bv-ranking-item bv-ranking-item--clickable"
+              :class="{ 'bv-ranking-item--active': isDrillActive('departamento', dept.departamento) }"
+              @click="fetchDrillDown('departamento', dept.departamento, 'Depto: ' + dept.departamento)"
             >
               <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
               <span class="bv-ranking-name">{{ dept.departamento }}</span>
               <span class="bv-ranking-count">{{ dept.cantidad }}</span>
               <div class="bv-ranking-bar">
-                <div class="bv-ranking-fill" :style="{ width: getPercentage(dept.cantidad, dashboardData.statistics.departamentos_top.map(d => d.cantidad)) + '%' }"></div>
+                <div class="bv-ranking-fill" :style="{ width: getPercentage(dept.cantidad, sortedDepartamentos.map(d => d.cantidad)) + '%' }"></div>
               </div>
             </div>
           </div>
+
+          <!-- Drill-down inline for departamentos -->
+          <Transition name="bv-slide-detail">
+            <div v-if="drillDown && drillDown.tipo === 'departamento'" class="bv-drill-panel bv-drill-panel--inline">
+              <div v-if="drillDownLoading" class="bv-drill-loading">
+                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+                <span>Cargando peticiones...</span>
+              </div>
+              <template v-else-if="drillDownPetitions.length > 0">
+                <div class="bv-drill-header">
+                  <span class="bv-drill-title">{{ drillDown.title }}</span>
+                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                    <i class="fas fa-download"></i> CSV
+                  </button>
+                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="bv-drill-table-wrap">
+                  <table class="bv-drill-table">
+                    <thead>
+                      <tr>
+                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                        <td>{{ pet.nombre || 'Anonimo' }}</td>
+                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                        <td>{{ pet.Municipio || '-' }}</td>
+                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+              <div v-else class="bv-drill-empty">No hay peticiones para este departamento.</div>
+            </div>
+          </Transition>
         </div>
 
-        <!-- Top Municipios (Estatal) -->
+        <!-- Top Municipios (Estatal) clickables -->
         <div v-if="isCanalizadorEstatal && dashboardData.statistics.top_municipios" class="bv-card">
           <h3 class="bv-card-title">
             <i class="fas fa-map-marked-alt"></i>
             Municipios con mas peticiones
+            <span class="bv-card-count">{{ sortedMunicipios.length }}</span>
           </h3>
+          <div class="bv-sort-bar">
+            <span class="bv-sort-label">Ordenar:</span>
+            <button class="bv-sort-btn" :class="{ 'bv-sort-btn--active': muniSort.startsWith('cantidad') }" @click="muniSort = muniSort === 'cantidad-desc' ? 'cantidad-asc' : 'cantidad-desc'">
+              Cantidad
+              <i class="fas" :class="muniSort === 'cantidad-asc' ? 'fa-arrow-up' : 'fa-arrow-down'"></i>
+            </button>
+            <button class="bv-sort-btn" :class="{ 'bv-sort-btn--active': muniSort.startsWith('nombre') }" @click="muniSort = muniSort === 'nombre-asc' ? 'nombre-desc' : 'nombre-asc'">
+              Nombre
+              <i class="fas" :class="muniSort === 'nombre-desc' ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+            </button>
+            <div v-if="availableDeptsForMuniFilter.length > 1" class="bv-filter-select-wrap">
+              <i class="fas fa-filter bv-filter-icon"></i>
+              <select v-model="muniFilterDept" class="bv-filter-select">
+                <option value="">Todos los departamentos</option>
+                <option v-for="d in availableDeptsForMuniFilter" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+          </div>
           <div class="bv-ranking-list">
             <div
-              v-for="(mun, index) in dashboardData.statistics.top_municipios"
-              :key="index"
-              class="bv-ranking-item"
+              v-for="(mun, index) in sortedMunicipios"
+              :key="mun.Municipio"
+              class="bv-ranking-item bv-ranking-item--clickable"
+              :class="{ 'bv-ranking-item--active': isDrillActive('municipio', mun.Municipio) }"
+              @click="fetchDrillDown('municipio', mun.Municipio, 'Municipio: ' + (mun.Municipio || 'Sin municipio'))"
             >
               <span class="bv-rank" :class="'bv-rank--' + (index + 1)">{{ index + 1 }}</span>
               <span class="bv-ranking-name">{{ mun.Municipio || 'Sin municipio' }}</span>
               <span class="bv-ranking-count">{{ mun.cantidad }}</span>
               <div class="bv-ranking-bar">
-                <div class="bv-ranking-fill" :style="{ width: getPercentage(mun.cantidad, dashboardData.statistics.top_municipios.map(m => m.cantidad)) + '%' }"></div>
+                <div class="bv-ranking-fill" :style="{ width: getPercentage(mun.cantidad, sortedMunicipios.map(m => m.cantidad)) + '%' }"></div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Peticiones urgentes -->
+          <!-- Drill-down inline for municipios -->
+          <Transition name="bv-slide-detail">
+            <div v-if="drillDown && drillDown.tipo === 'municipio'" class="bv-drill-panel bv-drill-panel--inline">
+              <div v-if="drillDownLoading" class="bv-drill-loading">
+                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
+                <span>Cargando peticiones...</span>
+              </div>
+              <template v-else-if="drillDownPetitions.length > 0">
+                <div class="bv-drill-header">
+                  <span class="bv-drill-title">{{ drillDown.title }}</span>
+                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
+                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
+                    <i class="fas fa-download"></i> CSV
+                  </button>
+                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                <div class="bv-drill-table-wrap">
+                  <table class="bv-drill-table">
+                    <thead>
+                      <tr>
+                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
+                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
+                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
+                        <td>{{ pet.nombre || 'Anonimo' }}</td>
+                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
+                        <td>{{ pet.Municipio || '-' }}</td>
+                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
+                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
+                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
+                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+              <div v-else class="bv-drill-empty">No hay peticiones para este municipio.</div>
+            </div>
+          </Transition>
+        </div>
 
       </template>
 
@@ -831,6 +1177,183 @@ export default {
 
     const swiperModules = [Navigation, Pagination]
 
+    // --- Drill-down state ---
+    const drillDown = ref(null) // { tipo, valor, title }
+    const drillDownPetitions = ref([])
+    const drillDownLoading = ref(false)
+
+    const fetchDrillDown = async (tipo, valor, title) => {
+      // Toggle: click same -> close
+      if (drillDown.value && drillDown.value.tipo === tipo && drillDown.value.valor === valor) {
+        drillDown.value = null
+        drillDownPetitions.value = []
+        return
+      }
+      drillDown.value = { tipo, valor, title }
+      drillDownLoading.value = true
+      drillDownPetitions.value = []
+      try {
+        const params = { tipo }
+        if (valor !== undefined && valor !== null) params.valor = valor
+        const res = await axios.get('dashboard-user-detalle.php', { params })
+        if (res.data.success) {
+          drillDownPetitions.value = res.data.peticiones || []
+        }
+      } catch (e) {
+        console.error('Error drill-down:', e)
+      } finally {
+        drillDownLoading.value = false
+      }
+    }
+
+    const closeDrillDown = () => {
+      drillDown.value = null
+      drillDownPetitions.value = []
+    }
+
+    const isDrillActive = (tipo, valor) => {
+      if (!drillDown.value) return false
+      return drillDown.value.tipo === tipo && drillDown.value.valor === valor
+    }
+
+    const truncateText = (str, len) => {
+      if (!str) return '-'
+      return str.length > len ? str.substring(0, len) + '...' : str
+    }
+
+    const formatFullDate = (d) => {
+      if (!d) return '-'
+      return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+    }
+
+    const drillDownCSV = () => {
+      if (!drillDownPetitions.value.length) return
+      const IMP = { 1: 'Critica', 2: 'Alta', 3: 'Media', 4: 'Baja' }
+      const headers = ['Folio', 'Peticionario', 'Descripcion', 'Municipio', 'Estado', 'Importancia', 'Dias', 'Fecha']
+      const rows = drillDownPetitions.value.map(p => [
+        p.folio || '', p.nombre || 'Anonimo',
+        (p.descripcion || '').replace(/[\r\n]+/g, ' '),
+        p.Municipio || '', p.estado || '',
+        IMP[p.NivelImportancia] || 'Baja',
+        p.dias_transcurridos || 0, p.fecha_registro || ''
+      ])
+      const esc = v => '"' + String(v).replace(/"/g, '""') + '"'
+      const csv = '\uFEFF' + [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))].join('\r\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = (drillDown.value?.title || 'peticiones').replace(/\s+/g, '_') + '.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+
+    const getImpLabel = (n) => ({ 1: 'Critica', 2: 'Alta', 3: 'Media', 4: 'Baja' }[n] || 'Baja')
+    const getImpClass = (n) => ({ 1: 'bv-imp--critica', 2: 'bv-imp--alta', 3: 'bv-imp--media' }[n] || 'bv-imp--baja')
+    const getEstadoBadgeClass = (e) => {
+      const map = {
+        'Sin revisar': 'bv-est--pendiente', 'Pendiente': 'bv-est--pendiente',
+        'Esperando recepción': 'bv-est--pendiente', 'Esperando recepcion': 'bv-est--pendiente',
+        'Aceptada en proceso': 'bv-est--proceso', 'Aceptado en proceso': 'bv-est--proceso',
+        'Completado': 'bv-est--completado', 'Completada': 'bv-est--completado',
+        'Devuelto a seguimiento': 'bv-est--devuelto',
+        'Rechazado': 'bv-est--cerrado', 'Cancelada': 'bv-est--cerrado', 'Improcedente': 'bv-est--cerrado'
+      }
+      return map[e] || ''
+    }
+
+    // --- Ranking sort state ---
+    const deptSort = ref('cantidad-desc')
+    const muniSort = ref('cantidad-desc')
+    const deptFilterMuni = ref('') // filter departamentos by municipio
+    const muniFilterDept = ref('') // filter municipios by departamento
+    const carouselFilterMuni = ref('') // filter carousel by municipio
+    const carouselFilterDept = ref('') // filter carousel by departamento
+
+    const sortRanking = (items, sortKey) => {
+      if (!items || !items.length) return []
+      const copy = [...items]
+      switch (sortKey) {
+        case 'cantidad-asc': return copy.sort((a, b) => a.cantidad - b.cantidad)
+        case 'nombre-asc': return copy.sort((a, b) => (a.departamento || a.Municipio || '').localeCompare(b.departamento || b.Municipio || ''))
+        case 'nombre-desc': return copy.sort((a, b) => (b.departamento || b.Municipio || '').localeCompare(a.departamento || a.Municipio || ''))
+        default: return copy.sort((a, b) => b.cantidad - a.cantidad)
+      }
+    }
+
+    // Cross-reference helpers
+    const crossData = computed(() => dashboardData.value?.statistics?.dept_muni_cross || [])
+
+    // Unique municipio names from cross-reference (for dept filter)
+    const availableMunicipiosForDeptFilter = computed(() => {
+      const set = new Set(crossData.value.map(r => r.municipio).filter(Boolean))
+      return [...set].sort()
+    })
+
+    // Unique departamento names from cross-reference (for muni filter)
+    const availableDeptsForMuniFilter = computed(() => {
+      const set = new Set(crossData.value.map(r => r.departamento).filter(Boolean))
+      return [...set].sort()
+    })
+
+    const sortedDepartamentos = computed(() => {
+      let items = dashboardData.value?.statistics?.departamentos_top
+      if (!items) return []
+      if (deptFilterMuni.value) {
+        const qtyMap = {}
+        crossData.value
+          .filter(r => r.municipio === deptFilterMuni.value)
+          .forEach(r => { qtyMap[r.departamento] = (qtyMap[r.departamento] || 0) + Number(r.cantidad) })
+        items = Object.entries(qtyMap).map(([departamento, cantidad]) => ({ departamento, cantidad }))
+      }
+      return sortRanking(items, deptSort.value)
+    })
+
+    const sortedMunicipios = computed(() => {
+      let items = dashboardData.value?.statistics?.top_municipios
+      if (!items) return []
+      if (muniFilterDept.value) {
+        // Get municipio names that have petitions assigned to the selected dept
+        const qtyMap = {}
+        crossData.value
+          .filter(r => r.departamento === muniFilterDept.value)
+          .forEach(r => { qtyMap[r.municipio] = (qtyMap[r.municipio] || 0) + Number(r.cantidad) })
+        items = Object.entries(qtyMap).map(([Municipio, cantidad]) => ({ Municipio, cantidad }))
+      }
+      return sortRanking(items, muniSort.value)
+    })
+
+    // Carousel filtered petitions
+    const carouselMuniOptions = computed(() => {
+      const pets = dashboardData.value?.recent_petitions || []
+      const set = new Set(pets.map(p => p.Municipio).filter(Boolean))
+      return [...set].sort()
+    })
+
+    const carouselDeptOptions = computed(() => {
+      // Get departments from cross data
+      const set = new Set(crossData.value.map(r => r.departamento).filter(Boolean))
+      return [...set].sort()
+    })
+
+    const filteredCarouselPetitions = computed(() => {
+      let pets = dashboardData.value?.recent_petitions || []
+      if (carouselFilterMuni.value) {
+        pets = pets.filter(p => p.Municipio === carouselFilterMuni.value)
+      }
+      if (carouselFilterDept.value) {
+        // Need to know which petition IDs belong to the selected dept
+        // We filter by municipio cross-reference: petitions in municipios served by this dept
+        const munis = new Set(
+          crossData.value
+            .filter(r => r.departamento === carouselFilterDept.value)
+            .map(r => r.municipio)
+        )
+        pets = pets.filter(p => munis.has(p.Municipio))
+      }
+      return pets
+    })
+
     onMounted(() => loadDashboardData())
 
     return {
@@ -840,7 +1363,19 @@ export default {
       filteredQuickActions, swiperModules,
       loadDashboardData, refreshData,
       slugify, getPercentage, getTrendHeight, formatShortDate,
-      viewPetitionDetails, getEstadoIcon, getNivelLabel
+      viewPetitionDetails, getEstadoIcon, getNivelLabel,
+      // drill-down
+      drillDown, drillDownPetitions, drillDownLoading,
+      fetchDrillDown, closeDrillDown, isDrillActive,
+      truncateText, formatFullDate, drillDownCSV,
+      getImpLabel, getImpClass, getEstadoBadgeClass,
+      // ranking sort & filters
+      deptSort, muniSort, deptFilterMuni, muniFilterDept,
+      sortedDepartamentos, sortedMunicipios,
+      availableMunicipiosForDeptFilter, availableDeptsForMuniFilter,
+      // carousel filters
+      carouselFilterMuni, carouselFilterDept,
+      carouselMuniOptions, carouselDeptOptions, filteredCarouselPetitions
     }
   }
 }
@@ -1951,13 +2486,18 @@ export default {
 }
 
 .bv-card-count {
-  margin-left: auto;
   background: #eff6ff;
   color: #0074D9;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.6rem;
   border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* When count is the last element in title, push it right */
+.bv-card-count:last-child {
+  margin-left: auto;
 }
 
 .bv-swiper {
@@ -2049,6 +2589,406 @@ export default {
 }
 
 /* --- Empty state --- */
+/* --- Drill-down panel (canalizador) --- */
+.bv-metric--clickable,
+.bv-state-card--clickable,
+.bv-ranking-item--clickable,
+.bv-alert--clickable,
+.bv-card-title--clickable {
+  cursor: pointer;
+}
+
+.bv-metric--clickable {
+  position: relative;
+}
+
+.bv-metric--clickable:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+}
+
+.bv-metric--active {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.18) !important;
+}
+
+.bv-state-card--clickable:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  border-color: #93c5fd;
+}
+
+.bv-state-card--active {
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.18) !important;
+  border-color: #3b82f6 !important;
+}
+
+.bv-ranking-item--clickable {
+  cursor: pointer;
+}
+
+.bv-ranking-item--clickable:hover {
+  background: #eff6ff;
+}
+
+.bv-ranking-item--active {
+  background: #eff6ff !important;
+  box-shadow: inset 3px 0 0 #3b82f6;
+}
+
+.bv-alert--clickable {
+  cursor: pointer;
+}
+
+.bv-alert--active {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.bv-card-title--clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.bv-card-title--clickable:hover {
+  color: #0074D9;
+}
+
+.bv-drill-chevron {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  transition: transform 0.25s ease;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+.bv-drill-chevron--sm {
+  font-size: 0.55rem;
+}
+
+.bv-drill-chevron--title {
+  font-size: 0.6rem;
+  margin-left: auto;
+}
+
+.bv-drill-chevron--open {
+  transform: rotate(180deg);
+  color: #3b82f6;
+}
+
+.bv-drill-panel {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.bv-drill-panel--inline {
+  margin: 1rem 0 0;
+  border-radius: 12px;
+}
+
+.bv-drill-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.bv-drill-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.bv-drill-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.bv-drill-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #0074D9;
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+}
+
+.bv-drill-csv {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bv-drill-csv:hover {
+  background: #d1fae5;
+  transform: translateY(-1px);
+}
+
+.bv-drill-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bv-drill-close:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.bv-drill-table-wrap {
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.bv-drill-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.bv-drill-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.bv-drill-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bv-drill-row:hover {
+  background: #f1f5f9;
+}
+
+.bv-drill-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.bv-td-folio {
+  font-weight: 700;
+  color: #0074D9;
+  white-space: nowrap;
+}
+
+.bv-td-desc {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #64748b;
+}
+
+.bv-td-fecha {
+  white-space: nowrap;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.bv-td-dias {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bv-td-dias--alerta {
+  color: #ef4444;
+  background: #fef2f2;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+}
+
+.bv-estado-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.bv-est--pendiente { background: #fffbeb; color: #d97706; }
+.bv-est--proceso { background: #eff6ff; color: #2563eb; }
+.bv-est--completado { background: #ecfdf5; color: #059669; }
+.bv-est--devuelto { background: #f5f3ff; color: #7c3aed; }
+.bv-est--cerrado { background: #fef2f2; color: #dc2626; }
+
+.bv-imp-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.bv-imp--critica { background: #fef2f2; color: #dc2626; }
+.bv-imp--alta { background: #fffbeb; color: #d97706; }
+.bv-imp--media { background: #eff6ff; color: #2563eb; }
+.bv-imp--baja { background: #ecfdf5; color: #059669; }
+
+.bv-drill-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* --- Sort bar --- */
+.bv-sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bv-sort-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bv-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bv-sort-btn i {
+  font-size: 0.6rem;
+}
+
+.bv-sort-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.bv-sort-btn--active {
+  background: #eff6ff;
+  color: #0074D9;
+  border-color: #93c5fd;
+}
+
+.bv-filter-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+}
+
+
+.bv-filter-icon {
+  font-size: 0.6rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.bv-filter-select {
+  appearance: none;
+  padding: 0.3rem 1.6rem 0.3rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #334155;
+  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  max-width: 200px;
+  text-overflow: ellipsis;
+}
+
+.bv-filter-select:hover {
+  border-color: #cbd5e1;
+  background-color: #f1f5f9;
+}
+
+.bv-filter-select:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+/* Transition for drill-down panel */
+.bv-slide-detail-enter-active {
+  transition: all 0.3s ease-out;
+}
+.bv-slide-detail-leave-active {
+  transition: all 0.2s ease-in;
+}
+.bv-slide-detail-enter-from {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+.bv-slide-detail-enter-to {
+  opacity: 1;
+  max-height: 500px;
+}
+.bv-slide-detail-leave-from {
+  opacity: 1;
+  max-height: 500px;
+}
+.bv-slide-detail-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+
 .bv-empty {
   text-align: center;
   padding: 3.5rem 2rem;

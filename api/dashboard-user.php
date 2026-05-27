@@ -199,22 +199,35 @@ try {
         $stmtRetrasadas->execute();
         $stats['peticiones_retrasadas'] = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
 
-        // Departamentos con más peticiones asignadas en su municipio
+        // Departamentos con más peticiones asignadas en su municipio (todos)
         $queryDepartamentos = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
                                 FROM peticion_departamento pd
                                 INNER JOIN peticiones p ON pd.peticion_id = p.id
                                 INNER JOIN unidades u ON pd.departamento_id = u.id
                                 WHERE p.division_id = :division_id
                                 GROUP BY u.id, u.nombre_unidad
-                                ORDER BY cantidad DESC
-                                LIMIT 5";
+                                ORDER BY cantidad DESC";
         $stmtDepts = $db->prepare($queryDepartamentos);
         $stmtDepts->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
         $stmtDepts->execute();
         $stats['departamentos_top'] = $stmtDepts->fetchAll(PDO::FETCH_ASSOC);
 
+        // Municipios disponibles para filtrar departamentos (cross-reference)
+        $queryDeptMuni = "SELECT u.nombre_unidad as departamento, da.Municipio as municipio, COUNT(pd.id) as cantidad
+                         FROM peticion_departamento pd
+                         INNER JOIN peticiones p ON pd.peticion_id = p.id
+                         INNER JOIN unidades u ON pd.departamento_id = u.id
+                         LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
+                         WHERE p.division_id = :division_id
+                         GROUP BY u.id, u.nombre_unidad, da.Municipio
+                         ORDER BY cantidad DESC";
+        $stmtDM = $db->prepare($queryDeptMuni);
+        $stmtDM->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
+        $stmtDM->execute();
+        $stats['dept_muni_cross'] = $stmtDM->fetchAll(PDO::FETCH_ASSOC);
+
         // ✅ NUEVO: Timeline de estados para gráfica - filtrado por municipio (últimos 90 días)
-        $queryTimeline = "SELECT 
+        $queryTimeline = "SELECT
                             DATE(p.fecha_registro) as fecha,
                             p.estado,
                             COUNT(*) as cantidad
@@ -259,25 +272,34 @@ try {
         $stmtRetrasadas = $db->query($queryRetrasadas);
         $stats['peticiones_retrasadas'] = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
 
-        // Departamentos con más peticiones asignadas a nivel estatal
+        // Departamentos con más peticiones asignadas a nivel estatal (todos)
         $queryDepartamentos = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
                               FROM peticion_departamento pd
                               INNER JOIN unidades u ON pd.departamento_id = u.id
                               GROUP BY u.id, u.nombre_unidad
-                              ORDER BY cantidad DESC
-                              LIMIT 5";
+                              ORDER BY cantidad DESC";
         $stmtDepts = $db->query($queryDepartamentos);
         $stats['departamentos_top'] = $stmtDepts->fetchAll(PDO::FETCH_ASSOC);
 
-        // Top municipios con más peticiones
+        // Top municipios con más peticiones (todos)
         $queryMunicipios = "SELECT d.Municipio, COUNT(p.id) as cantidad
                            FROM peticiones p
                            LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                            GROUP BY d.Municipio
-                           ORDER BY cantidad DESC
-                           LIMIT 5";
+                           ORDER BY cantidad DESC";
         $stmtMuni = $db->query($queryMunicipios);
         $stats['top_municipios'] = $stmtMuni->fetchAll(PDO::FETCH_ASSOC);
+
+        // Departamentos por municipio (cross-reference para filtros)
+        $queryDeptMuni = "SELECT u.nombre_unidad as departamento, da.Municipio as municipio, COUNT(pd.id) as cantidad
+                         FROM peticion_departamento pd
+                         INNER JOIN peticiones p ON pd.peticion_id = p.id
+                         INNER JOIN unidades u ON pd.departamento_id = u.id
+                         LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
+                         GROUP BY u.id, u.nombre_unidad, da.Municipio
+                         ORDER BY cantidad DESC";
+        $stmtDM = $db->query($queryDeptMuni);
+        $stats['dept_muni_cross'] = $stmtDM->fetchAll(PDO::FETCH_ASSOC);
 
         // Últimos 7 días
         $query7dias = "SELECT DATE(fecha_registro) as fecha, COUNT(*) as cantidad
@@ -289,7 +311,7 @@ try {
         $stats['ultimos_7_dias'] = $stmt7dias->fetchAll(PDO::FETCH_ASSOC);
 
         // ✅ NUEVO: Timeline de estados para gráfica (últimos 90 días)
-        $queryTimeline = "SELECT 
+        $queryTimeline = "SELECT
                             DATE(p.fecha_registro) as fecha,
                             p.estado,
                             COUNT(*) as cantidad
@@ -411,8 +433,8 @@ try {
         $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
 
     } elseif ($rolId == 12 && $divisionId) {
-        // Canalizador Municipal ve peticiones de su municipio
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado, 
+        // Canalizador Municipal ve peticiones de su municipio (sin limite)
+        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
                               p.NivelImportancia, p.fecha_registro,
                               d.Municipio,
                               DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
@@ -420,24 +442,22 @@ try {
                        LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                        WHERE p.division_id = :division_id
                        AND p.estado NOT IN ('Completada', 'Cancelada')
-                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC
-                       LIMIT 10";
+                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC";
         $stmtRecent = $db->prepare($queryRecent);
         $stmtRecent->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
         $stmtRecent->execute();
         $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
 
     } elseif ($rolId == 13) {
-        // Canalizador Estatal ve peticiones urgentes de todos los municipios
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado, 
+        // Canalizador Estatal ve peticiones urgentes de todos los municipios (sin limite)
+        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
                               p.NivelImportancia, p.fecha_registro,
                               d.Municipio,
                               DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
                        FROM peticiones p
                        LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                        WHERE p.estado NOT IN ('Completada', 'Cancelada')
-                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC
-                       LIMIT 10";
+                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC";
         $stmtRecent = $db->query($queryRecent);
         $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
 
@@ -453,8 +473,7 @@ try {
                        LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
                        WHERE pd.departamento_id = :unidad_id
                        AND pd.estado NOT IN ('Completado', 'Cerrado')
-                       ORDER BY p.NivelImportancia ASC, pd.fecha_asignacion ASC
-                       LIMIT 10";
+                       ORDER BY p.NivelImportancia ASC, pd.fecha_asignacion ASC";
         $stmtRecent = $db->prepare($queryRecent);
         $stmtRecent->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
         $stmtRecent->execute();
