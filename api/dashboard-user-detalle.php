@@ -1,7 +1,7 @@
 <?php
-// Endpoint para drill-down de peticiones desde Bienvenido.vue (canalizador)
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/constants.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 
@@ -23,14 +23,13 @@ function sendJson($data, $code = 200) {
 
 try {
     if (!isset($_SESSION['user_id'])) {
-        sendJson(['success' => false, 'message' => 'No hay sesion activa'], 401);
+        sendJson(['success' => false, 'message' => 'No hay sesión activa'], 401);
     }
 
     $database = new Database();
     $db = $database->getConnection();
     $userId = $_SESSION['user_id'];
 
-    // Obtener info del usuario
     $stmtUser = $db->prepare("SELECT IdRolSistema, IdDivisionAdm FROM Usuario WHERE Id = :uid AND Estatus = 'ACTIVO'");
     $stmtUser->bindValue(':uid', $userId, PDO::PARAM_INT);
     $stmtUser->execute();
@@ -41,97 +40,110 @@ try {
     $rolId = $user['IdRolSistema'];
     $divisionId = $user['IdDivisionAdm'];
 
-    // Solo canalizadores (12=Municipal, 13=Estatal)
-    if (!in_array($rolId, [12, 13])) {
+    if (!in_array($rolId, ROLES_CON_DRILLDOWN)) {
         sendJson(['success' => false, 'message' => 'Acceso no permitido'], 403);
     }
 
-    $tipo = isset($_GET['tipo']) ? trim($_GET['tipo']) : null;
+    $tipo = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
     if (!$tipo) {
-        sendJson(['success' => false, 'message' => 'Parametro tipo requerido'], 400);
+        sendJson(['success' => false, 'message' => 'Parámetro tipo requerido'], 400);
     }
+
+    // Paginación
+    $page = max(1, intval($_GET['page'] ?? 1));
+    $limit = min(200, max(10, intval($_GET['limit'] ?? 50)));
+    $offset = ($page - 1) * $limit;
 
     $where = [];
     $params = [];
+    $joins = "LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id";
 
     // Filtro base: canalizador municipal solo ve su municipio
-    if ($rolId == 12 && $divisionId) {
+    if ($rolId == ROL_CANALIZADOR_MUNICIPAL && $divisionId) {
         $where[] = "p.division_id = :division_id";
         $params[':division_id'] = $divisionId;
     }
 
-    // Condiciones por tipo de drill-down
+    $estadosFinales = "'" . implode("','", ESTADOS_FINALES) . "'";
+    $estadosCriticos = "'" . implode("','", ESTADOS_CRITICOS) . "'";
+
     switch ($tipo) {
         case 'total':
             break;
         case 'retrasadas':
-            $where[] = "p.estado NOT IN ('Completada', 'Cancelada', 'Improcedente')";
-            $where[] = "DATEDIFF(CURDATE(), p.fecha_registro) > 30";
+            $where[] = "p.estado NOT IN ($estadosFinales)";
+            $where[] = "DATEDIFF(CURDATE(), p.fecha_registro) > " . DIAS_RETRASO_PETICION;
             break;
         case 'alert_critical':
             $where[] = "p.NivelImportancia = 1";
-            $where[] = "p.estado IN ('Sin revisar', 'Pendiente', 'Esperando recepción')";
+            $where[] = "p.estado IN ($estadosCriticos)";
             break;
         case 'alert_retrasadas':
-            $where[] = "p.estado NOT IN ('Completada', 'Cancelada')";
-            $where[] = "DATEDIFF(CURDATE(), p.fecha_registro) > 30";
+            $where[] = "p.estado NOT IN ($estadosFinales)";
+            $where[] = "DATEDIFF(CURDATE(), p.fecha_registro) > " . DIAS_RETRASO_PETICION;
             break;
-        // Estados
         case 'estado':
             $estado = isset($_GET['valor']) ? trim($_GET['valor']) : '';
-            if ($estado) {
-                $where[] = "p.estado = :estado";
-                $params[':estado'] = $estado;
-            }
+            if (!$estado) sendJson(['success' => false, 'message' => 'Valor de estado requerido'], 400);
+            $where[] = "p.estado = :estado";
+            $params[':estado'] = $estado;
             break;
-        // Importancia
         case 'importancia':
-            $nivel = isset($_GET['valor']) ? intval($_GET['valor']) : 0;
-            if ($nivel > 0) {
-                $where[] = "p.NivelImportancia = :nivel";
-                $params[':nivel'] = $nivel;
-            }
+            $nivel = intval($_GET['valor'] ?? 0);
+            if ($nivel <= 0) sendJson(['success' => false, 'message' => 'Valor de importancia requerido'], 400);
+            $where[] = "p.NivelImportancia = :nivel";
+            $params[':nivel'] = $nivel;
             break;
-        // Departamento
         case 'departamento':
             $deptNombre = isset($_GET['valor']) ? trim($_GET['valor']) : '';
-            if ($deptNombre) {
-                $where[] = "p.id IN (SELECT pd2.peticion_id FROM peticion_departamento pd2 INNER JOIN unidades u2 ON pd2.departamento_id = u2.id WHERE u2.nombre_unidad = :dept_nombre)";
-                $params[':dept_nombre'] = $deptNombre;
-            }
+            if (!$deptNombre) sendJson(['success' => false, 'message' => 'Nombre de departamento requerido'], 400);
+            $joins .= " INNER JOIN peticion_departamento pd_f ON p.id = pd_f.peticion_id
+                        INNER JOIN unidades u_f ON pd_f.departamento_id = u_f.id";
+            $where[] = "u_f.nombre_unidad = :dept_nombre";
+            $params[':dept_nombre'] = $deptNombre;
             break;
-        // Municipio (solo estatal)
         case 'municipio':
             $muniNombre = isset($_GET['valor']) ? trim($_GET['valor']) : '';
-            if ($muniNombre) {
-                $where[] = "da.Municipio = :muni_nombre";
-                $params[':muni_nombre'] = $muniNombre;
-            }
+            if (!$muniNombre) sendJson(['success' => false, 'message' => 'Nombre de municipio requerido'], 400);
+            $where[] = "da.Municipio = :muni_nombre";
+            $params[':muni_nombre'] = $muniNombre;
             break;
-        // Peticiones recientes/urgentes (las que requieren atencion)
         case 'urgentes':
-            $where[] = "p.estado NOT IN ('Completada', 'Cancelada')";
+            $where[] = "p.estado NOT IN ($estadosFinales)";
             break;
         default:
-            sendJson(['success' => false, 'message' => 'Tipo no valido'], 400);
+            sendJson(['success' => false, 'message' => 'Tipo no válido'], 400);
     }
 
     $whereSQL = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
+    // Query de conteo total
+    $countSQL = "SELECT COUNT(*) as total FROM peticiones p $joins $whereSQL";
+    $stmtCount = $db->prepare($countSQL);
+    foreach ($params as $key => $val) {
+        $stmtCount->bindValue($key, $val);
+    }
+    $stmtCount->execute();
+    $totalRows = $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
+    $totalPages = ceil($totalRows / $limit);
+
+    // Query de datos con paginación
     $sql = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
                    p.NivelImportancia, p.fecha_registro, p.localidad, p.telefono,
                    da.Municipio,
                    DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
             FROM peticiones p
-            LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
+            $joins
             $whereSQL
             ORDER BY p.fecha_registro DESC
-            LIMIT 200";
+            LIMIT :limit OFFSET :offset";
 
     $stmt = $db->prepare($sql);
     foreach ($params as $key => $val) {
         $stmt->bindValue($key, $val);
     }
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $peticiones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -139,7 +151,10 @@ try {
         'success' => true,
         'tipo' => $tipo,
         'peticiones' => $peticiones,
-        'total' => count($peticiones)
+        'total' => $totalRows,
+        'page' => $page,
+        'limit' => $limit,
+        'pages' => $totalPages
     ]);
 
 } catch (Exception $e) {

@@ -28,7 +28,7 @@
       >
         <img
           :src="image.url_acceso"
-          :alt="image.filename_original"
+          :alt="`Imagen ${index + 1} de ${finalImages.length}`"
           class="gallery-image"
           @error="onImageError"
         />
@@ -57,7 +57,7 @@
       >
         <img
           :src="image.url_acceso"
-          :alt="image.filename_original"
+          :alt="`Imagen ${index + 1} de ${finalImages.length}`"
           class="list-image"
           @error="onImageError"
         />
@@ -106,7 +106,7 @@
           >
             <img
               :src="image.url_acceso"
-              :alt="image.filename_original"
+              :alt="`Imagen ${index + 1} de ${finalImages.length}`"
               class="carousel-image"
               @error="onImageError"
             />
@@ -150,14 +150,14 @@
 
     <!-- Modal de imagen ampliada -->
     <Teleport to="body">
-    <div v-if="modalVisible" class="ig-modal-overlay" @click.self="closeModal">
+    <div v-if="modalVisible" class="ig-modal-overlay" role="dialog" aria-modal="true" @click.self="closeModal">
       <div class="ig-modal-content">
         <div class="ig-modal-header">
           <div class="ig-modal-title">
             <h3>{{ currentImage?.filename_original }}</h3>
             <div class="ig-modal-counter">{{ modalIndex + 1 }} de {{ finalImages.length }}</div>
           </div>
-          <button @click="closeModal" class="ig-close-btn">
+          <button @click="closeModal" class="ig-close-btn" aria-label="Cerrar galería">
             <font-awesome-icon icon="fa-solid fa-times" />
           </button>
         </div>
@@ -166,7 +166,7 @@
           <div class="ig-modal-image-container">
             <img
               :src="currentImage?.url_acceso"
-              :alt="currentImage?.filename_original"
+              :alt="`Imagen ${modalIndex + 1} de ${finalImages.length}`"
               class="ig-modal-image"
               @error="onImageError"
             />
@@ -176,6 +176,7 @@
               @click="prevModalImage"
               class="ig-modal-nav-btn ig-prev"
               :disabled="modalIndex === 0"
+              aria-label="Imagen anterior"
             >
               <font-awesome-icon icon="fa-solid fa-chevron-left" />
             </button>
@@ -184,6 +185,7 @@
               @click="nextModalImage"
               class="ig-modal-nav-btn ig-next"
               :disabled="modalIndex === finalImages.length - 1"
+              aria-label="Imagen siguiente"
             >
               <font-awesome-icon icon="fa-solid fa-chevron-right" />
             </button>
@@ -391,11 +393,26 @@ export default {
       { immediate: true }
     )
 
+    // Preload de imágenes adyacentes para navegación fluida
+    const preloadImage = (url) => {
+      if (!url) return
+      const img = new Image()
+      img.src = url
+    }
+
+    const preloadAdjacentImages = () => {
+      const prevImg = finalImages.value[modalIndex.value - 1]
+      const nextImg = finalImages.value[modalIndex.value + 1]
+      if (prevImg) preloadImage(prevImg.url_acceso)
+      if (nextImg) preloadImage(nextImg.url_acceso)
+    }
+
     // Métodos del modal
     const openModal = (index) => {
       modalIndex.value = index
       modalVisible.value = true
       document.body.style.overflow = 'hidden' // Prevenir scroll del body
+      preloadAdjacentImages()
     }
 
     const closeModal = () => {
@@ -406,12 +423,14 @@ export default {
     const nextModalImage = () => {
       if (modalIndex.value < finalImages.value.length - 1) {
         modalIndex.value++
+        preloadAdjacentImages()
       }
     }
 
     const prevModalImage = () => {
       if (modalIndex.value > 0) {
         modalIndex.value--
+        preloadAdjacentImages()
       }
     }
 
@@ -532,20 +551,32 @@ export default {
     const deleteImage = (image, index) => {
       if (!confirm('¿Está seguro de que desea eliminar esta imagen?')) return
 
+      const totalAfterDelete = finalImages.value.length - 1
+
       emit('delete-image', { image, index })
 
       // Ajustar modal si está abierto
       if (modalVisible.value) {
-        if (props.images.length <= 1) {
+        if (totalAfterDelete <= 0) {
+          // No quedan imágenes, cerrar modal
           closeModal()
-        } else if (modalIndex.value >= props.images.length - 1) {
-          modalIndex.value = props.images.length - 2
+        } else if (index === modalIndex.value) {
+          // Se eliminó la imagen actual
+          if (modalIndex.value >= totalAfterDelete) {
+            // Era la última imagen, retroceder un índice
+            modalIndex.value = totalAfterDelete - 1
+          }
+          // Si no era la última, el índice se mantiene (la siguiente imagen ocupa su lugar)
+          preloadAdjacentImages()
+        } else if (index < modalIndex.value) {
+          // Se eliminó una imagen anterior a la actual, ajustar índice
+          modalIndex.value--
         }
       }
 
       // Ajustar carrusel
-      if (currentSlide.value >= props.images.length - 1) {
-        currentSlide.value = Math.max(0, props.images.length - 2)
+      if (currentSlide.value >= totalAfterDelete) {
+        currentSlide.value = Math.max(0, totalAfterDelete - 1)
       }
     }
 
@@ -1034,26 +1065,6 @@ export default {
   gap: 12px;
 }
 
-.ig-back-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #0074D9;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background 0.2s ease;
-  white-space: nowrap;
-}
-
-.ig-back-btn:hover {
-  background: #0056a6;
-}
-
 .ig-modal-title {
   flex: 1;
   min-width: 0;
@@ -1251,9 +1262,6 @@ export default {
     justify-content: center;
   }
 
-  .ig-back-btn span {
-    display: none;
-  }
 }
 
 @media (max-width: 480px) {

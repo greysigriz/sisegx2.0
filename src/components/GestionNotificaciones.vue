@@ -29,7 +29,7 @@
         </div>
         <div class="notificaciones-stat-info">
           <p class="notificaciones-stat-value">{{ usuariosInactivos }}</p>
-          <p class="notificaciones-stat-label">Notificaciones Inactivas</p>
+          <p class="notificaciones-stat-label">Notificaciones Desactivadas</p>
         </div>
       </div>
       <div class="notificaciones-stat-card">
@@ -38,7 +38,7 @@
         </div>
         <div class="notificaciones-stat-info">
           <p class="notificaciones-stat-value">{{ usuariosSinEmail }}</p>
-          <p class="notificaciones-stat-label">Sin Email</p>
+          <p class="notificaciones-stat-label">Sin Email Configurado</p>
         </div>
       </div>
     </div>
@@ -92,6 +92,15 @@
                 <option value="sin-email">Sin email configurado</option>
               </select>
             </div>
+          </div>
+
+          <!-- Retry banner for toggle errors -->
+          <div v-if="showRetry && !error" class="retry-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Ocurrio un error en la ultima operacion.</span>
+            <button @click="cargarUsuarios" class="btn-retry-inline">
+              <i class="fas fa-redo"></i> Reintentar
+            </button>
           </div>
 
           <!-- Resultados -->
@@ -158,7 +167,7 @@
                       <i v-else class="fas fa-exclamation-circle"></i>
                       {{
                         usuario.NotificacionesActivas ? 'Activa' :
-                        usuario.Email ? 'Inactiva' : 'Sin configurar'
+                        usuario.Email ? 'Desactivadas' : 'Sin email configurado'
                       }}
                     </span>
                   </td>
@@ -182,6 +191,9 @@
                         <i v-if="procesando === usuario.IdUsuario" class="fas fa-spinner fa-spin"></i>
                         <i v-else class="fas fa-bell"></i>
                       </button>
+                      <span v-if="!usuario.NotificacionesActivas && !usuario.Email" class="help-text-email">
+                        <i class="fas fa-info-circle"></i> Se requiere email para activar
+                      </span>
                       <!-- Botón Desactivar: visible cuando notificaciones están activas -->
                       <button
                         v-if="usuario.NotificacionesActivas"
@@ -294,6 +306,7 @@ export default {
     const cargandoHistorial = ref(false);
     const historialUsuario = ref([]);
     const usuarioSeleccionado = ref(null);
+    const showRetry = ref(false);
 
     const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -345,10 +358,12 @@ export default {
         if (response.data.success) {
           usuarios.value = response.data.data.usuarios;
           departamentos.value = response.data.data.departamentos;
+          showRetry.value = false;
         }
       } catch (err) {
         console.error('Error cargando usuarios:', err);
         error.value = err.response?.data?.message || 'Error al cargar usuarios';
+        showRetry.value = true;
       } finally {
         loading.value = false;
       }
@@ -371,12 +386,14 @@ export default {
         });
 
         if (response.data.success) {
-          alert('✅ Notificaciones activadas correctamente');
+          window.$toast.success('Notificaciones activadas correctamente');
+          showRetry.value = false;
           await cargarUsuarios();
         }
       } catch (err) {
         console.error('Error activando notificaciones:', err);
-        alert('❌ Error: ' + (err.response?.data?.message || err.message));
+        window.$toast.error('Error: ' + (err.response?.data?.message || err.message));
+        showRetry.value = true;
       } finally {
         procesando.value = null;
       }
@@ -399,12 +416,14 @@ export default {
         });
 
         if (response.data.success) {
-          alert('✅ Notificaciones desactivadas correctamente');
+          window.$toast.success('Notificaciones desactivadas correctamente');
+          showRetry.value = false;
           await cargarUsuarios();
         }
       } catch (err) {
         console.error('Error desactivando notificaciones:', err);
-        alert('❌ Error: ' + (err.response?.data?.message || err.message));
+        window.$toast.error('Error: ' + (err.response?.data?.message || err.message));
+        showRetry.value = true;
       } finally {
         procesando.value = null;
       }
@@ -457,14 +476,14 @@ export default {
       // Verificar si el usuario tiene rol Super Usuario
       const currentUser = AuthService.getCurrentUser();
       if (!currentUser || !currentUser.usuario || !currentUser.usuario.RolesIds) {
-        alert('No tienes acceso a esta sección');
+        window.$toast.error('No tienes acceso a esta sección');
         router.push('/bienvenido');
         return;
       }
 
       const esSuperUsuario = currentUser.usuario.RolesIds.includes(1);
       if (!esSuperUsuario) {
-        alert('Esta sección es solo para Super Usuarios');
+        window.$toast.error('Esta sección es solo para Super Usuarios');
         router.push('/bienvenido');
         return;
       }
@@ -476,6 +495,7 @@ export default {
       loading,
       error,
       procesando,
+      showRetry,
       usuarios,
       departamentos,
       usuariosFiltrados,
@@ -654,6 +674,54 @@ export default {
   background: #1976d2;
 }
 
+.retry-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #92400e;
+  font-size: 14px;
+}
+
+.retry-banner i {
+  color: #f59e0b;
+  font-size: 16px;
+}
+
+.btn-retry-inline {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: #165CB1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-retry-inline:hover {
+  background: #1976d2;
+}
+
+.help-text-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 /* Filters */
 .notificaciones-search-filter-container {
   display: flex;
@@ -801,13 +869,6 @@ export default {
 .empty-row p {
   margin: 0;
   font-size: 15px;
-}
-
-.usuario-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
 }
 
 .usuario-info {

@@ -16,12 +16,19 @@
     <!-- KPIs compactos -->
     <DashboardCards />
 
-    <!-- Mapa Choropleth -->
-    <div class="department-views">
-      <MapaProblemas />
+    <!-- Alertas del sistema -->
+    <div v-if="alerts && alerts.length > 0" class="dashboard-alerts">
+      <div v-for="(alert, i) in alerts" :key="i" class="dashboard-alert" :class="'dashboard-alert--' + alert.type">
+        <i :class="alert.type === 'critical' ? 'fas fa-exclamation-circle' : 'fas fa-clock'"></i>
+        <span>{{ alert.message }}</span>
+        <strong>{{ alert.count }}</strong>
+      </div>
     </div>
 
-    <!-- Panel de Analisis (Dept/Muni) + Distribucion por Estado -->
+    <!-- Timeline de progreso -->
+    <AreaChart />
+
+    <!-- Panel de Analisis (Dept/Muni) + Distribucion por Importancia -->
     <div class="analytics-grid">
       <div class="analytics-card">
         <AnalysisPanel />
@@ -31,8 +38,10 @@
       </div>
     </div>
 
-    <!-- Timeline de progreso -->
-    <AreaChart />
+    <!-- Mapa Choropleth -->
+    <div class="department-views">
+      <MapaProblemas />
+    </div>
   </div>
 </template>
 
@@ -59,7 +68,7 @@ export default {
     MapaProblemas
   },
   setup() {
-    const { fetchDashboard, isLoading } = useDashboardStore()
+    const { fetchDashboard, isLoading, alerts } = useDashboardStore()
 
     onMounted(() => {
       // Restore dark mode if it was active
@@ -74,7 +83,7 @@ export default {
       document.documentElement.classList.remove('dark-mode')
     })
 
-    return { isLoading }
+    return { isLoading, alerts }
   }
 }
 </script>

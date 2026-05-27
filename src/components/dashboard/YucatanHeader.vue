@@ -7,8 +7,8 @@
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
       <div class="dash-header__titles">
-        <span class="dash-header__name">Reportes Ciudadanos</span>
-        <span class="dash-header__sub">Yucatan</span>
+        <span class="dash-header__name">TramitIA — Panel Ejecutivo</span>
+        <span class="dash-header__sub">Gobierno del Estado de Yucatán</span>
       </div>
     </div>
 

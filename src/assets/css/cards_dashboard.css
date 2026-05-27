@@ -48,6 +48,27 @@
   transition: all 0.2s;
 }
 
+.resumen-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  margin-bottom: 2px;
+}
+
+.icon-total { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.icon-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.icon-info { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.icon-success { background: linear-gradient(135deg, #10b981, #059669); }
+.icon-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.icon-neutral { background: linear-gradient(135deg, #64748b, #475569); }
+
+:global(html.dark-mode) .resumen-icon { opacity: 0.9; }
+
 .resumen-label {
   font-size: 0.65rem;
   font-weight: 600;

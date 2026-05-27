@@ -1,11 +1,10 @@
 <?php
-// C:\xampp\htdocs\SISEE\api\dashboard-user.php
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/constants.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 
-// Configurar e iniciar sesión para obtener usuario actual
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.gc_maxlifetime', 8 * 60 * 60);
     ini_set('session.cookie_lifetime', 8 * 60 * 60);
@@ -22,74 +21,192 @@ function sendJsonResponse($data, $httpCode = 200) {
     exit;
 }
 
-// Función de logging
-function debugLog($message, $data = null) {
-    $logFile = __DIR__ . '/logs/dashboard_debug.log';
-    $timestamp = date('Y-m-d H:i:s');
-    $logMessage = "[$timestamp] $message";
-    
-    if ($data !== null) {
-        $logMessage .= " - Data: " . print_r($data, true);
-    }
-    
-    $logMessage .= PHP_EOL;
-    
-    if (!is_dir(dirname($logFile))) {
-        @mkdir(dirname($logFile), 0755, true);
-    }
-    
-    @file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+// ==========================================
+// FUNCIONES REUTILIZABLES DE ESTADÍSTICAS
+// ==========================================
+
+function getEstadisticasPeticiones($db, $divisionId = null) {
+    $stats = [];
+    $where = $divisionId ? "WHERE division_id = :division_id" : "";
+
+    // Query combinada: total, por estado, por importancia en una sola pasada
+    $queryBase = "SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN estado NOT IN ('" . implode("','", ESTADOS_FINALES) . "')
+                         AND DATEDIFF(CURDATE(), fecha_registro) > " . DIAS_RETRASO_PETICION . " THEN 1 ELSE 0 END) as retrasadas
+                  FROM peticiones $where";
+    $stmt = $db->prepare($queryBase);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    $base = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stats['total_peticiones'] = $base['total'];
+    $stats['peticiones_retrasadas'] = $base['retrasadas'];
+
+    // Por estado
+    $queryEstados = "SELECT estado, COUNT(*) as cantidad FROM peticiones $where GROUP BY estado";
+    $stmt = $db->prepare($queryEstados);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    $stats['por_estado'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Por importancia
+    $queryImp = "SELECT NivelImportancia, COUNT(*) as cantidad FROM peticiones $where GROUP BY NivelImportancia ORDER BY NivelImportancia";
+    $stmt = $db->prepare($queryImp);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    $stats['por_importancia'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return $stats;
 }
 
+function getDepartamentosTop($db, $divisionId = null) {
+    $join = $divisionId ? "INNER JOIN peticiones p ON pd.peticion_id = p.id" : "";
+    $where = $divisionId ? "WHERE p.division_id = :division_id" : "";
+
+    $query = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
+              FROM peticion_departamento pd
+              $join
+              INNER JOIN unidades u ON pd.departamento_id = u.id
+              $where
+              GROUP BY u.id, u.nombre_unidad
+              ORDER BY cantidad DESC";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getDeptMuniCross($db, $divisionId = null) {
+    $where = $divisionId ? "WHERE p.division_id = :division_id" : "";
+
+    $query = "SELECT u.nombre_unidad as departamento, da.Municipio as municipio, COUNT(pd.id) as cantidad
+              FROM peticion_departamento pd
+              INNER JOIN peticiones p ON pd.peticion_id = p.id
+              INNER JOIN unidades u ON pd.departamento_id = u.id
+              LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
+              $where
+              GROUP BY u.id, u.nombre_unidad, da.Municipio
+              ORDER BY cantidad DESC";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getTopMunicipios($db) {
+    $query = "SELECT d.Municipio, COUNT(p.id) as cantidad
+              FROM peticiones p
+              LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+              GROUP BY d.Municipio
+              ORDER BY cantidad DESC";
+    return $db->query($query)->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getUltimos7Dias($db, $divisionId = null) {
+    $where = $divisionId
+        ? "WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) AND division_id = :division_id"
+        : "WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)";
+
+    $query = "SELECT DATE(fecha_registro) as fecha, COUNT(*) as cantidad
+              FROM peticiones $where
+              GROUP BY DATE(fecha_registro) ORDER BY fecha";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getTimelineEstados($db, $divisionId = null) {
+    $where = $divisionId
+        ? "WHERE p.division_id = :division_id AND p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)"
+        : "WHERE p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)";
+
+    $query = "SELECT DATE(p.fecha_registro) as fecha, p.estado, COUNT(*) as cantidad
+              FROM peticiones p $where
+              GROUP BY DATE(p.fecha_registro), p.estado
+              ORDER BY fecha ASC, p.estado";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function getAlertasCriticas($db, $divisionId = null, $mensaje = '') {
+    $where = $divisionId ? "AND division_id = :division_id" : "";
+    $estadosCriticos = "'" . implode("','", ESTADOS_CRITICOS) . "'";
+
+    $query = "SELECT COUNT(*) as cantidad FROM peticiones
+              WHERE NivelImportancia = 1 AND estado IN ($estadosCriticos) $where";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    $count = $stmt->fetch(PDO::FETCH_ASSOC)['cantidad'];
+
+    if ($count > 0) {
+        return [
+            'type' => 'critical',
+            'message' => str_replace('{n}', $count, $mensaje),
+            'count' => $count
+        ];
+    }
+    return null;
+}
+
+function getAlertasRetrasadas($db, $divisionId = null, $diasRetraso = null, $mensaje = '') {
+    $dias = $diasRetraso ?? DIAS_RETRASO_PETICION;
+    $estadosFinales = "'" . implode("','", ESTADOS_FINALES) . "'";
+    $where = $divisionId ? "AND division_id = :division_id" : "";
+
+    $query = "SELECT COUNT(*) as cantidad FROM peticiones
+              WHERE estado NOT IN ($estadosFinales)
+              AND DATEDIFF(CURDATE(), fecha_registro) > $dias $where";
+    $stmt = $db->prepare($query);
+    if ($divisionId) $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+    $stmt->execute();
+    $count = $stmt->fetch(PDO::FETCH_ASSOC)['cantidad'];
+
+    if ($count > 0) {
+        return [
+            'type' => 'warning',
+            'message' => str_replace('{n}', $count, $mensaje),
+            'count' => $count
+        ];
+    }
+    return null;
+}
+
+// ==========================================
+// MAIN
+// ==========================================
+
 try {
-    debugLog("=== Dashboard Request ===");
-    debugLog("Session ID", session_id());
-    debugLog("Session Data", $_SESSION);
-    
-    // Verificar que hay sesión activa
     if (!isset($_SESSION['user_id'])) {
-        debugLog("ERROR: No hay user_id en sesión");
         sendJsonResponse([
             'success' => false,
             'message' => 'No hay sesión activa',
-            'debug' => [
-                'session_id' => session_id(),
-                'session_status' => session_status()
-            ]
+            'code' => 'NO_SESSION'
         ], 401);
     }
-    
-    debugLog("Usuario autenticado: " . $_SESSION['user_id']);
 
-    debugLog("Creando instancia Database");
     $database = new Database();
-    
-    debugLog("Obteniendo conexión BD");
     $db = $database->getConnection();
-    
-    debugLog("Conexión BD exitosa");
     $userId = $_SESSION['user_id'];
 
     // Obtener información del usuario
-    debugLog("Ejecutando query usuario");
     $queryUser = "SELECT u.Id, u.Nombre, u.ApellidoP, u.IdRolSistema, u.IdDivisionAdm, u.IdUnidad,
-                            r.Nombre as NombreRol,
-                            d.Municipio as NombreDivision
-                    FROM Usuario u
-                    LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
-                    LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
-                    WHERE u.Id = :user_id AND u.Estatus = 'ACTIVO'";
-    
+                         r.Nombre as NombreRol,
+                         d.Municipio as NombreDivision
+                  FROM Usuario u
+                  LEFT JOIN RolSistema r ON u.IdRolSistema = r.Id
+                  LEFT JOIN DivisionAdministrativa d ON u.IdDivisionAdm = d.Id
+                  WHERE u.Id = :user_id AND u.Estatus = 'ACTIVO'";
     $stmtUser = $db->prepare($queryUser);
     $stmtUser->bindParam(':user_id', $userId, PDO::PARAM_INT);
     $stmtUser->execute();
     $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
     if (!$user) {
-        sendJsonResponse([
-            'success' => false,
-            'message' => 'Usuario no encontrado'
-        ], 404);
+        sendJsonResponse(['success' => false, 'message' => 'Usuario no encontrado'], 404);
     }
 
     $rolId = $user['IdRolSistema'];
@@ -97,485 +214,104 @@ try {
     $unidadId = $user['IdUnidad'];
 
     // ==========================================
-    // ESTADÍSTICAS PERSONALIZADAS POR ROL
+    // ESTADÍSTICAS POR ROL
     // ==========================================
-    
     $stats = [];
-    
-    // ✅ NUEVO: Rol 1 (Super Usuario), Rol 2, Rol 10 (Director) - Ver TODO el sistema
-    if ($rolId == 1 || $rolId == 2 || $rolId == 10) {
-        // Total de peticiones
-        $queryTotal = "SELECT COUNT(*) as total FROM peticiones";
-        $stmtTotal = $db->query($queryTotal);
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
+    $alerts = [];
 
-        // Por estado
-        $queryEstados = "SELECT estado, COUNT(*) as cantidad 
-                        FROM peticiones 
-                        GROUP BY estado";
-        $stmtEstados = $db->query($queryEstados);
-        $stats['por_estado'] = $stmtEstados->fetchAll(PDO::FETCH_ASSOC);
+    if (in_array($rolId, ROLES_ADMIN)) {
+        // Admin / Director — ve todo el sistema
+        $stats = getEstadisticasPeticiones($db);
+        $stats['ultimos_7_dias'] = getUltimos7Dias($db);
+        $stats['top_municipios'] = getTopMunicipios($db);
+        $stats['departamentos_top'] = getDepartamentosTop($db);
+        $stats['dept_muni_cross'] = getDeptMuniCross($db);
+        $stats['timeline_estados'] = getTimelineEstados($db);
 
-        // Por importancia
-        $queryImportancia = "SELECT NivelImportancia, COUNT(*) as cantidad 
-                            FROM peticiones 
-                            GROUP BY NivelImportancia 
-                            ORDER BY NivelImportancia";
-        $stmtImp = $db->query($queryImportancia);
-        $stats['por_importancia'] = $stmtImp->fetchAll(PDO::FETCH_ASSOC);
+        $alert = getAlertasCriticas($db, null, "Hay {n} peticiones críticas pendientes de revisión");
+        if ($alert) $alerts[] = $alert;
 
-        // Últimos 7 días
-        $query7dias = "SELECT DATE(fecha_registro) as fecha, COUNT(*) as cantidad
-                        FROM peticiones
-                        WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                        GROUP BY DATE(fecha_registro)
-                        ORDER BY fecha";
-        $stmt7dias = $db->query($query7dias);
-        $stats['ultimos_7_dias'] = $stmt7dias->fetchAll(PDO::FETCH_ASSOC);
+    } elseif ($rolId == ROL_CANALIZADOR_MUNICIPAL && $divisionId) {
+        // Canalizador Municipal — ve su municipio
+        $stats = getEstadisticasPeticiones($db, $divisionId);
+        $stats['departamentos_top'] = getDepartamentosTop($db, $divisionId);
+        $stats['dept_muni_cross'] = getDeptMuniCross($db, $divisionId);
+        $stats['timeline_estados'] = getTimelineEstados($db, $divisionId);
 
-        // Top municipios
-        $queryMunicipios = "SELECT d.Municipio, COUNT(p.id) as cantidad
-                            FROM peticiones p
-                            LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                            GROUP BY d.Municipio
-                            ORDER BY cantidad DESC
-                            LIMIT 5";
-        $stmtMuni = $db->query($queryMunicipios);
-        $stats['top_municipios'] = $stmtMuni->fetchAll(PDO::FETCH_ASSOC);
+        $alert = getAlertasCriticas($db, $divisionId, "Hay {n} peticiones críticas en tu municipio");
+        if ($alert) $alerts[] = $alert;
 
-        // ✅ NUEVO: Timeline de estados para gráfica (últimos 90 días)
-        $queryTimeline = "SELECT 
-                            DATE(p.fecha_registro) as fecha,
-                            p.estado,
-                            COUNT(*) as cantidad
-                            FROM peticiones p
-                            WHERE p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
-                            GROUP BY DATE(p.fecha_registro), p.estado
-                            ORDER BY fecha ASC, p.estado";
-        $stmtTimeline = $db->query($queryTimeline);
-        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
+        $alert = getAlertasRetrasadas($db, $divisionId, DIAS_RETRASO_PETICION, "Tienes {n} peticiones retrasadas (más de " . DIAS_RETRASO_PETICION . " días sin completar)");
+        if ($alert) $alerts[] = $alert;
 
-    } 
-    // Rol 12: Canalizador Municipal - Ver peticiones de su municipio
-    elseif ($rolId == 12 && $divisionId) {
-        // Total de peticiones de su municipio
-        $queryTotal = "SELECT COUNT(*) as total 
-                      FROM peticiones 
-                      WHERE division_id = :division_id";
-        $stmtTotal = $db->prepare($queryTotal);
-        $stmtTotal->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtTotal->execute();
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
+    } elseif ($rolId == ROL_CANALIZADOR_ESTATAL) {
+        // Canalizador Estatal — ve todo
+        $stats = getEstadisticasPeticiones($db);
+        $stats['departamentos_top'] = getDepartamentosTop($db);
+        $stats['top_municipios'] = getTopMunicipios($db);
+        $stats['dept_muni_cross'] = getDeptMuniCross($db);
+        $stats['ultimos_7_dias'] = getUltimos7Dias($db);
+        $stats['timeline_estados'] = getTimelineEstados($db);
 
-        // Por estado de su municipio
-        $queryEstados = "SELECT estado, COUNT(*) as cantidad 
-                        FROM peticiones 
-                        WHERE division_id = :division_id
-                        GROUP BY estado";
-        $stmtEstados = $db->prepare($queryEstados);
-        $stmtEstados->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtEstados->execute();
-        $stats['por_estado'] = $stmtEstados->fetchAll(PDO::FETCH_ASSOC);
+        $alert = getAlertasCriticas($db, null, "Hay {n} peticiones críticas a nivel estatal");
+        if ($alert) $alerts[] = $alert;
 
-        // Por importancia de su municipio
-        $queryImportancia = "SELECT NivelImportancia, COUNT(*) as cantidad 
-                            FROM peticiones 
-                            WHERE division_id = :division_id
-                            GROUP BY NivelImportancia 
-                            ORDER BY NivelImportancia";
-        $stmtImp = $db->prepare($queryImportancia);
-        $stmtImp->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtImp->execute();
-        $stats['por_importancia'] = $stmtImp->fetchAll(PDO::FETCH_ASSOC);
+        $alert = getAlertasRetrasadas($db, null, DIAS_RETRASO_PETICION, "Hay {n} peticiones retrasadas a nivel estatal (más de " . DIAS_RETRASO_PETICION . " días)");
+        if ($alert) $alerts[] = $alert;
 
-        // Peticiones retrasadas (no completadas y con más de 30 días)
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad
-                            FROM peticiones
-                            WHERE division_id = :division_id
-                            AND estado NOT IN ('Completada', 'Cancelada')
-                            AND DATEDIFF(CURDATE(), fecha_registro) > 30";
-        $stmtRetrasadas = $db->prepare($queryRetrasadas);
-        $stmtRetrasadas->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtRetrasadas->execute();
-        $stats['peticiones_retrasadas'] = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
+    } elseif ($rolId == ROL_DEPARTAMENTO && $unidadId) {
+        // Departamento — ve peticiones asignadas a su unidad
+        $estadosFinalesDepto = "'" . implode("','", ESTADOS_FINALES_DEPTO) . "'";
 
-        // Departamentos con más peticiones asignadas en su municipio (todos)
-        $queryDepartamentos = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
-                                FROM peticion_departamento pd
-                                INNER JOIN peticiones p ON pd.peticion_id = p.id
-                                INNER JOIN unidades u ON pd.departamento_id = u.id
-                                WHERE p.division_id = :division_id
-                                GROUP BY u.id, u.nombre_unidad
-                                ORDER BY cantidad DESC";
-        $stmtDepts = $db->prepare($queryDepartamentos);
-        $stmtDepts->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtDepts->execute();
-        $stats['departamentos_top'] = $stmtDepts->fetchAll(PDO::FETCH_ASSOC);
-
-        // Municipios disponibles para filtrar departamentos (cross-reference)
-        $queryDeptMuni = "SELECT u.nombre_unidad as departamento, da.Municipio as municipio, COUNT(pd.id) as cantidad
-                         FROM peticion_departamento pd
-                         INNER JOIN peticiones p ON pd.peticion_id = p.id
-                         INNER JOIN unidades u ON pd.departamento_id = u.id
-                         LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
-                         WHERE p.division_id = :division_id
-                         GROUP BY u.id, u.nombre_unidad, da.Municipio
-                         ORDER BY cantidad DESC";
-        $stmtDM = $db->prepare($queryDeptMuni);
-        $stmtDM->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtDM->execute();
-        $stats['dept_muni_cross'] = $stmtDM->fetchAll(PDO::FETCH_ASSOC);
-
-        // ✅ NUEVO: Timeline de estados para gráfica - filtrado por municipio (últimos 90 días)
-        $queryTimeline = "SELECT
-                            DATE(p.fecha_registro) as fecha,
-                            p.estado,
-                            COUNT(*) as cantidad
-                            FROM peticiones p
-                            WHERE p.division_id = :division_id
-                            AND p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
-                            GROUP BY DATE(p.fecha_registro), p.estado
-                            ORDER BY fecha ASC, p.estado";
-        $stmtTimeline = $db->prepare($queryTimeline);
-        $stmtTimeline->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtTimeline->execute();
-        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
-
-    }
-    // Rol 13: Canalizador Estatal - Ver todas las peticiones del estado
-    elseif ($rolId == 13) {
-        // Total de peticiones estatales
-        $queryTotal = "SELECT COUNT(*) as total FROM peticiones";
-        $stmtTotal = $db->query($queryTotal);
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
-
-        // Por estado
-        $queryEstados = "SELECT estado, COUNT(*) as cantidad 
-                        FROM peticiones 
-                        GROUP BY estado";
-        $stmtEstados = $db->query($queryEstados);
-        $stats['por_estado'] = $stmtEstados->fetchAll(PDO::FETCH_ASSOC);
-
-        // Por importancia
-        $queryImportancia = "SELECT NivelImportancia, COUNT(*) as cantidad 
-                            FROM peticiones 
-                            GROUP BY NivelImportancia 
-                            ORDER BY NivelImportancia";
-        $stmtImp = $db->query($queryImportancia);
-        $stats['por_importancia'] = $stmtImp->fetchAll(PDO::FETCH_ASSOC);
-
-        // Peticiones retrasadas (no completadas y con más de 30 días)
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad
-                           FROM peticiones
-                           WHERE estado NOT IN ('Completada', 'Cancelada')
-                           AND DATEDIFF(CURDATE(), fecha_registro) > 30";
-        $stmtRetrasadas = $db->query($queryRetrasadas);
-        $stats['peticiones_retrasadas'] = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-
-        // Departamentos con más peticiones asignadas a nivel estatal (todos)
-        $queryDepartamentos = "SELECT u.nombre_unidad as departamento, COUNT(pd.id) as cantidad
-                              FROM peticion_departamento pd
-                              INNER JOIN unidades u ON pd.departamento_id = u.id
-                              GROUP BY u.id, u.nombre_unidad
-                              ORDER BY cantidad DESC";
-        $stmtDepts = $db->query($queryDepartamentos);
-        $stats['departamentos_top'] = $stmtDepts->fetchAll(PDO::FETCH_ASSOC);
-
-        // Top municipios con más peticiones (todos)
-        $queryMunicipios = "SELECT d.Municipio, COUNT(p.id) as cantidad
-                           FROM peticiones p
-                           LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                           GROUP BY d.Municipio
-                           ORDER BY cantidad DESC";
-        $stmtMuni = $db->query($queryMunicipios);
-        $stats['top_municipios'] = $stmtMuni->fetchAll(PDO::FETCH_ASSOC);
-
-        // Departamentos por municipio (cross-reference para filtros)
-        $queryDeptMuni = "SELECT u.nombre_unidad as departamento, da.Municipio as municipio, COUNT(pd.id) as cantidad
-                         FROM peticion_departamento pd
-                         INNER JOIN peticiones p ON pd.peticion_id = p.id
-                         INNER JOIN unidades u ON pd.departamento_id = u.id
-                         LEFT JOIN DivisionAdministrativa da ON p.division_id = da.Id
-                         GROUP BY u.id, u.nombre_unidad, da.Municipio
-                         ORDER BY cantidad DESC";
-        $stmtDM = $db->query($queryDeptMuni);
-        $stats['dept_muni_cross'] = $stmtDM->fetchAll(PDO::FETCH_ASSOC);
-
-        // Últimos 7 días
-        $query7dias = "SELECT DATE(fecha_registro) as fecha, COUNT(*) as cantidad
-                      FROM peticiones
-                      WHERE fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-                      GROUP BY DATE(fecha_registro)
-                      ORDER BY fecha";
-        $stmt7dias = $db->query($query7dias);
-        $stats['ultimos_7_dias'] = $stmt7dias->fetchAll(PDO::FETCH_ASSOC);
-
-        // ✅ NUEVO: Timeline de estados para gráfica (últimos 90 días)
-        $queryTimeline = "SELECT
-                            DATE(p.fecha_registro) as fecha,
-                            p.estado,
-                            COUNT(*) as cantidad
-                         FROM peticiones p
-                         WHERE p.fecha_registro >= DATE_SUB(CURDATE(), INTERVAL 90 DAY)
-                         GROUP BY DATE(p.fecha_registro), p.estado
-                         ORDER BY fecha ASC, p.estado";
-        $stmtTimeline = $db->query($queryTimeline);
-        $stats['timeline_estados'] = $stmtTimeline->fetchAll(PDO::FETCH_ASSOC);
-
-    }
-    // Rol 9: Usuario de departamento - Ver peticiones asignadas a su departamento
-    elseif ($rolId == 9 && $unidadId) {
-        // Total de peticiones asignadas a su departamento
-        $queryTotal = "SELECT COUNT(*) as total 
-                      FROM peticion_departamento 
-                      WHERE departamento_id = :unidad_id";
-        $stmtTotal = $db->prepare($queryTotal);
-        $stmtTotal->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtTotal->execute();
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
+        $queryBase = "SELECT
+                        COUNT(*) as total,
+                        SUM(CASE WHEN estado NOT IN ($estadosFinalesDepto) THEN 1 ELSE 0 END) as pendientes,
+                        SUM(CASE WHEN estado NOT IN ($estadosFinalesDepto) AND DATEDIFF(CURDATE(), fecha_asignacion) > " . DIAS_RETRASO_DEPARTAMENTO . " THEN 1 ELSE 0 END) as retrasadas
+                      FROM peticion_departamento WHERE departamento_id = :unidad_id";
+        $stmt = $db->prepare($queryBase);
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $base = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_peticiones'] = $base['total'];
+        $stats['peticiones_pendientes'] = $base['pendientes'];
+        $stats['peticiones_retrasadas'] = $base['retrasadas'];
 
         // Por estado en peticion_departamento
-        $queryEstados = "SELECT estado, COUNT(*) as cantidad 
-                        FROM peticion_departamento 
-                        WHERE departamento_id = :unidad_id
-                        GROUP BY estado";
-        $stmtEstados = $db->prepare($queryEstados);
-        $stmtEstados->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtEstados->execute();
-        $stats['por_estado'] = $stmtEstados->fetchAll(PDO::FETCH_ASSOC);
+        $queryEstados = "SELECT estado, COUNT(*) as cantidad FROM peticion_departamento WHERE departamento_id = :unidad_id GROUP BY estado";
+        $stmt = $db->prepare($queryEstados);
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $stats['por_estado'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Por importancia (de las peticiones asignadas)
-        $queryImportancia = "SELECT p.NivelImportancia, COUNT(*) as cantidad 
-                            FROM peticion_departamento pd
-                            INNER JOIN peticiones p ON pd.peticion_id = p.id
-                            WHERE pd.departamento_id = :unidad_id
-                            GROUP BY p.NivelImportancia 
-                            ORDER BY p.NivelImportancia";
-        $stmtImp = $db->prepare($queryImportancia);
-        $stmtImp->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtImp->execute();
-        $stats['por_importancia'] = $stmtImp->fetchAll(PDO::FETCH_ASSOC);
-
-        // Peticiones pendientes (no completadas)
-        $queryPendientes = "SELECT COUNT(*) as cantidad
-                           FROM peticion_departamento
-                           WHERE departamento_id = :unidad_id
-                           AND estado NOT IN ('Completado', 'Cerrado')";
-        $stmtPendientes = $db->prepare($queryPendientes);
-        $stmtPendientes->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtPendientes->execute();
-        $stats['peticiones_pendientes'] = $stmtPendientes->fetch(PDO::FETCH_ASSOC)['cantidad'];
-
-        // Peticiones retrasadas (más de 15 días sin completar)
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad
-                           FROM peticion_departamento
-                           WHERE departamento_id = :unidad_id
-                           AND estado NOT IN ('Completado', 'Cerrado')
-                           AND DATEDIFF(CURDATE(), fecha_asignacion) > 15";
-        $stmtRetrasadas = $db->prepare($queryRetrasadas);
-        $stmtRetrasadas->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtRetrasadas->execute();
-        $stats['peticiones_retrasadas'] = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
+        // Por importancia
+        $queryImp = "SELECT p.NivelImportancia, COUNT(*) as cantidad
+                     FROM peticion_departamento pd
+                     INNER JOIN peticiones p ON pd.peticion_id = p.id
+                     WHERE pd.departamento_id = :unidad_id
+                     GROUP BY p.NivelImportancia ORDER BY p.NivelImportancia";
+        $stmt = $db->prepare($queryImp);
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $stats['por_importancia'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Nombre del departamento
-        $queryDept = "SELECT nombre_unidad FROM unidades WHERE id = :unidad_id";
-        $stmtDept = $db->prepare($queryDept);
-        $stmtDept->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmtDept = $db->prepare("SELECT nombre_unidad FROM unidades WHERE id = :unidad_id");
+        $stmtDept->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
         $stmtDept->execute();
         $deptInfo = $stmtDept->fetch(PDO::FETCH_ASSOC);
         $stats['nombre_departamento'] = $deptInfo ? $deptInfo['nombre_unidad'] : 'Departamento';
 
-    } 
-    // Rol 10 o cualquier otro - Ver departamentos asignados
-    elseif ($unidadId) {
-        // Peticiones asignadas a su departamento
-        $queryTotal = "SELECT COUNT(*) as total 
-                      FROM peticion_departamento 
-                      WHERE departamento_id = :unidad_id";
-        $stmtTotal = $db->prepare($queryTotal);
-        $stmtTotal->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtTotal->execute();
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
-
-        // Por estado de departamento
-        $queryEstados = "SELECT estado, COUNT(*) as cantidad 
-                        FROM peticion_departamento 
-                        WHERE departamento_id = :unidad_id
-                        GROUP BY estado";
-        $stmtEstados = $db->prepare($queryEstados);
-        $stmtEstados->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtEstados->execute();
-        $stats['por_estado'] = $stmtEstados->fetchAll(PDO::FETCH_ASSOC);
-
-    } else {
-        // Usuario sin permisos específicos - estadísticas básicas
-        $queryTotal = "SELECT COUNT(*) as total FROM peticiones";
-        $stmtTotal = $db->query($queryTotal);
-        $stats['total_peticiones'] = $stmtTotal->fetch(PDO::FETCH_ASSOC)['total'];
-    }
-
-    // ==========================================
-    // PETICIONES RECIENTES
-    // ==========================================
-    
-    $recentPetitions = [];
-
-    if ($rolId == 1 || $rolId == 2 || $rolId == 10) {
-        // Super Usuario y Director ven las últimas 10 peticiones de TODO el sistema
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado, 
-                              p.NivelImportancia, p.fecha_registro,
-                              d.Municipio
-                       FROM peticiones p
-                       LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                       ORDER BY p.fecha_registro DESC
-                       LIMIT 10";
-        $stmtRecent = $db->query($queryRecent);
-        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
-
-    } elseif ($rolId == 12 && $divisionId) {
-        // Canalizador Municipal ve peticiones de su municipio (sin limite)
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
-                              p.NivelImportancia, p.fecha_registro,
-                              d.Municipio,
-                              DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
-                       FROM peticiones p
-                       LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                       WHERE p.division_id = :division_id
-                       AND p.estado NOT IN ('Completada', 'Cancelada')
-                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC";
-        $stmtRecent = $db->prepare($queryRecent);
-        $stmtRecent->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtRecent->execute();
-        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
-
-    } elseif ($rolId == 13) {
-        // Canalizador Estatal ve peticiones urgentes de todos los municipios (sin limite)
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
-                              p.NivelImportancia, p.fecha_registro,
-                              d.Municipio,
-                              DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
-                       FROM peticiones p
-                       LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                       WHERE p.estado NOT IN ('Completada', 'Cancelada')
-                       ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC";
-        $stmtRecent = $db->query($queryRecent);
-        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
-
-    } elseif ($rolId == 9 && $unidadId) {
-        // Usuario de departamento ve peticiones asignadas a su unidad (ordenadas por urgencia)
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado, 
-                              p.NivelImportancia, p.fecha_registro,
-                              d.Municipio, pd.estado as estado_departamento,
-                              pd.fecha_asignacion,
-                              DATEDIFF(CURDATE(), pd.fecha_asignacion) as dias_asignacion
-                       FROM peticion_departamento pd
-                       INNER JOIN peticiones p ON pd.peticion_id = p.id
-                       LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                       WHERE pd.departamento_id = :unidad_id
-                       AND pd.estado NOT IN ('Completado', 'Cerrado')
-                       ORDER BY p.NivelImportancia ASC, pd.fecha_asignacion ASC";
-        $stmtRecent = $db->prepare($queryRecent);
-        $stmtRecent->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtRecent->execute();
-        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
-
-    } elseif ($unidadId) {
-        // Usuario ve peticiones asignadas a su unidad
-        $queryRecent = "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado, 
-                              p.NivelImportancia, p.fecha_registro,
-                              d.Municipio, pd.estado as estado_departamento,
-                              pd.fecha_asignacion
-                       FROM peticion_departamento pd
-                       INNER JOIN peticiones p ON pd.peticion_id = p.id
-                       LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
-                       WHERE pd.departamento_id = :unidad_id
-                       ORDER BY pd.fecha_asignacion DESC
-                       LIMIT 10";
-        $stmtRecent = $db->prepare($queryRecent);
-        $stmtRecent->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtRecent->execute();
-        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // ==========================================
-    // ALERTAS Y NOTIFICACIONES
-    // ==========================================
-    
-    $alerts = [];
-
-    // Peticiones críticas sin revisar (Super Usuario y Director)
-    if ($rolId == 1 || $rolId == 2 || $rolId == 10) {
-        $queryCriticas = "SELECT COUNT(*) as cantidad 
-                         FROM peticiones 
-                         WHERE NivelImportancia = 1 
-                         AND estado IN ('Sin revisar', 'Pendiente', 'Esperando recepción')";
-        $stmtCriticas = $db->query($queryCriticas);
-        $criticasCount = $stmtCriticas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($criticasCount > 0) {
-            $alerts[] = [
-                'type' => 'critical',
-                'message' => "Hay {$criticasCount} peticiones críticas pendientes de revisión",
-                'count' => $criticasCount
-            ];
-        }
-    }
-
-    // Alertas para Canalizador Municipal
-    if ($rolId == 12 && $divisionId) {
-        // Peticiones críticas de su municipio
-        $queryCriticas = "SELECT COUNT(*) as cantidad 
-                         FROM peticiones 
-                         WHERE division_id = :division_id
-                         AND NivelImportancia = 1 
-                         AND estado IN ('Sin revisar', 'Pendiente', 'Esperando recepción')";
-        $stmtCriticas = $db->prepare($queryCriticas);
-        $stmtCriticas->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtCriticas->execute();
-        $criticasCount = $stmtCriticas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($criticasCount > 0) {
-            $alerts[] = [
-                'type' => 'critical',
-                'message' => "Hay {$criticasCount} peticiones críticas en tu municipio",
-                'count' => $criticasCount
-            ];
-        }
-
-        // Peticiones retrasadas
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad 
-                           FROM peticiones 
-                           WHERE division_id = :division_id
-                           AND estado NOT IN ('Completada', 'Cancelada')
-                           AND DATEDIFF(CURDATE(), fecha_registro) > 30";
-        $stmtRetrasadas = $db->prepare($queryRetrasadas);
-        $stmtRetrasadas->bindParam(':division_id', $divisionId, PDO::PARAM_INT);
-        $stmtRetrasadas->execute();
-        $retrasadasCount = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($retrasadasCount > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'message' => "Tienes {$retrasadasCount} peticiones retrasadas (más de 30 días sin completar)",
-                'count' => $retrasadasCount
-            ];
-        }
-    }
-
-    // Alertas para Rol Departamento (9)
-    if ($rolId == 9 && $unidadId) {
-        // Peticiones críticas asignadas
-        $queryCriticas = "SELECT COUNT(*) as cantidad 
+        // Alertas departamento
+        $queryCriticas = "SELECT COUNT(*) as cantidad
                          FROM peticion_departamento pd
                          INNER JOIN peticiones p ON pd.peticion_id = p.id
                          WHERE pd.departamento_id = :unidad_id
-                         AND p.NivelImportancia = 1 
-                         AND pd.estado NOT IN ('Completado', 'Cerrado')";
-        $stmtCriticas = $db->prepare($queryCriticas);
-        $stmtCriticas->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtCriticas->execute();
-        $criticasCount = $stmtCriticas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
+                         AND p.NivelImportancia = 1
+                         AND pd.estado NOT IN ($estadosFinalesDepto)";
+        $stmt = $db->prepare($queryCriticas);
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $criticasCount = $stmt->fetch(PDO::FETCH_ASSOC)['cantidad'];
         if ($criticasCount > 0) {
             $alerts[] = [
                 'type' => 'critical',
@@ -583,63 +319,106 @@ try {
                 'count' => $criticasCount
             ];
         }
-
-        // Peticiones retrasadas del departamento
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad 
-                           FROM peticion_departamento
-                           WHERE departamento_id = :unidad_id
-                           AND estado NOT IN ('Completado', 'Cerrado')
-                           AND DATEDIFF(CURDATE(), fecha_asignacion) > 15";
-        $stmtRetrasadas = $db->prepare($queryRetrasadas);
-        $stmtRetrasadas->bindParam(':unidad_id', $unidadId, PDO::PARAM_INT);
-        $stmtRetrasadas->execute();
-        $retrasadasCount = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($retrasadasCount > 0) {
+        if ($base['retrasadas'] > 0) {
             $alerts[] = [
                 'type' => 'warning',
-                'message' => "Tienes {$retrasadasCount} peticiones retrasadas en tu departamento (más de 15 días sin completar)",
-                'count' => $retrasadasCount
+                'message' => "Tienes {$base['retrasadas']} peticiones retrasadas en tu departamento (más de " . DIAS_RETRASO_DEPARTAMENTO . " días sin completar)",
+                'count' => intval($base['retrasadas'])
             ];
         }
+
+    } elseif ($unidadId) {
+        // Otro usuario con unidad — estadísticas básicas de su departamento
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM peticion_departamento WHERE departamento_id = :unidad_id");
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $stats['total_peticiones'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $stmt = $db->prepare("SELECT estado, COUNT(*) as cantidad FROM peticion_departamento WHERE departamento_id = :unidad_id GROUP BY estado");
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $stats['por_estado'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } else {
+        $stats['total_peticiones'] = $db->query("SELECT COUNT(*) as total FROM peticiones")->fetch(PDO::FETCH_ASSOC)['total'];
     }
 
-    // Alertas para Canalizador Estatal
-    if ($rolId == 13) {
-        // Peticiones críticas a nivel estatal
-        $queryCriticas = "SELECT COUNT(*) as cantidad 
-                         FROM peticiones 
-                         WHERE NivelImportancia = 1 
-                         AND estado IN ('Sin revisar', 'Pendiente', 'Esperando recepción')";
-        $stmtCriticas = $db->query($queryCriticas);
-        $criticasCount = $stmtCriticas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($criticasCount > 0) {
-            $alerts[] = [
-                'type' => 'critical',
-                'message' => "Hay {$criticasCount} peticiones críticas a nivel estatal",
-                'count' => $criticasCount
-            ];
-        }
+    // ==========================================
+    // PETICIONES RECIENTES
+    // ==========================================
+    $recentPetitions = [];
 
-        // Peticiones retrasadas a nivel estatal
-        $queryRetrasadas = "SELECT COUNT(*) as cantidad 
-                           FROM peticiones 
-                           WHERE estado NOT IN ('Completada', 'Cancelada')
-                           AND DATEDIFF(CURDATE(), fecha_registro) > 30";
-        $stmtRetrasadas = $db->query($queryRetrasadas);
-        $retrasadasCount = $stmtRetrasadas->fetch(PDO::FETCH_ASSOC)['cantidad'];
-        
-        if ($retrasadasCount > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'message' => "Hay {$retrasadasCount} peticiones retrasadas a nivel estatal (más de 30 días)",
-                'count' => $retrasadasCount
-            ];
-        }
+    if (in_array($rolId, ROLES_ADMIN)) {
+        $stmtRecent = $db->query(
+            "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                    p.NivelImportancia, p.fecha_registro, d.Municipio
+             FROM peticiones p
+             LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+             ORDER BY p.fecha_registro DESC LIMIT 10"
+        );
+        $recentPetitions = $stmtRecent->fetchAll(PDO::FETCH_ASSOC);
+
+    } elseif ($rolId == ROL_CANALIZADOR_MUNICIPAL && $divisionId) {
+        $estadosFinales = "'" . implode("','", ESTADOS_FINALES) . "'";
+        $stmt = $db->prepare(
+            "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                    p.NivelImportancia, p.fecha_registro, d.Municipio,
+                    DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
+             FROM peticiones p
+             LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+             WHERE p.division_id = :division_id AND p.estado NOT IN ($estadosFinales)
+             ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC"
+        );
+        $stmt->bindValue(':division_id', $divisionId, PDO::PARAM_INT);
+        $stmt->execute();
+        $recentPetitions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } elseif ($rolId == ROL_CANALIZADOR_ESTATAL) {
+        $estadosFinales = "'" . implode("','", ESTADOS_FINALES) . "'";
+        $recentPetitions = $db->query(
+            "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                    p.NivelImportancia, p.fecha_registro, d.Municipio,
+                    DATEDIFF(CURDATE(), p.fecha_registro) as dias_transcurridos
+             FROM peticiones p
+             LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+             WHERE p.estado NOT IN ($estadosFinales)
+             ORDER BY p.NivelImportancia ASC, p.fecha_registro ASC"
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+    } elseif ($rolId == ROL_DEPARTAMENTO && $unidadId) {
+        $estadosFinalesDepto = "'" . implode("','", ESTADOS_FINALES_DEPTO) . "'";
+        $stmt = $db->prepare(
+            "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                    p.NivelImportancia, p.fecha_registro, d.Municipio,
+                    pd.estado as estado_departamento, pd.fecha_asignacion,
+                    DATEDIFF(CURDATE(), pd.fecha_asignacion) as dias_asignacion
+             FROM peticion_departamento pd
+             INNER JOIN peticiones p ON pd.peticion_id = p.id
+             LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+             WHERE pd.departamento_id = :unidad_id AND pd.estado NOT IN ($estadosFinalesDepto)
+             ORDER BY p.NivelImportancia ASC, pd.fecha_asignacion ASC"
+        );
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $recentPetitions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } elseif ($unidadId) {
+        $stmt = $db->prepare(
+            "SELECT p.id, p.folio, p.nombre, p.descripcion, p.estado,
+                    p.NivelImportancia, p.fecha_registro, d.Municipio,
+                    pd.estado as estado_departamento, pd.fecha_asignacion
+             FROM peticion_departamento pd
+             INNER JOIN peticiones p ON pd.peticion_id = p.id
+             LEFT JOIN DivisionAdministrativa d ON p.division_id = d.Id
+             WHERE pd.departamento_id = :unidad_id
+             ORDER BY pd.fecha_asignacion DESC LIMIT 10"
+        );
+        $stmt->bindValue(':unidad_id', $unidadId, PDO::PARAM_INT);
+        $stmt->execute();
+        $recentPetitions = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Respuesta final
+    // Respuesta
     sendJsonResponse([
         'success' => true,
         'user_info' => [
@@ -656,15 +435,11 @@ try {
     ], 200);
 
 } catch (Exception $e) {
-    debugLog("EXCEPTION CAPTURADA: " . $e->getMessage());
-    debugLog("Stack trace: " . $e->getTraceAsString());
     error_log("Error en dashboard-user.php: " . $e->getMessage());
     sendJsonResponse([
         'success' => false,
         'message' => 'Error al obtener datos del dashboard',
-        'error' => $e->getMessage(),
-        'file' => basename($e->getFile()),
-        'line' => $e->getLine()
+        'error' => $e->getMessage()
     ], 500);
 }
 ?>

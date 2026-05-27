@@ -1071,141 +1071,13 @@
         </div>
       </div>
     </div>
-
-    <!-- ✅ Modal Detalles Completos de Petición -->
-    <div v-if="showDetallesPeticionModal" class="modal-overlay" @click.self="cerrarDetallesPeticion">
-      <div class="modal-content modal-detalles-peticion">
-        <div class="modal-header modal-detalles-header">
-          <h3>
-            <i class="fas fa-file-alt"></i>
-            Detalles de Petición - {{ peticionDetalles.folio }}
-          </h3>
-          <div class="header-actions">
-
-            <button class="close-btn" @click="cerrarDetallesPeticion">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-        <div class="modal-body modal-detalles-body">
-          <!-- Información principal -->
-          <div class="detalles-grid">
-            <div class="detalle-seccion info-principal">
-              <h4><i class="fas fa-info-circle"></i> Información Principal</h4>
-              <div class="detalle-item">
-                <span class="label">Folio:</span>
-                <span class="valor">{{ peticionDetalles.folio || 'No asignado' }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Nombre:</span>
-                <span class="valor">{{ peticionDetalles.nombre || 'Sin nombre' }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Teléfono:</span>
-                <span class="valor">{{ peticionDetalles.telefono || 'No especificado' }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Dirección:</span>
-                <span class="valor">{{ peticionDetalles.direccion || 'No especificada' }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Localidad:</span>
-                <span class="valor">{{ peticionDetalles.localidad || 'No especificada' }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Red Social:</span>
-                <span class="valor">{{ peticionDetalles.red_social || 'No especificada' }}</span>
-              </div>
-            </div>
-
-            <div class="detalle-seccion info-estado">
-              <h4><i class="fas fa-flag"></i> Estado y Prioridad</h4>
-              <div class="detalle-item">
-                <span class="label">Estado:</span>
-                <span class="valor estado-badge" :class="`estado-${(peticionDetalles.estado || '').toLowerCase().replace(/\\s+/g, '-')}`">
-                  {{ peticionDetalles.estado || 'Sin estado' }}
-                </span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Prioridad:</span>
-                <span class="valor prioridad-badge" :class="`prioridad-${peticionDetalles.NivelImportancia}`">
-                  {{ obtenerTextoNivelImportancia(peticionDetalles.NivelImportancia) }}
-                </span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Fecha Registro:</span>
-                <span class="valor">{{ formatearFechaCompleta(peticionDetalles.fecha_registro) }}</span>
-              </div>
-              <div class="detalle-item">
-                <span class="label">Usuario Seguimiento:</span>
-                <span class="valor">{{
-                  tieneUsuarioAsignado(peticionDetalles) ?
-                    (peticionDetalles.nombre_completo_usuario || peticionDetalles.nombre_usuario_seguimiento || 'Usuario asignado') :
-                    'Sin asignar'
-                }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Descripción -->
-          <div class="detalle-seccion descripcion-completa">
-            <h4><i class="fas fa-file-text"></i> Descripción</h4>
-            <div class="descripcion-contenido">
-              {{ peticionDetalles.descripcion || 'Sin descripción' }}
-            </div>
-          </div>
-
-          <!-- Departamentos asignados -->
-          <div class="detalle-seccion departamentos-info">
-            <h4><i class="fas fa-building"></i> Departamentos Asignados</h4>
-            <div v-if="!peticionDetalles.departamentos || peticionDetalles.departamentos.length === 0" class="no-departamentos">
-              <i class="fas fa-building"></i>
-              <div class="mensaje">Sin departamentos asignados</div>
-              <div class="descripcion">Esta petición aún no ha sido derivada a ningún departamento</div>
-            </div>
-            <div v-else class="departamentos-lista">
-              <div v-for="dept in peticionDetalles.departamentos" :key="dept.id" class="departamento-item">
-                <div class="dept-info">
-                  <h5>{{ dept.nombre_unidad }}</h5>
-                  <span class="dept-estado" :class="`dept-estado-${dept.estado_asignacion?.toLowerCase()}`">
-                    {{ dept.estado_asignacion || 'Sin estado' }}
-                  </span>
-                </div>
-                <div class="dept-fecha">
-                  {{ formatearFecha(dept.fecha_asignacion) }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Imágenes de la petición -->
-          <div class="detalle-seccion imagenes-peticion">
-            <h4><i class="fas fa-images"></i> Imágenes de la Petición</h4>
-            <div class="galeria-contenedor">
-              <ImageGallery
-                :entidad-tipo="'peticion'"
-                :entidad-id="peticionDetalles.id"
-                :readonly="true"
-                :show-upload="false"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" @click="cerrarDetallesPeticion">
-            <i class="fas fa-times"></i>
-            Cerrar
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import { ref, reactive, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import { ref, reactive, onMounted, onBeforeUnmount, watch, computed, nextTick } from 'vue';
+import { usePeticionUtils } from '@/composables/usePeticionUtils';
 import { useRoute } from 'vue-router';
 import ImageGallery from '@/components/ImageGallery.vue';
 
@@ -1216,6 +1088,7 @@ export default {
   },
   setup() {
     const route = useRoute();
+    const { truncateText: truncarTextoUtil, formatFullDate: formatearFechaUtil } = usePeticionUtils()
     const loading = ref(true);
     const peticiones = ref([]);
     const peticionesFiltradas = ref([]);
@@ -1586,6 +1459,8 @@ export default {
       return `${departamentos.length} departamentos`;
     };
 
+    // Nota: Existe formatearFechaUtil (de usePeticionUtils) que formata con toLocaleDateString('es-MX', day/month-short/year).
+    // Esta función local usa un formato diferente (dd/mm/yyyy HH:mm con hora), por lo que se mantiene.
     const formatearFecha = (fechaStr) => {
       if (!fechaStr) return '';
 
@@ -2225,6 +2100,20 @@ export default {
 
     // Función para cambiar estado de asignación
     const cambiarEstadoAsignacion = async (asignacionId, nuevoEstado) => {
+      // Confirmar antes de cambiar el estado del departamento
+      const confirmar = confirm(`¿Cambiar el estado a "${nuevoEstado}"?`)
+      if (!confirmar) {
+        // Revertir el select al valor anterior
+        const deptAnterior = departamentosAsignados.value.find(d => d.asignacion_id === asignacionId);
+        if (deptAnterior) {
+          // Forzar re-render del select restaurando el valor original
+          const estadoOriginal = deptAnterior.estado_asignacion;
+          deptAnterior.estado_asignacion = '';
+          nextTick(() => { deptAnterior.estado_asignacion = estadoOriginal; });
+        }
+        return;
+      }
+
       try {
         if (window.$loading) {
           window.$loading.show();
@@ -2726,6 +2615,8 @@ export default {
     };
 
     // ✅ NUEVA: Función auxiliar para formatear fecha completa
+    // Nota: Existe formatearFechaUtil (de usePeticionUtils) que usa toLocaleDateString con month:'short' y sin hora.
+    // Esta función local usa toLocaleString con month:'long' e incluye hora, por lo que se mantiene.
     const formatearFechaCompleta = (fechaStr) => {
       if (!fechaStr) return '';
       const fecha = new Date(fechaStr);
@@ -2739,6 +2630,8 @@ export default {
     };
 
     // ✅ NUEVA: Función auxiliar para truncar texto
+    // Nota: Existe truncarTextoUtil (de usePeticionUtils) que retorna '-' para valores falsy.
+    // Esta función local retorna el texto tal cual si es corto (incluyendo undefined/null), por lo que se mantiene.
     const truncarTexto = (texto, maxLength = 100) => {
       if (!texto || texto.length <= maxLength) return texto;
       return texto.substring(0, maxLength) + '...';
@@ -2746,6 +2639,7 @@ export default {
 
     // ✅ NUEVA: Función para abrir modal de detalles de petición
     const abrirDetallesPeticion = (peticion) => {
+      sugerenciasIA.value = [] // Limpiar sugerencias IA previas para evitar filtración entre peticiones
       peticionDetalles.value = { ...peticion };
       showDetallesPeticionModal.value = true;
     };
@@ -3003,6 +2897,10 @@ export default {
       cerrarHistorialDepartamento,
       truncarTexto,
       formatearFechaCompleta,
+
+      // ✅ Utilidades del composable (disponibles para uso futuro)
+      truncarTextoUtil,
+      formatearFechaUtil,
 
       // ✅ Modal de detalles de petición
       showDetallesPeticionModal,

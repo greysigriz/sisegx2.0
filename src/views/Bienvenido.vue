@@ -77,49 +77,19 @@
       </div>
 
       <!-- Drill-down for alerts -->
-      <Transition name="bv-slide-detail">
-        <div v-if="drillDown && (drillDown.tipo === 'alert_critical' || drillDown.tipo === 'alert_retrasadas')" class="bv-drill-panel bv-fade-in">
-          <div v-if="drillDownLoading" class="bv-drill-loading">
-            <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-            <span>Cargando peticiones...</span>
-          </div>
-          <template v-else-if="drillDownPetitions.length > 0">
-            <div class="bv-drill-header">
-              <span class="bv-drill-title">{{ drillDown.title }}</span>
-              <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-              <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                <i class="fas fa-download"></i> CSV
-              </button>
-              <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <div class="bv-drill-table-wrap">
-              <table class="bv-drill-table">
-                <thead>
-                  <tr>
-                    <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                    <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                    <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                    <td>{{ pet.nombre || 'Anonimo' }}</td>
-                    <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                    <td>{{ pet.Municipio || '-' }}</td>
-                    <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                    <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                    <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                    <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </template>
-          <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
-        </div>
-      </Transition>
+      <DrillDownPanel
+        :visible="drillDown && (drillDown.tipo === 'alert_critical' || drillDown.tipo === 'alert_retrasadas')"
+        :loading="drillDownLoading"
+        :peticiones="drillDownPetitions"
+        :title="drillDown?.title || ''"
+        :total-count="drillDownTotal"
+        :page="drillDownPage"
+        :total-pages="drillDownPages"
+        @close="closeDrillDown"
+        @download-csv="drillDownCSV"
+        @view-petition="viewPetitionDetails"
+        @page-change="changeDrillPage"
+      />
 
       <!-- Accesos Directos (SOLO Director y Super Usuario) -->
       <!-- <div v-if="isAdmin && filteredQuickActions.length > 0" class="bv-shortcuts bv-fade-in">
@@ -286,49 +256,19 @@
         </div>
 
         <!-- Drill-down panel (after metrics) -->
-        <Transition name="bv-slide-detail">
-          <div v-if="drillDown && (drillDown.tipo === 'total' || drillDown.tipo === 'retrasadas')" class="bv-drill-panel bv-fade-in">
-            <div v-if="drillDownLoading" class="bv-drill-loading">
-              <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-              <span>Cargando peticiones...</span>
-            </div>
-            <template v-else-if="drillDownPetitions.length > 0">
-              <div class="bv-drill-header">
-                <span class="bv-drill-title">{{ drillDown.title }}</span>
-                <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-                <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                  <i class="fas fa-download"></i> CSV
-                </button>
-                <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <div class="bv-drill-table-wrap">
-                <table class="bv-drill-table">
-                  <thead>
-                    <tr>
-                      <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                      <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                      <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                      <td>{{ pet.nombre || 'Anonimo' }}</td>
-                      <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                      <td>{{ pet.Municipio || '-' }}</td>
-                      <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                      <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                      <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                      <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </template>
-            <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
-          </div>
-        </Transition>
+        <DrillDownPanel
+          :visible="drillDown && (drillDown.tipo === 'total' || drillDown.tipo === 'retrasadas')"
+          :loading="drillDownLoading"
+          :peticiones="drillDownPetitions"
+          :title="drillDown?.title || ''"
+          :total-count="drillDownTotal"
+          :page="drillDownPage"
+          :total-pages="drillDownPages"
+          @close="closeDrillDown"
+          @download-csv="drillDownCSV"
+          @view-petition="viewPetitionDetails"
+          @page-change="changeDrillPage"
+        />
 
         <!-- Estados clickables -->
         <div v-if="dashboardData.statistics.por_estado" class="bv-states-grid bv-fade-in">
@@ -351,49 +291,19 @@
         </div>
 
         <!-- Drill-down panel (after estados) -->
-        <Transition name="bv-slide-detail">
-          <div v-if="drillDown && drillDown.tipo === 'estado'" class="bv-drill-panel bv-fade-in">
-            <div v-if="drillDownLoading" class="bv-drill-loading">
-              <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-              <span>Cargando peticiones...</span>
-            </div>
-            <template v-else-if="drillDownPetitions.length > 0">
-              <div class="bv-drill-header">
-                <span class="bv-drill-title">{{ drillDown.title }}</span>
-                <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-                <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                  <i class="fas fa-download"></i> CSV
-                </button>
-                <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                  <i class="fas fa-times"></i>
-                </button>
-              </div>
-              <div class="bv-drill-table-wrap">
-                <table class="bv-drill-table">
-                  <thead>
-                    <tr>
-                      <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                      <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                      <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                      <td>{{ pet.nombre || 'Anonimo' }}</td>
-                      <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                      <td>{{ pet.Municipio || '-' }}</td>
-                      <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                      <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                      <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                      <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </template>
-            <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
-          </div>
-        </Transition>
+        <DrillDownPanel
+          :visible="drillDown && drillDown.tipo === 'estado'"
+          :loading="drillDownLoading"
+          :peticiones="drillDownPetitions"
+          :title="drillDown?.title || ''"
+          :total-count="drillDownTotal"
+          :page="drillDownPage"
+          :total-pages="drillDownPages"
+          @close="closeDrillDown"
+          @download-csv="drillDownCSV"
+          @view-petition="viewPetitionDetails"
+          @page-change="changeDrillPage"
+        />
 
         <!-- Peticiones urgentes -->
         <div v-if="dashboardData.recent_petitions && dashboardData.recent_petitions.length > 0" class="bv-card bv-card--carousel">
@@ -425,49 +335,20 @@
           </div>
 
           <!-- Drill-down inline for urgentes -->
-          <Transition name="bv-slide-detail">
-            <div v-if="isDrillActive('urgentes', null)" class="bv-drill-panel bv-drill-panel--inline">
-              <div v-if="drillDownLoading" class="bv-drill-loading">
-                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-                <span>Cargando peticiones...</span>
-              </div>
-              <template v-else-if="drillDownPetitions.length > 0">
-                <div class="bv-drill-header">
-                  <span class="bv-drill-title">{{ drillDown.title }}</span>
-                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                    <i class="fas fa-download"></i> CSV
-                  </button>
-                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-                <div class="bv-drill-table-wrap">
-                  <table class="bv-drill-table">
-                    <thead>
-                      <tr>
-                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                        <td>{{ pet.nombre || 'Anonimo' }}</td>
-                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                        <td>{{ pet.Municipio || '-' }}</td>
-                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </template>
-              <div v-else class="bv-drill-empty">No hay peticiones para esta categoria.</div>
-            </div>
-          </Transition>
+          <DrillDownPanel
+            :visible="isDrillActive('urgentes', null)"
+            :loading="drillDownLoading"
+            :peticiones="drillDownPetitions"
+            :title="drillDown?.title || ''"
+            :total-count="drillDownTotal"
+            :page="drillDownPage"
+            :total-pages="drillDownPages"
+            :inline="true"
+            @close="closeDrillDown"
+            @download-csv="drillDownCSV"
+            @view-petition="viewPetitionDetails"
+            @page-change="changeDrillPage"
+          />
 
           <template v-if="!isDrillActive('urgentes', null)">
             <div v-if="filteredCarouselPetitions.length === 0" class="bv-drill-empty">
@@ -573,49 +454,21 @@
           </div>
 
           <!-- Drill-down inline for departamentos -->
-          <Transition name="bv-slide-detail">
-            <div v-if="drillDown && drillDown.tipo === 'departamento'" class="bv-drill-panel bv-drill-panel--inline">
-              <div v-if="drillDownLoading" class="bv-drill-loading">
-                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-                <span>Cargando peticiones...</span>
-              </div>
-              <template v-else-if="drillDownPetitions.length > 0">
-                <div class="bv-drill-header">
-                  <span class="bv-drill-title">{{ drillDown.title }}</span>
-                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                    <i class="fas fa-download"></i> CSV
-                  </button>
-                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-                <div class="bv-drill-table-wrap">
-                  <table class="bv-drill-table">
-                    <thead>
-                      <tr>
-                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                        <td>{{ pet.nombre || 'Anonimo' }}</td>
-                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                        <td>{{ pet.Municipio || '-' }}</td>
-                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </template>
-              <div v-else class="bv-drill-empty">No hay peticiones para este departamento.</div>
-            </div>
-          </Transition>
+          <DrillDownPanel
+            :visible="drillDown && drillDown.tipo === 'departamento'"
+            :loading="drillDownLoading"
+            :peticiones="drillDownPetitions"
+            :title="drillDown?.title || ''"
+            :total-count="drillDownTotal"
+            :page="drillDownPage"
+            :total-pages="drillDownPages"
+            :inline="true"
+            empty-message="No hay peticiones para este departamento."
+            @close="closeDrillDown"
+            @download-csv="drillDownCSV"
+            @view-petition="viewPetitionDetails"
+            @page-change="changeDrillPage"
+          />
         </div>
 
         <!-- Top Municipios (Estatal) clickables -->
@@ -661,49 +514,21 @@
           </div>
 
           <!-- Drill-down inline for municipios -->
-          <Transition name="bv-slide-detail">
-            <div v-if="drillDown && drillDown.tipo === 'municipio'" class="bv-drill-panel bv-drill-panel--inline">
-              <div v-if="drillDownLoading" class="bv-drill-loading">
-                <div class="bv-loading-spinner" style="width:32px;height:32px;border-width:2px;"></div>
-                <span>Cargando peticiones...</span>
-              </div>
-              <template v-else-if="drillDownPetitions.length > 0">
-                <div class="bv-drill-header">
-                  <span class="bv-drill-title">{{ drillDown.title }}</span>
-                  <span class="bv-drill-count">{{ drillDownPetitions.length }} peticiones</span>
-                  <button class="bv-drill-csv" @click.stop="drillDownCSV" title="Descargar CSV">
-                    <i class="fas fa-download"></i> CSV
-                  </button>
-                  <button class="bv-drill-close" @click.stop="closeDrillDown" title="Cerrar">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-                <div class="bv-drill-table-wrap">
-                  <table class="bv-drill-table">
-                    <thead>
-                      <tr>
-                        <th>Folio</th><th>Peticionario</th><th>Descripcion</th>
-                        <th>Municipio</th><th>Estado</th><th>Importancia</th><th>Dias</th><th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="pet in drillDownPetitions" :key="pet.id" @click="viewPetitionDetails(pet.folio)" class="bv-drill-row">
-                        <td class="bv-td-folio">{{ pet.folio || '-' }}</td>
-                        <td>{{ pet.nombre || 'Anonimo' }}</td>
-                        <td class="bv-td-desc">{{ truncateText(pet.descripcion, 50) }}</td>
-                        <td>{{ pet.Municipio || '-' }}</td>
-                        <td><span class="bv-estado-badge" :class="getEstadoBadgeClass(pet.estado)">{{ pet.estado }}</span></td>
-                        <td><span class="bv-imp-badge" :class="getImpClass(pet.NivelImportancia)">{{ getImpLabel(pet.NivelImportancia) }}</span></td>
-                        <td class="bv-td-dias" :class="{ 'bv-td-dias--alerta': pet.dias_transcurridos > 30 }">{{ pet.dias_transcurridos }}d</td>
-                        <td class="bv-td-fecha">{{ formatFullDate(pet.fecha_registro) }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </template>
-              <div v-else class="bv-drill-empty">No hay peticiones para este municipio.</div>
-            </div>
-          </Transition>
+          <DrillDownPanel
+            :visible="drillDown && drillDown.tipo === 'municipio'"
+            :loading="drillDownLoading"
+            :peticiones="drillDownPetitions"
+            :title="drillDown?.title || ''"
+            :total-count="drillDownTotal"
+            :page="drillDownPage"
+            :total-pages="drillDownPages"
+            :inline="true"
+            empty-message="No hay peticiones para este municipio."
+            @close="closeDrillDown"
+            @download-csv="drillDownCSV"
+            @view-petition="viewPetitionDetails"
+            @page-change="changeDrillPage"
+          />
         </div>
 
       </template>
@@ -1034,15 +859,18 @@ import axios from 'axios'
 import authService from '@/services/auth.js'
 import UserMetricsCards from '@/components/dashboard/UserMetricsCards.vue'
 import RecentActivity from '@/components/dashboard/RecentActivity.vue'
+import DrillDownPanel from '@/components/dashboard/DrillDownPanel.vue'
 import ImageGallery from '@/components/ImageGallery.vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Navigation, Pagination } from 'swiper/modules'
+import { usePeticionUtils } from '@/composables/usePeticionUtils'
 
 export default {
   name: 'BienvenidoDashboard',
-  components: { UserMetricsCards, RecentActivity, ImageGallery, Swiper, SwiperSlide },
+  components: { UserMetricsCards, RecentActivity, DrillDownPanel, ImageGallery, Swiper, SwiperSlide },
   setup() {
     const router = useRouter()
+    const { getImpLabel, getImpClass, getEstadoBadgeClass, getEstadoIcon, getNivelLabel, truncateText, formatFullDate, formatShortDate } = usePeticionUtils()
     const isLoading = ref(true)
     const isRefreshing = ref(false)
     const error = ref(null)
@@ -1146,11 +974,6 @@ export default {
       return max > 0 ? (cantidad / max) * 100 : 0
     }
 
-    const formatShortDate = (dateString) => {
-      const date = new Date(dateString)
-      return ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'][date.getDay()]
-    }
-
     const viewPetitionDetails = (folio) => {
       if (isDepartmentUser.value && !isAdmin.value) {
         router.push(`/departamentos?folio=${folio}`)
@@ -1159,71 +982,60 @@ export default {
       }
     }
 
-    const getEstadoIcon = (estado) => {
-      const map = {
-        'Esperando recepcion': 'fas fa-clock',
-        'Esperando recepción': 'fas fa-clock',
-        'Aceptado en proceso': 'fas fa-cog',
-        'Devuelto a seguimiento': 'fas fa-undo',
-        'Rechazado': 'fas fa-times-circle',
-        'Completado': 'fas fa-check-circle'
-      }
-      return map[estado] || 'fas fa-file-alt'
-    }
-
-    const getNivelLabel = (nivel) => {
-      return { 1: 'Muy Alta', 2: 'Alta', 3: 'Media', 4: 'Baja', 5: 'Muy Baja' }[nivel] || 'N/D'
-    }
-
     const swiperModules = [Navigation, Pagination]
 
     // --- Drill-down state ---
-    const drillDown = ref(null) // { tipo, valor, title }
+    const drillDown = ref(null)
     const drillDownPetitions = ref([])
     const drillDownLoading = ref(false)
+    const drillDownPage = ref(1)
+    const drillDownPages = ref(1)
+    const drillDownTotal = ref(0)
 
-    const fetchDrillDown = async (tipo, valor, title) => {
-      // Toggle: click same -> close
-      if (drillDown.value && drillDown.value.tipo === tipo && drillDown.value.valor === valor) {
-        drillDown.value = null
-        drillDownPetitions.value = []
+    const fetchDrillDown = async (tipo, valor, title, page = 1) => {
+      if (page === 1 && drillDown.value && drillDown.value.tipo === tipo && drillDown.value.valor === valor) {
+        closeDrillDown()
         return
       }
       drillDown.value = { tipo, valor, title }
       drillDownLoading.value = true
-      drillDownPetitions.value = []
+      if (page === 1) drillDownPetitions.value = []
       try {
-        const params = { tipo }
+        const params = { tipo, page, limit: 50 }
         if (valor !== undefined && valor !== null) params.valor = valor
         const res = await axios.get('dashboard-user-detalle.php', { params })
         if (res.data.success) {
           drillDownPetitions.value = res.data.peticiones || []
+          drillDownPage.value = res.data.page || 1
+          drillDownPages.value = res.data.pages || 1
+          drillDownTotal.value = res.data.total || drillDownPetitions.value.length
+        } else {
+          if (window.$toast) window.$toast.error(res.data.message || 'Error al obtener datos')
         }
       } catch (e) {
-        console.error('Error drill-down:', e)
+        const msg = e.response?.data?.message || 'Error al cargar las peticiones'
+        if (window.$toast) window.$toast.error(msg)
       } finally {
         drillDownLoading.value = false
       }
     }
 
+    const changeDrillPage = (newPage) => {
+      if (!drillDown.value) return
+      fetchDrillDown(drillDown.value.tipo, drillDown.value.valor, drillDown.value.title, newPage)
+    }
+
     const closeDrillDown = () => {
       drillDown.value = null
       drillDownPetitions.value = []
+      drillDownPage.value = 1
+      drillDownPages.value = 1
+      drillDownTotal.value = 0
     }
 
     const isDrillActive = (tipo, valor) => {
       if (!drillDown.value) return false
       return drillDown.value.tipo === tipo && drillDown.value.valor === valor
-    }
-
-    const truncateText = (str, len) => {
-      if (!str) return '-'
-      return str.length > len ? str.substring(0, len) + '...' : str
-    }
-
-    const formatFullDate = (d) => {
-      if (!d) return '-'
-      return new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
     }
 
     const drillDownCSV = () => {
@@ -1246,20 +1058,6 @@ export default {
       a.download = (drillDown.value?.title || 'peticiones').replace(/\s+/g, '_') + '.csv'
       a.click()
       URL.revokeObjectURL(url)
-    }
-
-    const getImpLabel = (n) => ({ 1: 'Critica', 2: 'Alta', 3: 'Media', 4: 'Baja' }[n] || 'Baja')
-    const getImpClass = (n) => ({ 1: 'bv-imp--critica', 2: 'bv-imp--alta', 3: 'bv-imp--media' }[n] || 'bv-imp--baja')
-    const getEstadoBadgeClass = (e) => {
-      const map = {
-        'Sin revisar': 'bv-est--pendiente', 'Pendiente': 'bv-est--pendiente',
-        'Esperando recepción': 'bv-est--pendiente', 'Esperando recepcion': 'bv-est--pendiente',
-        'Aceptada en proceso': 'bv-est--proceso', 'Aceptado en proceso': 'bv-est--proceso',
-        'Completado': 'bv-est--completado', 'Completada': 'bv-est--completado',
-        'Devuelto a seguimiento': 'bv-est--devuelto',
-        'Rechazado': 'bv-est--cerrado', 'Cancelada': 'bv-est--cerrado', 'Improcedente': 'bv-est--cerrado'
-      }
-      return map[e] || ''
     }
 
     // --- Ranking sort state ---
@@ -1366,7 +1164,8 @@ export default {
       viewPetitionDetails, getEstadoIcon, getNivelLabel,
       // drill-down
       drillDown, drillDownPetitions, drillDownLoading,
-      fetchDrillDown, closeDrillDown, isDrillActive,
+      drillDownPage, drillDownPages, drillDownTotal,
+      fetchDrillDown, closeDrillDown, isDrillActive, changeDrillPage,
       truncateText, formatFullDate, drillDownCSV,
       getImpLabel, getImpClass, getEstadoBadgeClass,
       // ranking sort & filters

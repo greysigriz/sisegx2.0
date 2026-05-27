@@ -55,6 +55,9 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 // Motion Plugin
 import motionPlugin from './plugins/motion-plugin'
 
+// Toast Plugin
+import toastPlugin from './plugins/toast'
+
 // ✅ Agregar TODOS los iconos a la librería
 library.add(
   faUserShield,
@@ -92,6 +95,7 @@ app.component('font-awesome-icon', FontAwesomeIcon)
 app.use(createPinia())
 app.use(router)
 app.use(motionPlugin)
+app.use(toastPlugin)
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL
 

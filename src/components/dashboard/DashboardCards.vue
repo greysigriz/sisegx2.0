@@ -11,6 +11,7 @@
           class="resumen-item"
           :class="{ 'resumen-item--active': selectedCard === card.key, 'resumen-item--clickable': card.clickable }"
           @click="card.clickable ? onCardClick(card.key) : null">
+          <span class="resumen-icon" :class="card.iconClass"><i :class="card.icon"></i></span>
           <span class="resumen-label">{{ card.label }}</span>
           <span class="resumen-valor" :class="card.colorClass">
             <AnimNum v-if="typeof card.value === 'number'" :value="card.value" />
@@ -166,13 +167,15 @@ export default {
           key: 'total', label: 'Total Peticiones',
           value: kpis.value.total_peticiones || 0,
           colorClass: '', clickable: true,
+          icon: 'fas fa-inbox', iconClass: 'icon-total',
           trend: t_total.val, trendLabel: t_total.label,
           trendClass: trendClass(t_total.val, true)
         },
         {
-          key: 'criticas', label: 'Criticas',
+          key: 'criticas', label: 'Críticas',
           value: kpis.value.criticas || 0,
           colorClass: 'danger', clickable: true,
+          icon: 'fas fa-exclamation-circle', iconClass: 'icon-danger',
           trend: t_criticas.val, trendLabel: t_criticas.label,
           trendClass: trendClass(t_criticas.val, true)
         },
@@ -180,6 +183,7 @@ export default {
           key: 'proceso', label: 'En Proceso',
           value: kpis.value.en_proceso || 0,
           colorClass: 'info', clickable: true,
+          icon: 'fas fa-cog', iconClass: 'icon-info',
           trend: t_proceso.val, trendLabel: t_proceso.label,
           trendClass: trendClass(t_proceso.val, false)
         },
@@ -187,6 +191,7 @@ export default {
           key: 'completadas', label: 'Completadas',
           value: kpis.value.completadas || 0,
           colorClass: 'success', clickable: true,
+          icon: 'fas fa-check-circle', iconClass: 'icon-success',
           trend: t_completadas.val, trendLabel: t_completadas.label,
           trendClass: trendClass(t_completadas.val, false)
         },
@@ -194,13 +199,15 @@ export default {
           key: 'retrasadas', label: 'Retrasadas (+30d)',
           value: kpis.value.retrasadas || 0,
           colorClass: 'warning', clickable: true,
+          icon: 'fas fa-clock', iconClass: 'icon-warning',
           trend: t_retrasadas.val, trendLabel: t_retrasadas.label,
           trendClass: trendClass(t_retrasadas.val, true)
         },
         {
-          key: 'resolucion', label: 'Prom. Resolucion',
+          key: 'resolucion', label: 'Prom. Resolución',
           value: kpis.value.promedio_dias_resolucion ? kpis.value.promedio_dias_resolucion + 'd' : 'N/A',
           colorClass: '', clickable: false,
+          icon: 'fas fa-chart-line', iconClass: 'icon-neutral',
           trend: null, trendLabel: '',
           trendClass: ''
         }
