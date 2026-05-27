@@ -294,7 +294,7 @@ const maxPeticiones = computed(() => {
 // Escala de color continua basada en el maximo real
 function getColor(total, max) {
   const dk = isDark()
-  if (total === 0) return dk ? '#1e293b' : '#f1f5f9'
+  if (total === 0) return dk ? '#2d3a4d' : '#f1f5f9'
   const ratio = Math.min(total / Math.max(max, 1), 1)
   if (dk) {
     // Dark: de #1e3a5f (azul oscuro tenue) a #3b82f6 (azul brillante)
@@ -443,9 +443,9 @@ async function renderMap() {
         fillColor: getColor(total, max),
         fillOpacity: dk ? 0.9 : 0.8,
         color: dk
-          ? (total > 0 ? '#475569' : '#334155')
+          ? (total > 0 ? '#60a5fa' : '#475569')
           : (total > 0 ? '#64748b' : '#cbd5e1'),
-        weight: total > 0 ? 1.2 : 0.6,
+        weight: total > 0 ? 1.5 : 0.8,
         opacity: 0.7
       }
     },
