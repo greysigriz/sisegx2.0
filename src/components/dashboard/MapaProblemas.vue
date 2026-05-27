@@ -416,7 +416,7 @@ async function renderMap() {
   // Cachear GeoJSON (2.9MB, solo descargar una vez)
   if (!cachedGeoJSON) {
     try {
-      const resp = await fetch('../../municipios-yucatan.geojson')
+      const resp = await fetch('/municipios_yucatan.geojson')
       if (!resp.ok) throw new Error('GeoJSON no encontrado')
       cachedGeoJSON = await resp.json()
     } catch (e) {

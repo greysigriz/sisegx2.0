@@ -16,15 +16,6 @@
     <!-- KPIs compactos -->
     <DashboardCards />
 
-    <!-- Alertas del sistema -->
-    <div v-if="alerts && alerts.length > 0" class="dashboard-alerts">
-      <div v-for="(alert, i) in alerts" :key="i" class="dashboard-alert" :class="'dashboard-alert--' + alert.type">
-        <i :class="alert.type === 'critical' ? 'fas fa-exclamation-circle' : 'fas fa-clock'"></i>
-        <span>{{ alert.message }}</span>
-        <strong>{{ alert.count }}</strong>
-      </div>
-    </div>
-
     <!-- Timeline de progreso -->
     <AreaChart />
 
